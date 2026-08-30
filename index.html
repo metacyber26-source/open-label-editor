@@ -8,16 +8,16 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-    h2 { font-size: 1.2rem; margin-bottom: 10px; color: #333; }
-    .toolbar { display: flex; wrap: wrap; gap: 8px; margin-bottom: 10px; justify-content: center; width: 100%; max-width: 800px; }
-    button, label.btn-upload { background: #4F46E5; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; display: inline-block; }
-    input[type="color"] { border: none; border-radius: 4px; height: 32px; width: 32px; cursor: pointer; }
+    h2 { font-size: 1.2rem; margin-bottom: 10px; color: #333; text-align: center; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; width: 100%; max-width: 800px; }
+    button, label.btn-upload { background: #4F46E5; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; }
+    input[type="color"] { border: none; border-radius: 4px; height: 32px; width: 32px; cursor: pointer; background: transparent; }
     .canvas-container-box { border: 2px dashed #ccc; background: #fff; overflow: auto; width: 100%; display: flex; justify-content: center; }
   </style>
 </head>
 <body>
 
-  <h2>Editor Redesain Label Yareen</h2>
+  <h2>Label Design Studio</h2>
 
   <div class="toolbar">
     <label class="btn-upload">
@@ -25,11 +25,8 @@
     </label>
     <button onclick="addText()">+ Teks</button>
     <input type="color" id="colorPicker" value="#000000" title="Ubah Warna Teks">
-    
     <button onclick="cropSquare()" style="background:#059669;">Potong Kotak (Siku)</button>
-    
     <button onclick="cropSquareRounded()" style="background:#059669;">Potong Kotak (Lengkung)</button>
-    
     <button onclick="cropCircle()" style="background:#059669;">Potong Lingkaran</button>
     <button onclick="deleteObject()" style="background:#DC2626;">Hapus</button>
     <button onclick="exportLabel()" style="background:#2563EB;">Unduh PNG</button>
@@ -40,29 +37,119 @@
   </div>
 
   <script>
-    // Inisialisasi Canvas FabricJS (Rasio Label 2:1)
     const canvas = new fabric.Canvas('labelCanvas', {
       backgroundColor: '#ffffff'
     });
 
-    // --- FUNGSI EXISTING (Sama Seperti Sebelumnya) ---
-
-    // 1. Tambah Gambar & Auto-fit
+    // 1. Tambah Gambar
     document.getElementById('imageLoader').addEventListener('change', function(e) {
+      if (!e.target.files[0]) return;
       const reader = new FileReader();
       reader.onload = function(event) {
         const imgObj = new Image();
         imgObj.src = event.target.result;
         imgObj.onload = function() {
           const fabricImg = new fabric.Image(imgObj);
-          fabricImg.scaleToWidth(150);
+          fabricImg.scaleToWidth(200);
           canvas.add(fabricImg);
           canvas.setActiveObject(fabricImg);
+          canvas.renderAll();
         }
       }
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // 2. Tambah Teks yang Bisa Diedit
+    // 2. Tambah Teks
     function addText() {
-      const text = new fabric.IText('Teks Label Baruhttp://googleusercontent.com/generated_image_content/0
+      const text = new fabric.IText('Teks Label', {
+        left: 50,
+        top: 50,
+        fontSize: 24,
+        fill: document.getElementById('colorPicker').value
+      });
+      canvas.add(text);
+      canvas.setActiveObject(text);
+      canvas.renderAll();
+    }
+
+    // Ubah Warna Teks
+    document.getElementById('colorPicker').addEventListener('input', function(e) {
+      const activeObject = canvas.getActiveObject();
+      if (activeObject && activeObject.type === 'i-text') {
+        activeObject.set('fill', e.target.value);
+        canvas.renderAll();
+      }
+    });
+
+    // 3. Potong Kotak (Siku)
+    function cropSquare() {
+      const activeObj = canvas.getActiveObject();
+      if (activeObj && activeObj.type === 'image') {
+        const rect = new fabric.Rect({
+          left: -activeObj.width / 4,
+          top: -activeObj.height / 4,
+          width: activeObj.width / 2,
+          height: activeObj.height / 2,
+          originX: 'left',
+          originY: 'top'
+        });
+        activeObj.set('clipPath', rect);
+        canvas.renderAll();
+      }
+    }
+
+    // 4. Potong Kotak (Lengkung)
+    function cropSquareRounded() {
+      const activeObj = canvas.getActiveObject();
+      if (activeObj && activeObj.type === 'image') {
+        const rect = new fabric.Rect({
+          left: -activeObj.width / 4,
+          top: -activeObj.height / 4,
+          width: activeObj.width / 2,
+          height: activeObj.height / 2,
+          rx: 20,
+          ry: 20,
+          originX: 'left',
+          originY: 'top'
+        });
+        activeObj.set('clipPath', rect);
+        canvas.renderAll();
+      }
+    }
+
+    // 5. Potong Lingkaran
+    function cropCircle() {
+      const activeObj = canvas.getActiveObject();
+      if (activeObj && activeObj.type === 'image') {
+        const radius = Math.min(activeObj.width, activeObj.height) / 4;
+        const circle = new fabric.Circle({
+          radius: radius,
+          originX: 'center',
+          originY: 'center'
+        });
+        activeObj.set('clipPath', circle);
+        canvas.renderAll();
+      }
+    }
+
+    // 6. Hapus Elemen
+    function deleteObject() {
+      const activeObj = canvas.getActiveObject();
+      if (activeObj) {
+        canvas.remove(activeObj);
+        canvas.discardActiveObject();
+        canvas.renderAll();
+      }
+    }
+
+    // 7. Unduh PNG
+    function exportLabel() {
+      const dataURL = canvas.toDataURL({ format: 'png', quality: 1.0 });
+      const link = document.createElement('a');
+      link.download = 'label-design.png';
+      link.href = dataURL;
+      link.click();
+    }
+  </script>
+</body>
+</html>
