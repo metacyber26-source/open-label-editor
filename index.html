@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - 2 Zone & Smart Box</title>
+  <title>Label Design Studio - Zoom & Smart Box</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -38,9 +38,10 @@
     .btn-orange { background: #f59e0b; }
     .btn-purple { background: #8b5cf6; }
     .btn-red { background: #ef4444; }
+    .btn-zoom { background: #0284c7; }
 
     input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; }
-    .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; }
+    .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; }
   </style>
 </head>
 <body>
@@ -54,6 +55,12 @@
       </label>
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
       <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
+      
+      <!-- FITUR ZOOM BARU -->
+      <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
+      <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
+      <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
+
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung (Lock)</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas (Unlock)</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
@@ -85,6 +92,27 @@
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff' });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc' });
 
+    let currentZoom = 1;
+
+    // --- FITUR ZOOM KANVAS UTAMA ---
+    function zoomMain(factor) {
+      currentZoom *= factor;
+      // Batasi Zoom antara 0.5x hingga 4x
+      if (currentZoom < 0.5) currentZoom = 0.5;
+      if (currentZoom > 4) currentZoom = 4;
+
+      const center = mainCanvas.getCenter();
+      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
+      mainCanvas.renderAll();
+    }
+
+    function resetZoomMain() {
+      currentZoom = 1;
+      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      mainCanvas.renderAll();
+    }
+
+    // --- LOGIK FITUR LAINNYA ---
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage;
       if (!bg) {
@@ -247,7 +275,15 @@
     }
 
     function exportPNG() {
+      // Kembalikan ke Zoom normal dulu sebelum mendownload agar gambar utuh
+      const tempZoom = currentZoom;
+      resetZoomMain();
+      
       const dataURL = mainCanvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 2 });
+      
+      // Kembalikan zoom ke kondisi semula
+      if (tempZoom !== 1) zoomMain(tempZoom);
+
       const link = document.createElement('a');
       link.download = 'label-desain-final.png';
       link.href = dataURL;
