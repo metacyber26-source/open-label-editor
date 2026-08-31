@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - AI Remove Background</title>
+  <title>Label Design Studio - Smart Box Fit & Auto Remove</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -79,10 +79,7 @@
       </label>
       <button class="btn" onclick="addStagingText()">+ Teks Seni</button>
       
-      <!-- FITUR AI HAPUS BG (SOLUSI A) -->
       <button class="btn btn-ai" onclick="autoRemoveBgAI()">🤖 AI Auto Hapus BG</button>
-
-      <!-- FITUR PIPET / KLIK GAMBAR -->
       <button class="btn btn-orange" onclick="enableColorPicker()">🧪 Klik Gambar (Pipet)</button>
       
       <div class="color-picker-wrapper">
@@ -96,7 +93,7 @@
       <button class="btn btn-green" onclick="cropStaging('circle')">Potong Lingkaran</button>
       
       <button class="btn btn-purple" style="width:100%; margin-top:4px;" onclick="sendToMain()">
-        ⬆️ Kirim Elemen Ke Kanvas Utama
+        ⬆️ Masukkan Elemen ke Kotak Sakti / Kanvas
       </button>
     </div>
     <canvas id="stagingCanvas" width="500" height="200"></canvas>
@@ -109,151 +106,7 @@
     let currentZoom = 1;
     let pickColorMode = false;
 
-    // --- FITUR A: AI AUTO HAPUS BACKGROUND ---
-    async function autoRemoveBgAI() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Silakan pilih/klik Gambar B di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const originalElement = activeObj._element;
-      if (!originalElement) return;
-
-      // Buat canvas sementara untuk analisis sampel sudut (ujung background)
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = originalElement.naturalWidth || originalElement.width;
-      tempCanvas.height = originalElement.naturalHeight || originalElement.height;
-      tempCtx.drawImage(originalElement, 0, 0);
-
-      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imgData.data;
-
-      // Ambil sampel warna background dari 4 sudut gambar
-      const corners = [
-        0, // Kiri atas
-        (tempCanvas.width - 1) * 4, // Kanan atas
-        (tempCanvas.height - 1) * tempCanvas.width * 4, // Kiri bawah
-        ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4 // Kanan bawah
-      ];
-
-      let bgR = 0, bgG = 0, bgB = 0;
-      corners.forEach(idx => {
-        bgR += data[idx];
-        bgG += data[idx + 1];
-        bgB += data[idx + 2];
-      });
-      bgR = Math.round(bgR / 4);
-      bgG = Math.round(bgG / 4);
-      bgB = Math.round(bgB / 4);
-
-      // Algoritma AI Threshold Hapus BG berdasarkan deteksi sudut
-      const threshold = 60; // Nilai toleransi warna
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        // Hitung jarak warna piksel terhadap warna dasar background sudut
-        const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-        if (diff < threshold) {
-          data[i + 3] = 0; // Ubah Alpha menjadi Transparan (0)
-        }
-      }
-
-      tempCtx.putImageData(imgData, 0, 0);
-
-      // Ganti objek gambar di kanvas dengan versi transparan
-      fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
-        newImg.set({
-          left: activeObj.left,
-          top: activeObj.top,
-          scaleX: activeObj.scaleX,
-          scaleY: activeObj.scaleY,
-          angle: activeObj.angle
-        });
-        stagingCanvas.remove(activeObj);
-        stagingCanvas.add(newImg);
-        stagingCanvas.setActiveObject(newImg);
-        stagingCanvas.renderAll();
-        alert("✨ Background otomatis berhasil dihapus dengan rapi!");
-      });
-    }
-
-    // --- FITUR PIPET / KLIK GAMBAR ---
-    function enableColorPicker() {
-      pickColorMode = true;
-      alert("Sentuh/Klik area warna background di gambar Meja Potong!");
-    }
-
-    stagingCanvas.on('mouse:down', function(options) {
-      if (!pickColorMode) return;
-
-      const pointer = stagingCanvas.getPointer(options.e);
-      const ctx = stagingCanvas.getContext();
-      const pixel = ctx.getImageData(Math.round(pointer.x), Math.round(pointer.y), 1, 1).data;
-      
-      const hexColor = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
-      
-      document.getElementById('removeColor').value = hexColor;
-      pickColorMode = false;
-      
-      // Jalankan filter hapus warna otomatis setelah warna dipilih
-      removeBackgroundStaging();
-    });
-
-    // --- FITUR FILTER HAPUS WARNA MANUAL ---
-    function removeBackgroundStaging() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const targetColor = document.getElementById('removeColor').value;
-      const removeColorFilter = new fabric.Image.filters.RemoveColor({
-        color: targetColor,
-        distance: 0.2
-      });
-
-      activeObj.filters = [removeColorFilter];
-      activeObj.applyFilters();
-      stagingCanvas.renderAll();
-    }
-
-    // --- FITUR ZOOM ---
-    function zoomMain(factor) {
-      currentZoom *= factor;
-      if (currentZoom < 0.5) currentZoom = 0.5;
-      if (currentZoom > 4) currentZoom = 4;
-
-      const center = mainCanvas.getCenter();
-      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
-      mainCanvas.renderAll();
-    }
-
-    function resetZoomMain() {
-      currentZoom = 1;
-      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-      mainCanvas.renderAll();
-    }
-
-    // --- OPERASI DASAR ---
-    function autoFlattenBg() {
-      const bg = mainCanvas.backgroundImage;
-      if (!bg) {
-        alert("Upload gambar Background terlebih dahulu!");
-        return;
-      }
-      bg.set({
-        scaleX: mainCanvas.width / bg.width,
-        scaleY: mainCanvas.height / bg.height,
-        left: 0, top: 0, originX: 'left', originY: 'top', angle: 0
-      });
-      mainCanvas.renderAll();
-    }
-
+    // --- FITUR KOTAK SAKTI DENGAN PENANDA (isMagicBox) ---
     function addMagicBox() {
       const rect = new fabric.Rect({
         width: 120, height: 120,
@@ -269,22 +122,187 @@
         transparentCorners: false, cornerColor: '#ec4899', cornerStyle: 'circle'
       });
 
-      let lastClickTime = 0;
-      magicBox.on('mousedown', function() {
-        const currentTime = new Date().getTime();
-        if (currentTime - lastClickTime < 300) {
-          magicBox.clone(function(cloned) {
-            cloned.set({ left: magicBox.left + 20, top: magicBox.top + 20 });
-            mainCanvas.add(cloned);
-            mainCanvas.setActiveObject(cloned);
-            mainCanvas.renderAll();
-          });
-        }
-        lastClickTime = currentTime;
-      });
+      // Tandai bahwa grup ini adalah Kotak Sakti
+      magicBox.isMagicBox = true;
 
       mainCanvas.add(magicBox);
       mainCanvas.setActiveObject(magicBox);
+      mainCanvas.renderAll();
+    }
+
+    // --- KIRIM ELEMEN: OTOMATIS FIT KE KOTAK SAKTI & HAPUS KOTAK SAKTI ---
+    function sendToMain() {
+      const activeStagingObj = stagingCanvas.getActiveObject();
+      if (!activeStagingObj) {
+        alert("Pilih elemen di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const activeMainObj = mainCanvas.getActiveObject();
+
+      activeStagingObj.clone(function(clonedObj) {
+        // PERKONDISIAN: Jika pengguna sedang memilih Kotak Sakti di Kanvas Utama
+        if (activeMainObj && activeMainObj.isMagicBox) {
+          const targetWidth = activeMainObj.getScaledWidth();
+          const targetHeight = activeMainObj.getScaledHeight();
+          const targetLeft = activeMainObj.left;
+          const targetTop = activeMainObj.top;
+
+          // Hitung skala agar elemen pas masuk di dalam ukuran Kotak Sakti
+          const scaleX = targetWidth / clonedObj.width;
+          const scaleY = targetHeight / clonedObj.height;
+          const finalScale = Math.min(scaleX, scaleY); // Menjaga rasio agar tidak terdistorsi
+
+          clonedObj.set({
+            left: targetLeft,
+            top: targetTop,
+            scaleX: finalScale,
+            scaleY: finalScale,
+            originX: 'center',
+            originY: 'center'
+          });
+
+          // Hapus Kotak Sakti dari kanvas (agar tidak berbekas)
+          mainCanvas.remove(activeMainObj);
+        } else {
+          // Jika tidak ada Kotak Sakti yang dipilih, letakkan di posisi default
+          clonedObj.set({
+            left: mainCanvas.width / 2,
+            top: mainCanvas.height / 2,
+            originX: 'center',
+            originY: 'center'
+          });
+        }
+
+        mainCanvas.add(clonedObj);
+        mainCanvas.setActiveObject(clonedObj);
+        mainCanvas.renderAll();
+      });
+    }
+
+    // --- AI AUTO HAPUS BACKGROUND ---
+    async function autoRemoveBgAI() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Silakan pilih/klik Gambar B di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const originalElement = activeObj._element;
+      if (!originalElement) return;
+
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = originalElement.naturalWidth || originalElement.width;
+      tempCanvas.height = originalElement.naturalHeight || originalElement.height;
+      tempCtx.drawImage(originalElement, 0, 0);
+
+      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imgData.data;
+
+      const corners = [
+        0,
+        (tempCanvas.width - 1) * 4,
+        (tempCanvas.height - 1) * tempCanvas.width * 4,
+        ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4
+      ];
+
+      let bgR = 0, bgG = 0, bgB = 0;
+      corners.forEach(idx => {
+        bgR += data[idx];
+        bgG += data[idx + 1];
+        bgB += data[idx + 2];
+      });
+      bgR = Math.round(bgR / 4);
+      bgG = Math.round(bgG / 4);
+      bgB = Math.round(bgB / 4);
+
+      const threshold = 60;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+        if (diff < threshold) {
+          data[i + 3] = 0;
+        }
+      }
+
+      tempCtx.putImageData(imgData, 0, 0);
+
+      fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
+        newImg.set({
+          left: activeObj.left,
+          top: activeObj.top,
+          scaleX: activeObj.scaleX,
+          scaleY: activeObj.scaleY,
+          angle: activeObj.angle
+        });
+        stagingCanvas.remove(activeObj);
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
+        stagingCanvas.renderAll();
+      });
+    }
+
+    // --- PIPET WARNA ---
+    function enableColorPicker() {
+      pickColorMode = true;
+      alert("Sentuh/Klik area warna background di gambar Meja Potong!");
+    }
+
+    stagingCanvas.on('mouse:down', function(options) {
+      if (!pickColorMode) return;
+      const pointer = stagingCanvas.getPointer(options.e);
+      const ctx = stagingCanvas.getContext();
+      const pixel = ctx.getImageData(Math.round(pointer.x), Math.round(pointer.y), 1, 1).data;
+      const hexColor = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
+      document.getElementById('removeColor').value = hexColor;
+      pickColorMode = false;
+      removeBackgroundStaging();
+    });
+
+    function removeBackgroundStaging() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') return;
+      const targetColor = document.getElementById('removeColor').value;
+      const removeColorFilter = new fabric.Image.filters.RemoveColor({
+        color: targetColor,
+        distance: 0.2
+      });
+      activeObj.filters = [removeColorFilter];
+      activeObj.applyFilters();
+      stagingCanvas.renderAll();
+    }
+
+    // --- ZOOM KANVAS UTAMA ---
+    function zoomMain(factor) {
+      currentZoom *= factor;
+      if (currentZoom < 0.5) currentZoom = 0.5;
+      if (currentZoom > 4) currentZoom = 4;
+      const center = mainCanvas.getCenter();
+      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
+      mainCanvas.renderAll();
+    }
+
+    function resetZoomMain() {
+      currentZoom = 1;
+      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      mainCanvas.renderAll();
+    }
+
+    // --- UTILITAS DAN EKSPOR ---
+    function autoFlattenBg() {
+      const bg = mainCanvas.backgroundImage;
+      if (!bg) {
+        alert("Upload gambar Background terlebih dahulu!");
+        return;
+      }
+      bg.set({
+        scaleX: mainCanvas.width / bg.width,
+        scaleY: mainCanvas.height / bg.height,
+        left: 0, top: 0, originX: 'left', originY: 'top', angle: 0
+      });
       mainCanvas.renderAll();
     }
 
@@ -342,17 +360,6 @@
 
       activeObj.set('clipPath', clipShape);
       stagingCanvas.renderAll();
-    }
-
-    function sendToMain() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj) return;
-      activeObj.clone(function(clonedObj) {
-        clonedObj.set({ left: 100, top: 50 });
-        mainCanvas.add(clonedObj);
-        mainCanvas.setActiveObject(clonedObj);
-        mainCanvas.renderAll();
-      });
     }
 
     function mergeSelected() {
