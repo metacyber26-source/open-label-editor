@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Smart Box Fit & Auto Remove</title>
+  <title>Label Design Studio - Duplikat Kotak Sakti</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -58,6 +58,9 @@
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
       <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
       
+      <!-- TOMBOL DUPLIKAT BARU -->
+      <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
+
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
       <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
       <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
@@ -106,7 +109,7 @@
     let currentZoom = 1;
     let pickColorMode = false;
 
-    // --- FITUR KOTAK SAKTI DENGAN PENANDA (isMagicBox) ---
+    // --- FITUR MEMBUAT KOTAK SAKTI ---
     function addMagicBox() {
       const rect = new fabric.Rect({
         width: 120, height: 120,
@@ -122,15 +125,59 @@
         transparentCorners: false, cornerColor: '#ec4899', cornerStyle: 'circle'
       });
 
-      // Tandai bahwa grup ini adalah Kotak Sakti
       magicBox.isMagicBox = true;
+
+      // Fitur Double-Click untuk Duplikat secara langsung
+      let lastClickTime = 0;
+      magicBox.on('mousedown', function() {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastClickTime < 300) {
+          duplicateMainObj();
+        }
+        lastClickTime = currentTime;
+      });
 
       mainCanvas.add(magicBox);
       mainCanvas.setActiveObject(magicBox);
       mainCanvas.renderAll();
     }
 
-    // --- KIRIM ELEMEN: OTOMATIS FIT KE KOTAK SAKTI & HAPUS KOTAK SAKTI ---
+    // --- FITUR DUPLIKAT ELEMEN / KOTAK SAKTI ---
+    function duplicateMainObj() {
+      const activeObj = mainCanvas.getActiveObject();
+      if (!activeObj) {
+        alert("Pilih Kotak Sakti atau elemen yang ingin diduplikat terlebih dahulu!");
+        return;
+      }
+
+      activeObj.clone(function(clonedObj) {
+        clonedObj.set({
+          left: activeObj.left + 20,
+          top: activeObj.top + 20,
+          evented: true
+        });
+
+        // Tetap pertahankan identitas Kotak Sakti jika yang diduplikat adalah Kotak Sakti
+        if (activeObj.isMagicBox) {
+          clonedObj.isMagicBox = true;
+          
+          let lastClickTime = 0;
+          clonedObj.on('mousedown', function() {
+            const currentTime = new Date().getTime();
+            if (currentTime - lastClickTime < 300) {
+              duplicateMainObj();
+            }
+            lastClickTime = currentTime;
+          });
+        }
+
+        mainCanvas.add(clonedObj);
+        mainCanvas.setActiveObject(clonedObj);
+        mainCanvas.renderAll();
+      });
+    }
+
+    // --- FITUR KIRIM ELEMEN KE KOTAK SAKTI / KANVAS ---
     function sendToMain() {
       const activeStagingObj = stagingCanvas.getActiveObject();
       if (!activeStagingObj) {
@@ -141,17 +188,15 @@
       const activeMainObj = mainCanvas.getActiveObject();
 
       activeStagingObj.clone(function(clonedObj) {
-        // PERKONDISIAN: Jika pengguna sedang memilih Kotak Sakti di Kanvas Utama
         if (activeMainObj && activeMainObj.isMagicBox) {
           const targetWidth = activeMainObj.getScaledWidth();
           const targetHeight = activeMainObj.getScaledHeight();
           const targetLeft = activeMainObj.left;
           const targetTop = activeMainObj.top;
 
-          // Hitung skala agar elemen pas masuk di dalam ukuran Kotak Sakti
           const scaleX = targetWidth / clonedObj.width;
           const scaleY = targetHeight / clonedObj.height;
-          const finalScale = Math.min(scaleX, scaleY); // Menjaga rasio agar tidak terdistorsi
+          const finalScale = Math.min(scaleX, scaleY);
 
           clonedObj.set({
             left: targetLeft,
@@ -162,10 +207,8 @@
             originY: 'center'
           });
 
-          // Hapus Kotak Sakti dari kanvas (agar tidak berbekas)
           mainCanvas.remove(activeMainObj);
         } else {
-          // Jika tidak ada Kotak Sakti yang dipilih, letakkan di posisi default
           clonedObj.set({
             left: mainCanvas.width / 2,
             top: mainCanvas.height / 2,
