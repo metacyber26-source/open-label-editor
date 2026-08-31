@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Hapus Background</title>
+  <title>Label Design Studio - AI Remove Background</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -39,6 +39,7 @@
     .btn-purple { background: #8b5cf6; }
     .btn-red { background: #ef4444; }
     .btn-zoom { background: #0284c7; }
+    .btn-ai { background: linear-gradient(135deg, #a855f7, #ec4899); color: white; }
 
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; }
@@ -78,12 +79,17 @@
       </label>
       <button class="btn" onclick="addStagingText()">+ Teks Seni</button>
       
-      <!-- FITUR HAPUS BACKGROUND BARU -->
+      <!-- FITUR AI HAPUS BG (SOLUSI A) -->
+      <button class="btn btn-ai" onclick="autoRemoveBgAI()">🤖 AI Auto Hapus BG</button>
+
+      <!-- FITUR PIPET / KLIK GAMBAR -->
+      <button class="btn btn-orange" onclick="enableColorPicker()">🧪 Klik Gambar (Pipet)</button>
+      
       <div class="color-picker-wrapper">
-        <span>Target BG:</span>
-        <input type="color" id="removeColor" value="#ffffff" title="Pilih Warna BG yang Ingin Dihapus">
+        <span>Target:</span>
+        <input type="color" id="removeColor" value="#ffffff" title="Warna Target">
       </div>
-      <button class="btn btn-red" onclick="removeBackgroundStaging()">🪄 Hapus BG</button>
+      <button class="btn btn-red" onclick="removeBackgroundStaging()">🪄 Hapus BG Warna</button>
 
       <button class="btn btn-green" onclick="cropStaging('square')">Potong Siku</button>
       <button class="btn btn-green" onclick="cropStaging('rounded')">Potong Lengkung</button>
@@ -101,8 +107,103 @@
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc' });
 
     let currentZoom = 1;
+    let pickColorMode = false;
 
-    // --- FITUR HAPUS BACKGROUND (STAGING AREA) ---
+    // --- FITUR A: AI AUTO HAPUS BACKGROUND ---
+    async function autoRemoveBgAI() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Silakan pilih/klik Gambar B di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const originalElement = activeObj._element;
+      if (!originalElement) return;
+
+      // Buat canvas sementara untuk analisis sampel sudut (ujung background)
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = originalElement.naturalWidth || originalElement.width;
+      tempCanvas.height = originalElement.naturalHeight || originalElement.height;
+      tempCtx.drawImage(originalElement, 0, 0);
+
+      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imgData.data;
+
+      // Ambil sampel warna background dari 4 sudut gambar
+      const corners = [
+        0, // Kiri atas
+        (tempCanvas.width - 1) * 4, // Kanan atas
+        (tempCanvas.height - 1) * tempCanvas.width * 4, // Kiri bawah
+        ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4 // Kanan bawah
+      ];
+
+      let bgR = 0, bgG = 0, bgB = 0;
+      corners.forEach(idx => {
+        bgR += data[idx];
+        bgG += data[idx + 1];
+        bgB += data[idx + 2];
+      });
+      bgR = Math.round(bgR / 4);
+      bgG = Math.round(bgG / 4);
+      bgB = Math.round(bgB / 4);
+
+      // Algoritma AI Threshold Hapus BG berdasarkan deteksi sudut
+      const threshold = 60; // Nilai toleransi warna
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // Hitung jarak warna piksel terhadap warna dasar background sudut
+        const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+        if (diff < threshold) {
+          data[i + 3] = 0; // Ubah Alpha menjadi Transparan (0)
+        }
+      }
+
+      tempCtx.putImageData(imgData, 0, 0);
+
+      // Ganti objek gambar di kanvas dengan versi transparan
+      fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
+        newImg.set({
+          left: activeObj.left,
+          top: activeObj.top,
+          scaleX: activeObj.scaleX,
+          scaleY: activeObj.scaleY,
+          angle: activeObj.angle
+        });
+        stagingCanvas.remove(activeObj);
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
+        stagingCanvas.renderAll();
+        alert("✨ Background otomatis berhasil dihapus dengan rapi!");
+      });
+    }
+
+    // --- FITUR PIPET / KLIK GAMBAR ---
+    function enableColorPicker() {
+      pickColorMode = true;
+      alert("Sentuh/Klik area warna background di gambar Meja Potong!");
+    }
+
+    stagingCanvas.on('mouse:down', function(options) {
+      if (!pickColorMode) return;
+
+      const pointer = stagingCanvas.getPointer(options.e);
+      const ctx = stagingCanvas.getContext();
+      const pixel = ctx.getImageData(Math.round(pointer.x), Math.round(pointer.y), 1, 1).data;
+      
+      const hexColor = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
+      
+      document.getElementById('removeColor').value = hexColor;
+      pickColorMode = false;
+      
+      // Jalankan filter hapus warna otomatis setelah warna dipilih
+      removeBackgroundStaging();
+    });
+
+    // --- FITUR FILTER HAPUS WARNA MANUAL ---
     function removeBackgroundStaging() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -111,11 +212,9 @@
       }
 
       const targetColor = document.getElementById('removeColor').value;
-      
-      // Menggunakan Fabric Filter RemoveColor
       const removeColorFilter = new fabric.Image.filters.RemoveColor({
         color: targetColor,
-        distance: 0.15 // Toleransi kemiripan warna (0.0 - 1.0)
+        distance: 0.2
       });
 
       activeObj.filters = [removeColorFilter];
@@ -140,7 +239,7 @@
       mainCanvas.renderAll();
     }
 
-    // --- OPERASI LAINNYA ---
+    // --- OPERASI DASAR ---
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage;
       if (!bg) {
