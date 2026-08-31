@@ -6,10 +6,10 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Duplikat Kotak Sakti</title>
+  <title>Label Design Studio - Precision D-Pad & Auto Save</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; touch-action: manipulation; }
     body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
     h3 { font-size: 0.95rem; margin: 6px 0; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; }
     
@@ -31,7 +31,7 @@
     .btn { 
       background: #3b82f6; color: white; border: none; padding: 6px 10px; 
       border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
-      display: inline-flex; align-items: center; touch-action: manipulation;
+      display: inline-flex; align-items: center; justify-content: center; user-select: none;
     }
     .btn-pink { background: #ec4899; }
     .btn-green { background: #10b981; }
@@ -44,6 +44,32 @@
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; }
     .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; }
+
+    /* PANEL PAPAN KONTROL (D-PAD) */
+    .control-panel {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      align-items: center;
+      gap: 10px;
+    }
+    .dpad-group { display: flex; flex-direction: column; align-items: center; }
+    .dpad-row { display: flex; gap: 4px; }
+    .btn-dpad {
+      width: 36px; height: 36px; font-size: 1rem; border-radius: 6px;
+      background: #334155; color: #f8fafc; border: 1px solid #475569;
+    }
+    .btn-dpad:active { background: #0284c7; }
+    .action-group { display: flex; flex-direction: column; gap: 4px; }
+    .action-row { display: flex; gap: 4px; }
+    .btn-action { height: 36px; padding: 0 10px; font-size: 0.75rem; background: #1e293b; border: 1px solid #475569; }
+    .btn-action:active { background: #ec4899; }
   </style>
 </head>
 <body>
@@ -57,8 +83,6 @@
       </label>
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
       <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
-      
-      <!-- TOMBOL DUPLIKAT BARU -->
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
@@ -69,8 +93,39 @@
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas (Unlock)</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
       <button class="btn btn-green" onclick="exportPNG()">Unduh PNG</button>
+      <button class="btn btn-red" onclick="clearProjectData()" title="Hapus Sesi & Mulai Baru">Reset Proyek</button>
     </div>
+
     <canvas id="mainCanvas" width="500" height="250"></canvas>
+
+    <!-- PAPAN KONTROL / MOUSE VIRTUAL -->
+    <div class="control-panel">
+      <!-- D-PAD ARAH GESER -->
+      <div class="dpad-group">
+        <span style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 2px;">Geser Presisi</span>
+        <div class="dpad-row">
+          <button class="btn btn-dpad" id="btnUp">⬆️</button>
+        </div>
+        <div class="dpad-row">
+          <button class="btn btn-dpad" id="btnLeft">⬅️</button>
+          <button class="btn btn-dpad" id="btnDown">⬇️</button>
+          <button class="btn btn-dpad" id="btnRight">➡️</button>
+        </div>
+      </div>
+
+      <!-- KONTROL UKURAN & ROTASI -->
+      <div class="action-group">
+        <span style="font-size: 0.7rem; color: #94a3b8; text-align: center;">Ukuran & Rotasi</span>
+        <div class="action-row">
+          <button class="btn btn-action" id="btnScaleUp">➕ Perbesar</button>
+          <button class="btn btn-action" id="btnScaleDown">➖ Perkecil</button>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-action" id="btnRotateCCW">🔄 Putar Kiri</button>
+          <button class="btn btn-action" id="btnRotateCW">🔁 Putar Kanan</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- STAGING AREA (BAGIAN 2) -->
@@ -109,7 +164,130 @@
     let currentZoom = 1;
     let pickColorMode = false;
 
-    // --- FITUR MEMBUAT KOTAK SAKTI ---
+    // ==========================================
+    // 1. SISTEM AUTO-SAVE & AUTO-RESTORE
+    // ==========================================
+    function saveProjectState() {
+      try {
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox']));
+        const stagingData = JSON.stringify(stagingCanvas.toJSON());
+        localStorage.setItem('label_studio_main', mainData);
+        localStorage.setItem('label_studio_staging', stagingData);
+      } catch (e) {
+        console.warn("Gagal menyimpan otomatis:", e);
+      }
+    }
+
+    function loadProjectState() {
+      const savedMain = localStorage.getItem('label_studio_main');
+      const savedStaging = localStorage.getItem('label_studio_staging');
+
+      if (savedMain) {
+        mainCanvas.loadFromJSON(savedMain, function() {
+          mainCanvas.getObjects().forEach(obj => {
+            if (obj.isMagicBox) attachMagicBoxEvents(obj);
+          });
+          mainCanvas.renderAll();
+        });
+      }
+      if (savedStaging) {
+        stagingCanvas.loadFromJSON(savedStaging, function() {
+          stagingCanvas.renderAll();
+        });
+      }
+    }
+
+    function clearProjectData() {
+      if (confirm("Yakin ingin menghapus seluruh progres dan mulai dari awal?")) {
+        localStorage.removeItem('label_studio_main');
+        localStorage.removeItem('label_studio_staging');
+        location.reload();
+      }
+    }
+
+    // Auto save setiap kali terjadi perubahan kanvas
+    mainCanvas.on('object:modified', saveProjectState);
+    mainCanvas.on('object:added', saveProjectState);
+    mainCanvas.on('object:removed', saveProjectState);
+    stagingCanvas.on('object:modified', saveProjectState);
+    stagingCanvas.on('object:added', saveProjectState);
+    stagingCanvas.on('object:removed', saveProjectState);
+
+    // ==========================================
+    // 2. SISTEM PAPAN KONTROL (HOLD / TAP CONTINUOUS)
+    // ==========================================
+    function bindContinuousControl(buttonId, actionFunction) {
+      const btn = document.getElementById(buttonId);
+      let timer = null;
+
+      const start = (e) => {
+        e.preventDefault();
+        actionFunction(); // Eksekusi tap pertama
+        timer = setInterval(actionFunction, 60); // Tahan untuk eksekusi berulang
+      };
+
+      const stop = (e) => {
+        e.preventDefault();
+        if (timer) clearInterval(timer);
+        timer = null;
+        saveProjectState();
+      };
+
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', stop);
+      btn.addEventListener('mouseleave', stop);
+      btn.addEventListener('touchstart', start);
+      btn.addEventListener('touchend', stop);
+    }
+
+    // Fungsi Transformasi Objek Terpilih
+    function moveSelected(dx, dy) {
+      const obj = mainCanvas.getActiveObject();
+      if (!obj) return;
+      obj.set({ left: obj.left + dx, top: obj.top + dy });
+      mainCanvas.renderAll();
+    }
+
+    function scaleSelected(factor) {
+      const obj = mainCanvas.getActiveObject();
+      if (!obj) return;
+      obj.scale(obj.scaleX * factor);
+      mainCanvas.renderAll();
+    }
+
+    function rotateSelected(angle) {
+      const obj = mainCanvas.getActiveObject();
+      if (!obj) return;
+      obj.set('angle', obj.angle + angle);
+      mainCanvas.renderAll();
+    }
+
+    // Binding Tombol Kontrol
+    bindContinuousControl('btnUp', () => moveSelected(0, -2));
+    bindContinuousControl('btnDown', () => moveSelected(0, 2));
+    bindContinuousControl('btnLeft', () => moveSelected(-2, 0));
+    bindContinuousControl('btnRight', () => moveSelected(2, 0));
+
+    bindContinuousControl('btnScaleUp', () => scaleSelected(1.02));
+    bindContinuousControl('btnScaleDown', () => scaleSelected(0.98));
+    bindContinuousControl('btnRotateCCW', () => rotateSelected(-2));
+    bindContinuousControl('btnRotateCW', () => rotateSelected(2));
+
+
+    // ==========================================
+    // 3. FITUR KOTAK SAKTI & DUPLIKAT
+    // ==========================================
+    function attachMagicBoxEvents(magicBox) {
+      let lastClickTime = 0;
+      magicBox.on('mousedown', function() {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastClickTime < 300) {
+          duplicateMainObj();
+        }
+        lastClickTime = currentTime;
+      });
+    }
+
     function addMagicBox() {
       const rect = new fabric.Rect({
         width: 120, height: 120,
@@ -126,23 +304,13 @@
       });
 
       magicBox.isMagicBox = true;
-
-      // Fitur Double-Click untuk Duplikat secara langsung
-      let lastClickTime = 0;
-      magicBox.on('mousedown', function() {
-        const currentTime = new Date().getTime();
-        if (currentTime - lastClickTime < 300) {
-          duplicateMainObj();
-        }
-        lastClickTime = currentTime;
-      });
+      attachMagicBoxEvents(magicBox);
 
       mainCanvas.add(magicBox);
       mainCanvas.setActiveObject(magicBox);
       mainCanvas.renderAll();
     }
 
-    // --- FITUR DUPLIKAT ELEMEN / KOTAK SAKTI ---
     function duplicateMainObj() {
       const activeObj = mainCanvas.getActiveObject();
       if (!activeObj) {
@@ -157,18 +325,9 @@
           evented: true
         });
 
-        // Tetap pertahankan identitas Kotak Sakti jika yang diduplikat adalah Kotak Sakti
         if (activeObj.isMagicBox) {
           clonedObj.isMagicBox = true;
-          
-          let lastClickTime = 0;
-          clonedObj.on('mousedown', function() {
-            const currentTime = new Date().getTime();
-            if (currentTime - lastClickTime < 300) {
-              duplicateMainObj();
-            }
-            lastClickTime = currentTime;
-          });
+          attachMagicBoxEvents(clonedObj);
         }
 
         mainCanvas.add(clonedObj);
@@ -177,7 +336,6 @@
       });
     }
 
-    // --- FITUR KIRIM ELEMEN KE KOTAK SAKTI / KANVAS ---
     function sendToMain() {
       const activeStagingObj = stagingCanvas.getActiveObject();
       if (!activeStagingObj) {
@@ -223,7 +381,9 @@
       });
     }
 
-    // --- AI AUTO HAPUS BACKGROUND ---
+    // ==========================================
+    // 4. OLAH GAMBAR & STAGING AREA
+    // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -288,7 +448,6 @@
       });
     }
 
-    // --- PIPET WARNA ---
     function enableColorPicker() {
       pickColorMode = true;
       alert("Sentuh/Klik area warna background di gambar Meja Potong!");
@@ -318,7 +477,6 @@
       stagingCanvas.renderAll();
     }
 
-    // --- ZOOM KANVAS UTAMA ---
     function zoomMain(factor) {
       currentZoom *= factor;
       if (currentZoom < 0.5) currentZoom = 0.5;
@@ -334,7 +492,6 @@
       mainCanvas.renderAll();
     }
 
-    // --- UTILITAS DAN EKSPOR ---
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage;
       if (!bg) {
@@ -355,7 +512,10 @@
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, function(img) {
           img.scaleToWidth(mainCanvas.width);
-          mainCanvas.setBackgroundImage(img, function() { autoFlattenBg(); });
+          mainCanvas.setBackgroundImage(img, function() { 
+            autoFlattenBg(); 
+            saveProjectState();
+          });
         });
       };
       reader.readAsDataURL(e.target.files[0]);
@@ -438,6 +598,9 @@
       link.href = dataURL;
       link.click();
     }
+
+    // Panggil Auto Restore saat aplikasi dibuka
+    window.onload = loadProjectState;
   </script>
 </body>
 </html>
