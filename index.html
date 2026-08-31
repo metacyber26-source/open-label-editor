@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Label Design Studio - Kotak Sakti</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Label Design Studio - 2 Zone & Smart Box</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -49,9 +52,7 @@
       <label class="btn btn-purple">
         + Background <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
-      <!-- Tombol Pelurus Otomatis -->
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
-      <!-- Tombol Kotak Sakti -->
       <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung (Lock)</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas (Unlock)</button>
@@ -84,16 +85,12 @@
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff' });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc' });
 
-    let mainBgImageObj = null;
-
-    // --- FITUR AUTO-FLATTEN (RATAKAN LABEL) ---
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage;
       if (!bg) {
         alert("Upload gambar Background terlebih dahulu!");
         return;
       }
-      // Meratakan skala gambar dan posisi agar presisi simetris di tengah kanvas
       bg.set({
         scaleX: mainCanvas.width / bg.width,
         scaleY: mainCanvas.height / bg.height,
@@ -106,9 +103,7 @@
       mainCanvas.renderAll();
     }
 
-    // --- FITUR KOTAK SAKTI ---
     function addMagicBox() {
-      // 1. Bingkai Kotak Sakti
       const rect = new fabric.Rect({
         width: 120,
         height: 120,
@@ -120,7 +115,6 @@
         originY: 'center'
       });
 
-      // 2. Tanda '+' di Tengah
       const plusText = new fabric.Text('+', {
         fontSize: 26,
         fill: '#ec4899',
@@ -129,19 +123,17 @@
         fontWeight: 'bold'
       });
 
-      // 3. Grup Kotak Sakti
       const magicBox = new fabric.Group([rect, plusText], {
         left: mainCanvas.width / 2,
         top: mainCanvas.height / 2,
         originX: 'center',
         originY: 'center',
-        centeredScaling: true, // Ubah ukuran simetri dari titik pusat
+        centeredScaling: true,
         transparentCorners: false,
         cornerColor: '#ec4899',
         cornerStyle: 'circle'
       });
 
-      // Fitur Double Tap / Double Click untuk Duplikat
       let lastClickTime = 0;
       magicBox.on('mousedown', function() {
         const currentTime = new Date().getTime();
@@ -161,23 +153,20 @@
       mainCanvas.renderAll();
     }
 
-    // Upload Background Kanvas Utama
     document.getElementById('loadMainBg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
       const reader = new FileReader();
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, function(img) {
-          mainBgImageObj = img;
           img.scaleToWidth(mainCanvas.width);
           mainCanvas.setBackgroundImage(img, function() {
-            autoFlattenBg(); // Otomatis ratakan saat di-upload
+            autoFlattenBg();
           });
         });
       };
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // --- STAGING AREA LOGIC ---
     document.getElementById('loadStagingImg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
       const reader = new FileReader();
