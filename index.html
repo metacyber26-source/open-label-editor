@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Label Design Studio</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background: #f0f2f5; padding: 10px; display: flex; flex-direction: column; align-items: center; }
     h2 { font-size: 1.1rem; margin-bottom: 8px; color: #1e293b; text-align: center; }
     
-    /* Toolbar Responsif HP */
     .toolbar { 
       display: flex; 
       flex-wrap: wrap; 
@@ -17,7 +16,7 @@
       margin-bottom: 10px; 
       justify-content: center; 
       width: 100%; 
-      max-width: 500px;
+      max-width: 600px;
     }
     
     .btn { 
@@ -39,119 +38,111 @@
     .btn-red { background: #DC2626; }
     .btn-blue { background: #2563EB; }
 
-    input[type="color"] { 
-      border: 1px solid #ccc; 
-      border-radius: 6px; 
-      height: 33px; 
-      width: 33px; 
-      cursor: pointer; 
-      padding: 2px;
-    }
-
-    /* Container Canvas */
-    .canvas-wrapper { 
-      border: 2px dashed #94a3b8; 
-      background: #ffffff; 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-      touch-action: none; /* Penting untuk interaksi sentuh HP */
-    }
-
+    input[type="color"] { border: 1px solid #ccc; border-radius: 6px; height: 33px; width: 33px; cursor: pointer; padding: 2px; }
+    .canvas-wrapper { border: 2px dashed #94a3b8; background: #ffffff; border-radius: 8px; overflow: hidden; touch-action: none; }
     canvas { display: block; background: #ffffff; }
   </style>
 </head>
 <body>
 
-  <h2>Label Design Studio</h2>
+  <h2>Editor Redesain Label (Layer A & B)</h2>
 
   <div class="toolbar">
+    <!-- Tombol Upload Gambar A (Background) -->
     <label class="btn btn-blue">
-      + Gambar <input type="file" id="imageLoader" accept="image/*" hidden>
+      + Gambar A (Label Utama) <input type="file" id="loadBg" accept="image/*" hidden>
     </label>
+    
+    <!-- Tombol Upload Gambar B (Elemen Tambahan) -->
+    <label class="btn btn-blue">
+      + Gambar B (Tempelan) <input type="file" id="loadElement" accept="image/*" hidden>
+    </label>
+
     <button class="btn" onclick="addText()">+ Teks</button>
     <input type="color" id="colorPicker" value="#000000" title="Warna Teks">
-    <button class="btn btn-green" onclick="cropImage('square')">Potong Kotak</button>
-    <button class="btn btn-green" onclick="cropImage('rounded')">Kotak Lengkung</button>
-    <button class="btn btn-green" onclick="cropImage('circle')">Lingkaran</button>
-    <button class="btn btn-red" onclick="clearCanvas()">Hapus Semua</button>
-    <button class="btn btn-blue" onclick="downloadCanvas()">Unduh PNG</button>
+
+    <!-- Kontrol Pemotongan khusus untuk Gambar B -->
+    <button class="btn btn-green" onclick="cropElement('square')">Potong Siku (B)</button>
+    <button class="btn btn-green" onclick="cropElement('rounded')">Potong Lengkung (B)</button>
+    <button class="btn btn-green" onclick="cropElement('circle')">Potong Lingkaran (B)</button>
+    
+    <button class="btn btn-red" onclick="clearAll()">Hapus Semua</button>
+    <button class="btn btn-blue" onclick="downloadPNG()">Unduh PNG</button>
   </div>
 
   <div class="canvas-wrapper">
-    <canvas id="labelCanvas" width="600" height="300"></canvas>
+    <canvas id="labelCanvas" width="800" height="400"></canvas>
   </div>
 
   <script>
     const canvas = document.getElementById('labelCanvas');
     const ctx = canvas.getContext('2d');
-    
-    let currentImage = null;
-    let currentCropShape = 'none'; // 'none', 'square', 'rounded', 'circle'
-    let textItems = [];
-    let selectedTextIndex = -1;
 
-    // Redraw Canvas Utama
+    let bgImage = null; // Gambar A
+    let elementImage = null; // Gambar B
+    let elementCrop = 'none'; // Bentuk potong Gambar B
+    let elementPos = { x: 50, y: 50, w: 150, h: 150 }; // Posisi & Ukuran Gambar B
+    let textItems = [];
+
+    // Redraw Seluruh Layar Canvas
     function draw() {
-      // Bersihkan canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Gambar Gambar Utama (Jika Ada)
-      if (currentImage) {
-        ctx.save();
-        
-        const imgWidth = 200;
-        const imgHeight = (currentImage.height / currentImage.width) * imgWidth;
-        const x = (canvas.width - imgWidth) / 2;
-        const y = (canvas.height - imgHeight) / 2;
+      // 1. Gambar Utama / Background (Gambar A)
+      if (bgImage) {
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+      }
 
-        // Terapkan Pemotongan (Clip)
-        if (currentCropShape === 'square') {
+      // 2. Gambar Tempelan (Gambar B dengan Potongan)
+      if (elementImage) {
+        ctx.save();
+        const { x, y, w, h } = elementPos;
+
+        // Terapkan Potongan / Clip Mask pada Gambar B
+        if (elementCrop === 'square') {
           ctx.beginPath();
-          ctx.rect(x, y, imgWidth, imgHeight);
+          ctx.rect(x, y, w, h);
           ctx.clip();
-        } else if (currentCropShape === 'rounded') {
+        } else if (elementCrop === 'rounded') {
           ctx.beginPath();
           const r = 20;
           ctx.moveTo(x + r, y);
-          ctx.arcTo(x + imgWidth, y, x + imgWidth, y + imgHeight, r);
-          ctx.arcTo(x + imgWidth, y + imgHeight, x, y + imgHeight, r);
-          ctx.arcTo(x, y + imgHeight, x, y, r);
-          ctx.arcTo(x, y, x + imgWidth, y, r);
+          ctx.arcTo(x + w, y, x + w, y + h, r);
+          ctx.arcTo(x + w, y + h, x, y + h, r);
+          ctx.arcTo(x, y + h, x, y, r);
+          ctx.arcTo(x, y, x + w, y, r);
           ctx.closePath();
           ctx.clip();
-        } else if (currentCropShape === 'circle') {
+        } else if (elementCrop === 'circle') {
           ctx.beginPath();
-          const radius = Math.min(imgWidth, imgHeight) / 2;
-          ctx.arc(x + imgWidth/2, y + imgHeight/2, radius, 0, Math.PI * 2);
+          const radius = Math.min(w, h) / 2;
+          ctx.arc(x + w / 2, y + h / 2, radius, 0, Math.PI * 2);
           ctx.clip();
         }
 
-        ctx.drawImage(currentImage, x, y, imgWidth, imgHeight);
+        ctx.drawImage(elementImage, x, y, w, h);
         ctx.restore();
       }
 
-      // 2. Gambar Teks
-      textItems.forEach((item, index) => {
-        ctx.font = '24px sans-serif';
+      // 3. Render Teks Tambahan
+      textItems.forEach(item => {
+        ctx.font = 'bold 24px sans-serif';
         ctx.fillStyle = item.color;
         ctx.fillText(item.text, item.x, item.y);
       });
     }
 
-    // Load Gambar dari HP
-    document.getElementById('imageLoader').addEventListener('change', function(e) {
+    // Upload Gambar A (Background Label)
+    document.getElementById('loadBg').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
-          currentImage = img;
-          currentCropShape = 'none';
+          bgImage = img;
           draw();
         }
         img.src = event.target.result;
@@ -159,48 +150,68 @@
       reader.readAsDataURL(file);
     });
 
+    // Upload Gambar B (Elemen yang mau dipotong/ditempel)
+    document.getElementById('loadElement').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          elementImage = img;
+          elementCrop = 'none';
+          // Atur proporsi gambar B
+          const ratio = img.height / img.width;
+          elementPos.w = 160;
+          elementPos.h = 160 * ratio;
+          draw();
+        }
+        img.src = event.target.result;
+      }
+      reader.readAsDataURL(file);
+    });
+
+    // Pilih Bentuk Potongan Gambar B
+    function cropElement(shape) {
+      if (!elementImage) {
+        alert("Upload Gambar B (Tempelan) terlebih dahulu!");
+        return;
+      }
+      elementCrop = shape;
+      draw();
+    }
+
     // Tambah Teks
     function addText() {
-      const color = document.getElementById('colorPicker').value;
-      const textPrompt = prompt("Masukkan Teks Label:", "Sirup Markisa");
+      const textPrompt = prompt("Masukkan Teks Baru:", "Beli 1 Gratis 1");
       if (textPrompt) {
         textItems.push({
           text: textPrompt,
-          x: 40,
-          y: 60 + (textItems.length * 30),
-          color: color
+          x: 100,
+          y: 100 + (textItems.length * 30),
+          color: document.getElementById('colorPicker').value
         });
         draw();
       }
     }
 
-    // Fungsi Crop Gambar
-    function cropImage(shape) {
-      if (!currentImage) {
-        alert("Silakan masukkan gambar terlebih dahulu!");
-        return;
-      }
-      currentCropShape = shape;
-      draw();
-    }
-
-    // Hapus Semua Elemen
-    function clearCanvas() {
-      currentImage = null;
-      currentCropShape = 'none';
+    // Hapus Layar
+    function clearAll() {
+      bgImage = null;
+      elementImage = null;
+      elementCrop = 'none';
       textItems = [];
       draw();
     }
 
-    // Unduh Hasil PNG
-    function downloadCanvas() {
+    // Download Hasil
+    function downloadPNG() {
       const link = document.createElement('a');
-      link.download = 'label-desain.png';
+      link.download = 'hasil-redesain-label.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
 
-    // Gambar awal canvas kosong
     draw();
   </script>
 </body>
