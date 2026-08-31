@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Zoom & Smart Box</title>
+  <title>Label Design Studio - Hapus Background</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -40,7 +40,8 @@
     .btn-red { background: #ef4444; }
     .btn-zoom { background: #0284c7; }
 
-    input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; }
+    .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
+    input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; }
     .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; }
   </style>
 </head>
@@ -56,7 +57,6 @@
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
       <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
       
-      <!-- FITUR ZOOM BARU -->
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
       <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
       <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
@@ -77,10 +77,18 @@
         + Gambar B <input type="file" id="loadStagingImg" accept="image/*" hidden>
       </label>
       <button class="btn" onclick="addStagingText()">+ Teks Seni</button>
-      <input type="color" id="textColor" value="#ff0000" title="Warna Teks">
+      
+      <!-- FITUR HAPUS BACKGROUND BARU -->
+      <div class="color-picker-wrapper">
+        <span>Target BG:</span>
+        <input type="color" id="removeColor" value="#ffffff" title="Pilih Warna BG yang Ingin Dihapus">
+      </div>
+      <button class="btn btn-red" onclick="removeBackgroundStaging()">🪄 Hapus BG</button>
+
       <button class="btn btn-green" onclick="cropStaging('square')">Potong Siku</button>
       <button class="btn btn-green" onclick="cropStaging('rounded')">Potong Lengkung</button>
       <button class="btn btn-green" onclick="cropStaging('circle')">Potong Lingkaran</button>
+      
       <button class="btn btn-purple" style="width:100%; margin-top:4px;" onclick="sendToMain()">
         ⬆️ Kirim Elemen Ke Kanvas Utama
       </button>
@@ -94,10 +102,30 @@
 
     let currentZoom = 1;
 
-    // --- FITUR ZOOM KANVAS UTAMA ---
+    // --- FITUR HAPUS BACKGROUND (STAGING AREA) ---
+    function removeBackgroundStaging() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Pilih gambar di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const targetColor = document.getElementById('removeColor').value;
+      
+      // Menggunakan Fabric Filter RemoveColor
+      const removeColorFilter = new fabric.Image.filters.RemoveColor({
+        color: targetColor,
+        distance: 0.15 // Toleransi kemiripan warna (0.0 - 1.0)
+      });
+
+      activeObj.filters = [removeColorFilter];
+      activeObj.applyFilters();
+      stagingCanvas.renderAll();
+    }
+
+    // --- FITUR ZOOM ---
     function zoomMain(factor) {
       currentZoom *= factor;
-      // Batasi Zoom antara 0.5x hingga 4x
       if (currentZoom < 0.5) currentZoom = 0.5;
       if (currentZoom > 4) currentZoom = 4;
 
@@ -112,7 +140,7 @@
       mainCanvas.renderAll();
     }
 
-    // --- LOGIK FITUR LAINNYA ---
+    // --- OPERASI LAINNYA ---
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage;
       if (!bg) {
@@ -122,44 +150,24 @@
       bg.set({
         scaleX: mainCanvas.width / bg.width,
         scaleY: mainCanvas.height / bg.height,
-        left: 0,
-        top: 0,
-        originX: 'left',
-        originY: 'top',
-        angle: 0
+        left: 0, top: 0, originX: 'left', originY: 'top', angle: 0
       });
       mainCanvas.renderAll();
     }
 
     function addMagicBox() {
       const rect = new fabric.Rect({
-        width: 120,
-        height: 120,
-        fill: 'rgba(236, 72, 153, 0.1)',
-        stroke: '#ec4899',
-        strokeWidth: 2,
-        strokeDashArray: [6, 6],
-        originX: 'center',
-        originY: 'center'
+        width: 120, height: 120,
+        fill: 'rgba(236, 72, 153, 0.1)', stroke: '#ec4899', strokeWidth: 2,
+        strokeDashArray: [6, 6], originX: 'center', originY: 'center'
       });
-
       const plusText = new fabric.Text('+', {
-        fontSize: 26,
-        fill: '#ec4899',
-        originX: 'center',
-        originY: 'center',
-        fontWeight: 'bold'
+        fontSize: 26, fill: '#ec4899', originX: 'center', originY: 'center', fontWeight: 'bold'
       });
-
       const magicBox = new fabric.Group([rect, plusText], {
-        left: mainCanvas.width / 2,
-        top: mainCanvas.height / 2,
-        originX: 'center',
-        originY: 'center',
-        centeredScaling: true,
-        transparentCorners: false,
-        cornerColor: '#ec4899',
-        cornerStyle: 'circle'
+        left: mainCanvas.width / 2, top: mainCanvas.height / 2,
+        originX: 'center', originY: 'center', centeredScaling: true,
+        transparentCorners: false, cornerColor: '#ec4899', cornerStyle: 'circle'
       });
 
       let lastClickTime = 0;
@@ -187,9 +195,7 @@
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, function(img) {
           img.scaleToWidth(mainCanvas.width);
-          mainCanvas.setBackgroundImage(img, function() {
-            autoFlattenBg();
-          });
+          mainCanvas.setBackgroundImage(img, function() { autoFlattenBg(); });
         });
       };
       reader.readAsDataURL(e.target.files[0]);
@@ -213,8 +219,7 @@
       const txt = prompt("Masukkan Teks Seni:", "Varian Rasa");
       if (!txt) return;
       const textObj = new fabric.IText(txt, {
-        left: 50, top: 50, fontSize: 24,
-        fill: document.getElementById('textColor').value,
+        left: 50, top: 50, fontSize: 24, fill: '#ff0000',
         fontWeight: 'bold', stroke: '#000000', strokeWidth: 1
       });
       stagingCanvas.add(textObj);
@@ -275,15 +280,10 @@
     }
 
     function exportPNG() {
-      // Kembalikan ke Zoom normal dulu sebelum mendownload agar gambar utuh
       const tempZoom = currentZoom;
       resetZoomMain();
-      
       const dataURL = mainCanvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 2 });
-      
-      // Kembalikan zoom ke kondisi semula
       if (tempZoom !== 1) zoomMain(tempZoom);
-
       const link = document.createElement('a');
       link.download = 'label-desain-final.png';
       link.href = dataURL;
