@@ -2,17 +2,63 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Label Design Studio</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-    h2 { font-size: 1.2rem; margin-bottom: 10px; color: #333; text-align: center; }
-    .toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; width: 100%; max-width: 800px; }
-    button, label.btn-upload { background: #4F46E5; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; }
-    input[type="color"] { border: none; border-radius: 4px; height: 32px; width: 32px; cursor: pointer; background: transparent; }
-    .canvas-container-box { border: 2px dashed #ccc; background: #fff; overflow: auto; width: 100%; display: flex; justify-content: center; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f0f2f5; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+    h2 { font-size: 1.1rem; margin-bottom: 8px; color: #1e293b; text-align: center; }
+    
+    /* Toolbar Responsif HP */
+    .toolbar { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 6px; 
+      margin-bottom: 10px; 
+      justify-content: center; 
+      width: 100%; 
+      max-width: 500px;
+    }
+    
+    .btn { 
+      background: #4F46E5; 
+      color: white; 
+      border: none; 
+      padding: 8px 10px; 
+      border-radius: 6px; 
+      font-size: 0.75rem; 
+      font-weight: 600;
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center;
+      touch-action: manipulation;
+    }
+    
+    .btn-green { background: #059669; }
+    .btn-red { background: #DC2626; }
+    .btn-blue { background: #2563EB; }
+
+    input[type="color"] { 
+      border: 1px solid #ccc; 
+      border-radius: 6px; 
+      height: 33px; 
+      width: 33px; 
+      cursor: pointer; 
+      padding: 2px;
+    }
+
+    /* Container Canvas */
+    .canvas-wrapper { 
+      border: 2px dashed #94a3b8; 
+      background: #ffffff; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      touch-action: none; /* Penting untuk interaksi sentuh HP */
+    }
+
+    canvas { display: block; background: #ffffff; }
   </style>
 </head>
 <body>
@@ -20,136 +66,142 @@
   <h2>Label Design Studio</h2>
 
   <div class="toolbar">
-    <label class="btn-upload">
+    <label class="btn btn-blue">
       + Gambar <input type="file" id="imageLoader" accept="image/*" hidden>
     </label>
-    <button onclick="addText()">+ Teks</button>
-    <input type="color" id="colorPicker" value="#000000" title="Ubah Warna Teks">
-    <button onclick="cropSquare()" style="background:#059669;">Potong Kotak (Siku)</button>
-    <button onclick="cropSquareRounded()" style="background:#059669;">Potong Kotak (Lengkung)</button>
-    <button onclick="cropCircle()" style="background:#059669;">Potong Lingkaran</button>
-    <button onclick="deleteObject()" style="background:#DC2626;">Hapus</button>
-    <button onclick="exportLabel()" style="background:#2563EB;">Unduh PNG</button>
+    <button class="btn" onclick="addText()">+ Teks</button>
+    <input type="color" id="colorPicker" value="#000000" title="Warna Teks">
+    <button class="btn btn-green" onclick="cropImage('square')">Potong Kotak</button>
+    <button class="btn btn-green" onclick="cropImage('rounded')">Kotak Lengkung</button>
+    <button class="btn btn-green" onclick="cropImage('circle')">Lingkaran</button>
+    <button class="btn btn-red" onclick="clearCanvas()">Hapus Semua</button>
+    <button class="btn btn-blue" onclick="downloadCanvas()">Unduh PNG</button>
   </div>
 
-  <div class="canvas-container-box">
-    <canvas id="labelCanvas" width="800" height="400"></canvas>
+  <div class="canvas-wrapper">
+    <canvas id="labelCanvas" width="600" height="300"></canvas>
   </div>
 
   <script>
-    const canvas = new fabric.Canvas('labelCanvas', {
-      backgroundColor: '#ffffff'
-    });
+    const canvas = document.getElementById('labelCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let currentImage = null;
+    let currentCropShape = 'none'; // 'none', 'square', 'rounded', 'circle'
+    let textItems = [];
+    let selectedTextIndex = -1;
 
-    // 1. Tambah Gambar
+    // Redraw Canvas Utama
+    function draw() {
+      // Bersihkan canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Gambar Gambar Utama (Jika Ada)
+      if (currentImage) {
+        ctx.save();
+        
+        const imgWidth = 200;
+        const imgHeight = (currentImage.height / currentImage.width) * imgWidth;
+        const x = (canvas.width - imgWidth) / 2;
+        const y = (canvas.height - imgHeight) / 2;
+
+        // Terapkan Pemotongan (Clip)
+        if (currentCropShape === 'square') {
+          ctx.beginPath();
+          ctx.rect(x, y, imgWidth, imgHeight);
+          ctx.clip();
+        } else if (currentCropShape === 'rounded') {
+          ctx.beginPath();
+          const r = 20;
+          ctx.moveTo(x + r, y);
+          ctx.arcTo(x + imgWidth, y, x + imgWidth, y + imgHeight, r);
+          ctx.arcTo(x + imgWidth, y + imgHeight, x, y + imgHeight, r);
+          ctx.arcTo(x, y + imgHeight, x, y, r);
+          ctx.arcTo(x, y, x + imgWidth, y, r);
+          ctx.closePath();
+          ctx.clip();
+        } else if (currentCropShape === 'circle') {
+          ctx.beginPath();
+          const radius = Math.min(imgWidth, imgHeight) / 2;
+          ctx.arc(x + imgWidth/2, y + imgHeight/2, radius, 0, Math.PI * 2);
+          ctx.clip();
+        }
+
+        ctx.drawImage(currentImage, x, y, imgWidth, imgHeight);
+        ctx.restore();
+      }
+
+      // 2. Gambar Teks
+      textItems.forEach((item, index) => {
+        ctx.font = '24px sans-serif';
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, item.x, item.y);
+      });
+    }
+
+    // Load Gambar dari HP
     document.getElementById('imageLoader').addEventListener('change', function(e) {
-      if (!e.target.files[0]) return;
+      const file = e.target.files[0];
+      if (!file) return;
+
       const reader = new FileReader();
       reader.onload = function(event) {
-        const imgObj = new Image();
-        imgObj.src = event.target.result;
-        imgObj.onload = function() {
-          const fabricImg = new fabric.Image(imgObj);
-          fabricImg.scaleToWidth(200);
-          canvas.add(fabricImg);
-          canvas.setActiveObject(fabricImg);
-          canvas.renderAll();
+        const img = new Image();
+        img.onload = function() {
+          currentImage = img;
+          currentCropShape = 'none';
+          draw();
         }
+        img.src = event.target.result;
       }
-      reader.readAsDataURL(e.target.files[0]);
+      reader.readAsDataURL(file);
     });
 
-    // 2. Tambah Teks
+    // Tambah Teks
     function addText() {
-      const text = new fabric.IText('Teks Label', {
-        left: 50,
-        top: 50,
-        fontSize: 24,
-        fill: document.getElementById('colorPicker').value
-      });
-      canvas.add(text);
-      canvas.setActiveObject(text);
-      canvas.renderAll();
-    }
-
-    // Ubah Warna Teks
-    document.getElementById('colorPicker').addEventListener('input', function(e) {
-      const activeObject = canvas.getActiveObject();
-      if (activeObject && activeObject.type === 'i-text') {
-        activeObject.set('fill', e.target.value);
-        canvas.renderAll();
-      }
-    });
-
-    // 3. Potong Kotak (Siku)
-    function cropSquare() {
-      const activeObj = canvas.getActiveObject();
-      if (activeObj && activeObj.type === 'image') {
-        const rect = new fabric.Rect({
-          left: -activeObj.width / 4,
-          top: -activeObj.height / 4,
-          width: activeObj.width / 2,
-          height: activeObj.height / 2,
-          originX: 'left',
-          originY: 'top'
+      const color = document.getElementById('colorPicker').value;
+      const textPrompt = prompt("Masukkan Teks Label:", "Sirup Markisa");
+      if (textPrompt) {
+        textItems.push({
+          text: textPrompt,
+          x: 40,
+          y: 60 + (textItems.length * 30),
+          color: color
         });
-        activeObj.set('clipPath', rect);
-        canvas.renderAll();
+        draw();
       }
     }
 
-    // 4. Potong Kotak (Lengkung)
-    function cropSquareRounded() {
-      const activeObj = canvas.getActiveObject();
-      if (activeObj && activeObj.type === 'image') {
-        const rect = new fabric.Rect({
-          left: -activeObj.width / 4,
-          top: -activeObj.height / 4,
-          width: activeObj.width / 2,
-          height: activeObj.height / 2,
-          rx: 20,
-          ry: 20,
-          originX: 'left',
-          originY: 'top'
-        });
-        activeObj.set('clipPath', rect);
-        canvas.renderAll();
+    // Fungsi Crop Gambar
+    function cropImage(shape) {
+      if (!currentImage) {
+        alert("Silakan masukkan gambar terlebih dahulu!");
+        return;
       }
+      currentCropShape = shape;
+      draw();
     }
 
-    // 5. Potong Lingkaran
-    function cropCircle() {
-      const activeObj = canvas.getActiveObject();
-      if (activeObj && activeObj.type === 'image') {
-        const radius = Math.min(activeObj.width, activeObj.height) / 4;
-        const circle = new fabric.Circle({
-          radius: radius,
-          originX: 'center',
-          originY: 'center'
-        });
-        activeObj.set('clipPath', circle);
-        canvas.renderAll();
-      }
+    // Hapus Semua Elemen
+    function clearCanvas() {
+      currentImage = null;
+      currentCropShape = 'none';
+      textItems = [];
+      draw();
     }
 
-    // 6. Hapus Elemen
-    function deleteObject() {
-      const activeObj = canvas.getActiveObject();
-      if (activeObj) {
-        canvas.remove(activeObj);
-        canvas.discardActiveObject();
-        canvas.renderAll();
-      }
-    }
-
-    // 7. Unduh PNG
-    function exportLabel() {
-      const dataURL = canvas.toDataURL({ format: 'png', quality: 1.0 });
+    // Unduh Hasil PNG
+    function downloadCanvas() {
       const link = document.createElement('a');
-      link.download = 'label-design.png';
-      link.href = dataURL;
+      link.download = 'label-desain.png';
+      link.href = canvas.toDataURL('image/png');
       link.click();
     }
+
+    // Gambar awal canvas kosong
+    draw();
   </script>
 </body>
 </html>
