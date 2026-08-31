@@ -30,12 +30,13 @@
       border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
       display: inline-flex; align-items: center; touch-action: manipulation;
     }
-    .btn-magic { background: #ec4899; }
+    .btn-pink { background: #ec4899; }
     .btn-green { background: #10b981; }
     .btn-orange { background: #f59e0b; }
     .btn-purple { background: #8b5cf6; }
     .btn-red { background: #ef4444; }
 
+    input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; }
     .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; }
   </style>
 </head>
@@ -43,12 +44,15 @@
 
   <!-- KANVAS UTAMA (BAGIAN 1) -->
   <div class="section-box">
-    <h3>1. Kanvas Utama</h3>
+    <h3>1. KANVAS UTAMA (HASIL LABEL)</h3>
     <div class="toolbar">
       <label class="btn btn-purple">
         + Background <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
-      <button class="btn btn-magic" onclick="addMagicBox()">✨ + Kotak Sakti</button>
+      <!-- Tombol Pelurus Otomatis -->
+      <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
+      <!-- Tombol Kotak Sakti -->
+      <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung (Lock)</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas (Unlock)</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
@@ -59,7 +63,7 @@
 
   <!-- STAGING AREA (BAGIAN 2) -->
   <div class="section-box">
-    <h3>2. Meja Potong & Olah (Staging Area)</h3>
+    <h3>2. MEJA POTONG & OLAH GAMBAR (STAGING AREA)</h3>
     <div class="toolbar">
       <label class="btn btn-purple">
         + Gambar B <input type="file" id="loadStagingImg" accept="image/*" hidden>
@@ -80,55 +84,70 @@
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff' });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc' });
 
-    let mainBgColor = '#ffffff';
+    let mainBgImageObj = null;
 
-    // --- FITUR KOTAK SAKTI (BAGIAN 1) ---
+    // --- FITUR AUTO-FLATTEN (RATAKAN LABEL) ---
+    function autoFlattenBg() {
+      const bg = mainCanvas.backgroundImage;
+      if (!bg) {
+        alert("Upload gambar Background terlebih dahulu!");
+        return;
+      }
+      // Meratakan skala gambar dan posisi agar presisi simetris di tengah kanvas
+      bg.set({
+        scaleX: mainCanvas.width / bg.width,
+        scaleY: mainCanvas.height / bg.height,
+        left: 0,
+        top: 0,
+        originX: 'left',
+        originY: 'top',
+        angle: 0
+      });
+      mainCanvas.renderAll();
+    }
 
+    // --- FITUR KOTAK SAKTI ---
     function addMagicBox() {
-      // 1. Buat Bingkai Kotak Sakti
+      // 1. Bingkai Kotak Sakti
       const rect = new fabric.Rect({
         width: 120,
         height: 120,
-        fill: 'transparent',
+        fill: 'rgba(236, 72, 153, 0.1)',
         stroke: '#ec4899',
         strokeWidth: 2,
-        strokeDashArray: [5, 5],
+        strokeDashArray: [6, 6],
         originX: 'center',
         originY: 'center'
       });
 
-      // 2. Buat Tanda '+' di Tengah
+      // 2. Tanda '+' di Tengah
       const plusText = new fabric.Text('+', {
-        fontSize: 24,
+        fontSize: 26,
         fill: '#ec4899',
         originX: 'center',
         originY: 'center',
         fontWeight: 'bold'
       });
 
-      // 3. Gabungkan menjadi Grup Kotak Sakti
+      // 3. Grup Kotak Sakti
       const magicBox = new fabric.Group([rect, plusText], {
-        left: 180,
-        top: 60,
-        centeredScaling: true, // Perubahan ukuran selalu simetri dari titik pusat
+        left: mainCanvas.width / 2,
+        top: mainCanvas.height / 2,
+        originX: 'center',
+        originY: 'center',
+        centeredScaling: true, // Ubah ukuran simetri dari titik pusat
         transparentCorners: false,
         cornerColor: '#ec4899',
         cornerStyle: 'circle'
       });
 
-      // Event Double Click untuk Duplikat Kotak Sakti
+      // Fitur Double Tap / Double Click untuk Duplikat
       let lastClickTime = 0;
-      magicBox.on('mousedown', function(options) {
+      magicBox.on('mousedown', function() {
         const currentTime = new Date().getTime();
-        const clickInterval = currentTime - lastClickTime;
-        
-        if (clickInterval < 300 && clickInterval > 0) {
-          // Double click terdeteksi -> Duplikat
+        if (currentTime - lastClickTime < 300) {
           magicBox.clone(function(cloned) {
-            cloned.set({
-              left: magicBox.left + 20,
-              top: magicBox.top + 20
-            });
+            cloned.set({ left: magicBox.left + 20, top: magicBox.top + 20 });
             mainCanvas.add(cloned);
             mainCanvas.setActiveObject(cloned);
             mainCanvas.renderAll();
@@ -137,21 +156,28 @@
         lastClickTime = currentTime;
       });
 
-      // Fitur Penambal Latar Belakang (Smart Patching bekas geser)
-      magicBox.on('moving', function(e) {
-        // Otomatis menambal bekas pergeseran dengan warna background
-        if (mainCanvas.backgroundImage) {
-          mainCanvas.renderAll();
-        }
-      });
-
       mainCanvas.add(magicBox);
       mainCanvas.setActiveObject(magicBox);
       mainCanvas.renderAll();
     }
 
-    // --- FUNGSI STAGING AREA & KANVAS UTAMA ---
+    // Upload Background Kanvas Utama
+    document.getElementById('loadMainBg').addEventListener('change', function(e) {
+      if (!e.target.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        fabric.Image.fromURL(event.target.result, function(img) {
+          mainBgImageObj = img;
+          img.scaleToWidth(mainCanvas.width);
+          mainCanvas.setBackgroundImage(img, function() {
+            autoFlattenBg(); // Otomatis ratakan saat di-upload
+          });
+        });
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
 
+    // --- STAGING AREA LOGIC ---
     document.getElementById('loadStagingImg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
       const reader = new FileReader();
@@ -207,18 +233,6 @@
         mainCanvas.renderAll();
       });
     }
-
-    document.getElementById('loadMainBg').addEventListener('change', function(e) {
-      if (!e.target.files[0]) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        fabric.Image.fromURL(event.target.result, function(img) {
-          img.scaleToWidth(mainCanvas.width);
-          mainCanvas.setBackgroundImage(img, mainCanvas.renderAll.bind(mainCanvas));
-        });
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    });
 
     function mergeSelected() {
       const activeObj = mainCanvas.getActiveObject();
