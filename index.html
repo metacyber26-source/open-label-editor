@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Label Design Studio - 2 Zone</title>
+  <title>Label Design Studio - Kotak Sakti</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -30,13 +30,12 @@
       border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
       display: inline-flex; align-items: center; touch-action: manipulation;
     }
+    .btn-magic { background: #ec4899; }
     .btn-green { background: #10b981; }
     .btn-orange { background: #f59e0b; }
     .btn-purple { background: #8b5cf6; }
     .btn-red { background: #ef4444; }
 
-    input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; }
-    
     .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; }
   </style>
 </head>
@@ -44,11 +43,12 @@
 
   <!-- KANVAS UTAMA (BAGIAN 1) -->
   <div class="section-box">
-    <h3>1. Kanvas Utama (Hasil Label)</h3>
+    <h3>1. Kanvas Utama</h3>
     <div class="toolbar">
       <label class="btn btn-purple">
         + Background <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
+      <button class="btn btn-magic" onclick="addMagicBox()">✨ + Kotak Sakti</button>
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung (Lock)</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas (Unlock)</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
@@ -59,7 +59,7 @@
 
   <!-- STAGING AREA (BAGIAN 2) -->
   <div class="section-box">
-    <h3>2. Meja Potong & Olah Gambar (Staging Area)</h3>
+    <h3>2. Meja Potong & Olah (Staging Area)</h3>
     <div class="toolbar">
       <label class="btn btn-purple">
         + Gambar B <input type="file" id="loadStagingImg" accept="image/*" hidden>
@@ -77,13 +77,81 @@
   </div>
 
   <script>
-    // Inisialisasi Dua Canvas
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff' });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc' });
 
-    // --- BAGIAN 2: STAGING AREA (PENGOLAHAN) ---
+    let mainBgColor = '#ffffff';
 
-    // 1. Upload Gambar B ke Staging Area
+    // --- FITUR KOTAK SAKTI (BAGIAN 1) ---
+
+    function addMagicBox() {
+      // 1. Buat Bingkai Kotak Sakti
+      const rect = new fabric.Rect({
+        width: 120,
+        height: 120,
+        fill: 'transparent',
+        stroke: '#ec4899',
+        strokeWidth: 2,
+        strokeDashArray: [5, 5],
+        originX: 'center',
+        originY: 'center'
+      });
+
+      // 2. Buat Tanda '+' di Tengah
+      const plusText = new fabric.Text('+', {
+        fontSize: 24,
+        fill: '#ec4899',
+        originX: 'center',
+        originY: 'center',
+        fontWeight: 'bold'
+      });
+
+      // 3. Gabungkan menjadi Grup Kotak Sakti
+      const magicBox = new fabric.Group([rect, plusText], {
+        left: 180,
+        top: 60,
+        centeredScaling: true, // Perubahan ukuran selalu simetri dari titik pusat
+        transparentCorners: false,
+        cornerColor: '#ec4899',
+        cornerStyle: 'circle'
+      });
+
+      // Event Double Click untuk Duplikat Kotak Sakti
+      let lastClickTime = 0;
+      magicBox.on('mousedown', function(options) {
+        const currentTime = new Date().getTime();
+        const clickInterval = currentTime - lastClickTime;
+        
+        if (clickInterval < 300 && clickInterval > 0) {
+          // Double click terdeteksi -> Duplikat
+          magicBox.clone(function(cloned) {
+            cloned.set({
+              left: magicBox.left + 20,
+              top: magicBox.top + 20
+            });
+            mainCanvas.add(cloned);
+            mainCanvas.setActiveObject(cloned);
+            mainCanvas.renderAll();
+          });
+        }
+        lastClickTime = currentTime;
+      });
+
+      // Fitur Penambal Latar Belakang (Smart Patching bekas geser)
+      magicBox.on('moving', function(e) {
+        // Otomatis menambal bekas pergeseran dengan warna background
+        if (mainCanvas.backgroundImage) {
+          mainCanvas.renderAll();
+        }
+      });
+
+      mainCanvas.add(magicBox);
+      mainCanvas.setActiveObject(magicBox);
+      mainCanvas.renderAll();
+    }
+
+    // --- FUNGSI STAGING AREA & KANVAS UTAMA ---
+
     document.getElementById('loadStagingImg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
       const reader = new FileReader();
@@ -98,33 +166,24 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // 2. Tambah Teks Seni di Staging Area
     function addStagingText() {
       const txt = prompt("Masukkan Teks Seni:", "Varian Rasa");
       if (!txt) return;
       const textObj = new fabric.IText(txt, {
-        left: 50, top: 50,
-        fontSize: 24,
+        left: 50, top: 50, fontSize: 24,
         fill: document.getElementById('textColor').value,
-        fontWeight: 'bold',
-        stroke: '#000000',
-        strokeWidth: 1
+        fontWeight: 'bold', stroke: '#000000', strokeWidth: 1
       });
       stagingCanvas.add(textObj);
       stagingCanvas.setActiveObject(textObj);
       stagingCanvas.renderAll();
     }
 
-    // 3. Pemotongan Gambar B di Staging Area
     function cropStaging(shape) {
       const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
+      if (!activeObj || activeObj.type !== 'image') return;
       let clipShape;
-      const w = activeObj.width;
-      const h = activeObj.height;
+      const w = activeObj.width, h = activeObj.height;
 
       if (shape === 'square') {
         clipShape = new fabric.Rect({ left: -w/4, top: -h/4, width: w/2, height: h/2, originX: 'left', originY: 'top' });
@@ -138,24 +197,17 @@
       stagingCanvas.renderAll();
     }
 
-    // 4. Transfer Elemen dari Staging ke Kanvas Utama
     function sendToMain() {
       const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj) {
-        alert("Pilih elemen di Meja Potong yang ingin dikirim!");
-        return;
-      }
+      if (!activeObj) return;
       activeObj.clone(function(clonedObj) {
-        clonedObj.set({ left: 50, top: 50 });
+        clonedObj.set({ left: 100, top: 50 });
         mainCanvas.add(clonedObj);
         mainCanvas.setActiveObject(clonedObj);
         mainCanvas.renderAll();
       });
     }
 
-    // --- BAGIAN 1: KANVAS UTAMA ---
-
-    // 1. Upload Background Label Utama
     document.getElementById('loadMainBg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
       const reader = new FileReader();
@@ -168,29 +220,20 @@
       reader.readAsDataURL(e.target.files[0]);
     });
 
-    // 2. Gabungkan Elemen (Group/Lock)
     function mergeSelected() {
       const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'activeSelection') {
-        alert("Pilih minimal 2 elemen di Kanvas Utama (tahan geser/select) untuk menggabungkan!");
-        return;
-      }
+      if (!activeObj || activeObj.type !== 'activeSelection') return;
       activeObj.toGroup();
       mainCanvas.renderAll();
     }
 
-    // 3. Lepas Elemen (Ungroup/Unlock)
     function unmergeSelected() {
       const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'group') {
-        alert("Pilih grup elemen yang ingin dilepas!");
-        return;
-      }
+      if (!activeObj || activeObj.type !== 'group') return;
       activeObj.toActiveSelection();
       mainCanvas.renderAll();
     }
 
-    // 4. Hapus Objek di Kanvas Utama
     function deleteMainObj() {
       const activeObj = mainCanvas.getActiveObject();
       if (activeObj) {
@@ -200,7 +243,6 @@
       }
     }
 
-    // 5. Ekspor PNG High-Res
     function exportPNG() {
       const dataURL = mainCanvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 2 });
       const link = document.createElement('a');
