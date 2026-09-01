@@ -22,7 +22,7 @@
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
     }
     .dash-title { font-size: 0.9rem; font-weight: bold; color: #38bdf8; }
-    .dash-stats { display: flex; gap: 12px; font-size: 0.75rem; }
+    .dash-stats { display: flex; gap: 8px; font-size: 0.75rem; }
     .stat-badge { background: #334155; padding: 4px 8px; border-radius: 4px; border: 1px solid #475569; }
     .stat-badge span { color: #10b981; font-weight: bold; }
 
@@ -45,6 +45,7 @@
     .btn-orange { background: #f59e0b; }
     .btn-purple { background: #8b5cf6; }
     .btn-red { background: #ef4444; }
+    .btn-cyan { background: #06b6d4; }
     .btn-zoom { background: #0284c7; }
     .btn-ai { background: linear-gradient(135deg, #a855f7, #ec4899); color: white; }
 
@@ -110,6 +111,7 @@
       </label>
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
       <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
+      <button class="btn btn-cyan" onclick="addLicenseBox()">📜 + Kotak Lisensi</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
@@ -121,6 +123,14 @@
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
       <button class="btn btn-green" onclick="exportPNG()">Unduh PNG</button>
       <button class="btn btn-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
+    </div>
+
+    <!-- REKOMENDASI PENEMPATAN LISENSI -->
+    <div class="inline-tool-box">
+      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📍 Auto Posisi Lisensi:</span>
+      <button class="btn btn-cyan" onclick="autoPlaceLicense('top-right')">Kanan Atas</button>
+      <button class="btn btn-cyan" onclick="autoPlaceLicense('bottom-right')">Kanan Bawah</button>
+      <button class="btn btn-cyan" onclick="autoPlaceLicense('bottom-left')">Kiri Bawah</button>
     </div>
 
     <div class="inline-tool-box">
@@ -195,6 +205,12 @@
       <button class="btn btn-green" onclick="cropStaging('circle')">Lingkaran</button>
     </div>
 
+    <!-- GENERATOR STEMPEL LISENSI DIGITAL / MULTI LISENSI -->
+    <div class="inline-tool-box">
+      <input type="text" id="licenseCodeInput" class="inline-input" placeholder="ID Lisensi (misal: LIC-ICP2E-001)">
+      <button class="btn btn-cyan" onclick="generateLicenseStamp()">📜 + Stempel Lisensi</button>
+    </div>
+
     <div class="inline-tool-box">
       <input type="text" id="stampPriceValue" class="inline-input" placeholder="Price (Contoh: 15.000 / 50)">
       <button class="btn btn-pink" onclick="generatePriceStamp()">🏷️ Stempel Price</button>
@@ -206,7 +222,7 @@
     </div>
 
     <button class="btn btn-purple" style="width:100%; margin-top:8px;" onclick="sendToMain()">
-      ⬆️ Masukkan Elemen Terpilih ke Kotak Sakti / Kanvas Utama
+      ⬆️ Masukkan Elemen Terpilih ke Kotak Sakti / Lisensi / Kanvas
     </button>
 
     <div style="margin-top: 8px;">
@@ -236,7 +252,7 @@
 
     function saveProjectState() {
       try {
-        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox']));
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox']));
         const stagingData = JSON.stringify(stagingCanvas.toJSON());
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
@@ -259,7 +275,7 @@
       if (savedMain) {
         mainCanvas.loadFromJSON(savedMain, function() {
           mainCanvas.getObjects().forEach(obj => {
-            if (obj.isMagicBox) attachMagicBoxEvents(obj);
+            if (obj.isMagicBox || obj.isLicenseBox) attachMagicBoxEvents(obj);
           });
           mainCanvas.renderAll();
         });
@@ -289,7 +305,7 @@
     stagingCanvas.on('object:removed', saveProjectState);
 
     // ==========================================
-    // 2. GENERATOR BENTUK LATAR POLOS (BAGIAN 1)
+    // 2. GENERATOR LATAR & STEMPEL LISENSI
     // ==========================================
     function generateCustomBgShape() {
       const shapeType = document.getElementById('bgShapeType').value;
@@ -312,7 +328,6 @@
       bgObj.set({ selectable: false, evented: false });
       mainCanvas.setBackgroundImage(null, mainCanvas.renderAll.bind(mainCanvas));
       
-      // Bersihkan objek background lama jika ada
       const existingBg = mainCanvas.getObjects().find(o => o.isGeneratedBg);
       if (existingBg) mainCanvas.remove(existingBg);
 
@@ -323,8 +338,30 @@
       saveProjectState();
     }
 
+    // Generator Stempel Lisensi Multi Slot
+    function generateLicenseStamp() {
+      const code = document.getElementById('licenseCodeInput').value.trim() || 'LIC-VERIFIED';
+
+      const rect = new fabric.Rect({
+        width: 110, height: 34, rx: 6, ry: 6, fill: '#06b6d4', stroke: '#0284c7', strokeWidth: 1.5, originX: 'center', originY: 'center'
+      });
+
+      const iconText = new fabric.Text("🛡️ " + code, {
+        fontSize: 10, fontWeight: 'bold', fill: '#ffffff', originX: 'center', originY: 'center'
+      });
+
+      const stampGroup = new fabric.Group([rect, iconText], {
+        left: 70, top: 50, originX: 'center', originY: 'center'
+      });
+
+      stagingCanvas.add(stampGroup);
+      stagingCanvas.setActiveObject(stampGroup);
+      stagingCanvas.renderAll();
+      saveProjectState();
+    }
+
     // ==========================================
-    // 3. GENERATOR STEMPEL PRICE (POLOS TANPA CURRENCY)
+    // 3. STEMPEL PRICE & BARCODE
     // ==========================================
     function generatePriceStamp() {
       const val = document.getElementById('stampPriceValue').value.trim();
@@ -355,9 +392,6 @@
       saveProjectState();
     }
 
-    // ==========================================
-    // 4. GENERATOR BARCODE PRESISI & AMAN SCAN
-    // ==========================================
     function generateSafeBarcode() {
       const val = document.getElementById('barcodeValue').value.trim();
       if (!val) {
@@ -368,7 +402,6 @@
       const hiddenCanvas = document.getElementById('barcodeHiddenCanvas');
       
       try {
-        // Enforce Quiet Zone & Kontras Tinggi (Hitam-Putih Murni) untuk keamanan scan
         JsBarcode(hiddenCanvas, val, {
           format: "CODE128",
           lineColor: "#000000",
@@ -377,7 +410,7 @@
           height: 50,
           displayValue: true,
           fontSize: 12,
-          margin: 10 // Quiet zone aman scan
+          margin: 10
         });
 
         const dataURL = hiddenCanvas.toDataURL('image/png');
@@ -394,7 +427,7 @@
     }
 
     // ==========================================
-    // 5. FITUR PERBAIKAN: RATAKAN LABEL & MULTI UPLOAD
+    // 4. RATAKAN BG & ASET GUDANG
     // ==========================================
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
@@ -498,7 +531,7 @@
     }
 
     // ==========================================
-    // 6. CONTROL PANEL D-PAD & CONTINUOUS ACTION
+    // 5. CONTROL PANEL D-PAD
     // ==========================================
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
@@ -555,11 +588,11 @@
     bindContinuousControl('btnRotateCW', () => rotateSelected(2));
 
     // ==========================================
-    // 7. KOTAK SAKTI & DUPLIKAT
+    // 6. KOTAK SAKTI & KOTAK LISENSI PRESISI
     // ==========================================
-    function attachMagicBoxEvents(magicBox) {
+    function attachMagicBoxEvents(box) {
       let lastClickTime = 0;
-      magicBox.on('mousedown', function() {
+      box.on('mousedown', function() {
         const currentTime = new Date().getTime();
         if (currentTime - lastClickTime < 300) {
           duplicateMainObj();
@@ -591,10 +624,58 @@
       mainCanvas.renderAll();
     }
 
+    function addLicenseBox() {
+      const rect = new fabric.Rect({
+        width: 90, height: 45,
+        fill: 'rgba(6, 182, 212, 0.15)', stroke: '#06b6d4', strokeWidth: 2,
+        strokeDashArray: [4, 4], originX: 'center', originY: 'center', rx: 4, ry: 4
+      });
+      const labelText = new fabric.Text('📜 Lisensi', {
+        fontSize: 12, fill: '#06b6d4', originX: 'center', originY: 'center', fontWeight: 'bold'
+      });
+      const licenseBox = new fabric.Group([rect, labelText], {
+        left: mainCanvas.width - 70, top: 40,
+        originX: 'center', originY: 'center', centeredScaling: true,
+        transparentCorners: false, cornerColor: '#06b6d4', cornerStyle: 'circle'
+      });
+
+      licenseBox.isLicenseBox = true;
+      attachMagicBoxEvents(licenseBox);
+
+      mainCanvas.add(licenseBox);
+      mainCanvas.setActiveObject(licenseBox);
+      mainCanvas.renderAll();
+    }
+
+    // Rekomendasi otomatis penempatan kotak lisensi
+    function autoPlaceLicense(position) {
+      let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox);
+      
+      if (!targetBox) {
+        addLicenseBox();
+        targetBox = mainCanvas.getActiveObject();
+      }
+
+      const w = mainCanvas.width;
+      const h = mainCanvas.height;
+
+      if (position === 'top-right') {
+        targetBox.set({ left: w - 60, top: 35 });
+      } else if (position === 'bottom-right') {
+        targetBox.set({ left: w - 60, top: h - 35 });
+      } else if (position === 'bottom-left') {
+        targetBox.set({ left: 60, top: h - 35 });
+      }
+
+      targetBox.setCoords();
+      mainCanvas.renderAll();
+      saveProjectState();
+    }
+
     function duplicateMainObj() {
       const activeObj = mainCanvas.getActiveObject();
       if (!activeObj) {
-        alert("Pilih Kotak Sakti atau elemen yang ingin diduplikat terlebih dahulu!");
+        alert("Pilih elemen terlebih dahulu!");
         return;
       }
 
@@ -607,6 +688,9 @@
 
         if (activeObj.isMagicBox) {
           clonedObj.isMagicBox = true;
+          attachMagicBoxEvents(clonedObj);
+        } else if (activeObj.isLicenseBox) {
+          clonedObj.isLicenseBox = true;
           attachMagicBoxEvents(clonedObj);
         }
 
@@ -626,7 +710,7 @@
       const activeMainObj = mainCanvas.getActiveObject();
 
       activeStagingObj.clone(function(clonedObj) {
-        if (activeMainObj && activeMainObj.isMagicBox) {
+        if (activeMainObj && (activeMainObj.isMagicBox || activeMainObj.isLicenseBox)) {
           const targetWidth = activeMainObj.getScaledWidth();
           const targetHeight = activeMainObj.getScaledHeight();
           const targetLeft = activeMainObj.left;
@@ -657,7 +741,7 @@
     }
 
     // ==========================================
-    // 8. OLAH GAMBAR STAGING
+    // 7. OLAH GAMBAR STAGING
     // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
