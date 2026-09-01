@@ -2,10 +2,8 @@
 // SMART LABEL STUDIO - GENERAL AUTOMATION ENGINE
 // =================================================================
 
-// Konversi Skala Layar (1 cm = 37.8 px pada monitor 96 DPI)
 const PIXELS_PER_CM = 37.8;
 
-// Konfigurasi Kertas Cetak A3+
 const CONFIG_A3_PLUS = {
   sheetWidthCm: 32,
   sheetHeightCm: 48,
@@ -14,25 +12,21 @@ const CONFIG_A3_PLUS = {
   bleedCm: 0.5
 };
 
-// State Dimensi Aktif
 let currentConfig = {
   widthCm: 15,
   heightCm: 7,
   shape: 'persegi'
 };
 
-// Inisialisasi Pertama
 window.onload = function() {
   updateUkuranKanvas();
 };
 
-// 1. Fungsi Buka / Tutup Panel Info di Layar HP
 function togglePanelAI() {
   const panel = document.getElementById('ai-sidebar');
   panel.classList.toggle('active');
 }
 
-// 2. Mengubah Ukuran Fisik Kanvas Layar Otomatis
 function updateUkuranKanvas() {
   const lebarInput = parseFloat(document.getElementById('input-lebar').value) || 10;
   const tinggiInput = parseFloat(document.getElementById('input-tinggi').value) || 5;
@@ -45,7 +39,6 @@ function updateUkuranKanvas() {
   canvas.style.height = `${tinggiInput * PIXELS_PER_CM}px`;
 }
 
-// 3. Mengubah Bentuk Label
 function updateBentukKanvas() {
   const bentuk = document.getElementById('select-bentuk').value;
   const canvas = document.getElementById('label-canvas');
@@ -54,7 +47,6 @@ function updateBentukKanvas() {
   canvas.className = `canvas-preview ${bentuk}`;
 }
 
-// 4. Fitur "+ Kotak Lisensi"
 function tambahKotakLisensi() {
   const canvas = document.getElementById('label-canvas');
   
@@ -75,7 +67,6 @@ function tambahKotakLisensi() {
   buatElemenBisaDigeser(licenseGroup);
 }
 
-// 5. Fitur "+ Barcode" (Minimal 2x2 cm)
 function tambahKotakTransaksi() {
   const canvas = document.getElementById('label-canvas');
   
@@ -99,7 +90,6 @@ function tambahKotakTransaksi() {
   buatElemenBisaDigeser(transGroup);
 }
 
-// 6. Analisis AI Layout & Kelayakan
 function jalankanAnalisisLayout() {
   const panel = document.getElementById('ai-messages');
   panel.innerHTML = ''; 
@@ -150,13 +140,12 @@ function jalankanAnalisisLayout() {
     panel.appendChild(div);
   });
 
-  // Jika di HP, otomatis buka panelnya saat tombol diklik
   if (window.innerWidth <= 768) {
     document.getElementById('ai-sidebar').classList.add('active');
   }
 }
 
-// 7. Estimasi Cetak Lembar A3+ (Nesting)
+// 7. SIMULASI VISUAL NESTING CETAK A3+
 function prosesNestingCetak() {
   const panelNesting = document.getElementById('nesting-results');
   panelNesting.innerHTML = '';
@@ -173,8 +162,8 @@ function prosesNestingCetak() {
   const totalB = kolomB * barisB;
 
   let hasilTerbaik = (totalB > totalA) 
-    ? { orientasi: 'Lansekap (Diputar 90°)', total: totalB, susunan: `${barisB} Baris x ${kolomB} Kolom` }
-    : { orientasi: 'Potret (Standar)', total: totalA, susunan: `${barisA} Baris x ${kolomA} Kolom` };
+    ? { orientasi: 'Lansekap (Diputar 90°)', total: totalB, baris: barisB, kolom: kolomB, rotasi: true }
+    : { orientasi: 'Potret (Standar)', total: totalA, baris: barisA, kolom: kolomA, rotasi: false };
 
   const efisiensi = ((hasilTerbaik.total * currentConfig.widthCm * currentConfig.heightCm) / (32 * 48) * 100).toFixed(1);
 
@@ -183,22 +172,46 @@ function prosesNestingCetak() {
       <b>Estimasi Kertas A3+:</b><br>
       • Posisi: <b>${hasilTerbaik.orientasi}</b><br>
       • Hasil: <b>${hasilTerbaik.total} pcs / lembar</b><br>
-      • Susunan: <b>${hasilTerbaik.susunan}</b><br>
+      • Susunan: <b>${hasilTerbaik.baris} Baris x ${hasilTerbaik.kolom} Kolom</b><br>
       • Efisiensi Bahan: <b>${efisiensi}% terpakai</b>
     </div>
   `;
 
-  // Jika di HP, otomatis buka panelnya saat tombol diklik
-  if (window.innerWidth <= 768) {
-    document.getElementById('ai-sidebar').classList.add('active');
+  // Render Simulasi Lembar Cetak Visual di Modal Popup
+  renderVisualA3Sheet(hasilTerbaik);
+
+  // Buka Modal Pop-up Visual A3+
+  document.getElementById('modal-a3').classList.add('active');
+}
+
+// Render Visual Potongan Label di Atas Lembar A3+
+function renderVisualA3Sheet(dataLayout) {
+  const sheet = document.getElementById('a3-sheet');
+  const summaryText = document.getElementById('a3-summary-info');
+  sheet.innerHTML = '';
+
+  summaryText.innerHTML = `Hasil Layout: ${dataLayout.total} pcs label (${dataLayout.baris} baris x ${dataLayout.kolom} kolom) di lembar A3+`;
+
+  // Skala Visual 1cm = 8px
+  const itemWidth = (dataLayout.rotasi ? currentConfig.heightCm : currentConfig.widthCm) * 8;
+  const itemHeight = (dataLayout.rotasi ? currentConfig.widthCm : currentConfig.heightCm) * 8;
+
+  for (let i = 0; i < dataLayout.total; i++) {
+    const item = document.createElement('div');
+    item.className = 'nest-item';
+    item.style.width = `${itemWidth}px`;
+    item.style.height = `${itemHeight}px`;
+    sheet.appendChild(item);
   }
 }
 
-// 8. Fitur Geser Elemen (Drag & Drop)
+function tutupModalA3() {
+  document.getElementById('modal-a3').classList.remove('active');
+}
+
 function buatElemenBisaDigeser(elemen) {
   let posX = 0, posY = 0, awalX = 0, awalY = 0;
 
-  // Mendukung Sentuhan Jari di HP (Touch) & Klik Mouse di PC
   elemen.onmousedown = dragMouseDown;
   elemen.ontouchstart = dragTouchStart;
 
