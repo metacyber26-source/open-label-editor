@@ -1,263 +1,173 @@
-// =================================================================
-// SMART LABEL STUDIO - GENERAL AUTOMATION ENGINE
-// =================================================================
-
-const PIXELS_PER_CM = 37.8;
-
-const CONFIG_A3_PLUS = {
-  sheetWidthCm: 32,
-  sheetHeightCm: 48,
-  printableWidthCm: 31,
-  printableHeightCm: 47,
-  bleedCm: 0.5
-};
-
-let currentConfig = {
-  widthCm: 15,
-  heightCm: 7,
-  shape: 'persegi'
-};
-
-window.onload = function() {
-  updateUkuranKanvas();
-};
-
-function togglePanelAI() {
-  const panel = document.getElementById('ai-sidebar');
-  panel.classList.toggle('active');
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-function updateUkuranKanvas() {
-  const lebarInput = parseFloat(document.getElementById('input-lebar').value) || 10;
-  const tinggiInput = parseFloat(document.getElementById('input-tinggi').value) || 5;
-
-  currentConfig.widthCm = lebarInput;
-  currentConfig.heightCm = tinggiInput;
-
-  const canvas = document.getElementById('label-canvas');
-  canvas.style.width = `${lebarInput * PIXELS_PER_CM}px`;
-  canvas.style.height = `${tinggiInput * PIXELS_PER_CM}px`;
+body {
+  background-color: #0d1527;
+  color: #ffffff;
+  padding: 10px;
 }
 
-function updateBentukKanvas() {
-  const bentuk = document.getElementById('select-bentuk').value;
-  const canvas = document.getElementById('label-canvas');
-  
-  currentConfig.shape = bentuk;
-  canvas.className = `canvas-preview ${bentuk}`;
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-function tambahKotakLisensi() {
-  const canvas = document.getElementById('label-canvas');
-  
-  const elemLama = document.getElementById('kotak-lisensi-group');
-  if (elemLama) elemLama.remove();
-
-  const licenseGroup = document.createElement('div');
-  licenseGroup.className = 'license-group';
-  licenseGroup.id = 'kotak-lisensi-group';
-  
-  licenseGroup.innerHTML = `
-    <div class="license-item">HALAL</div>
-    <div class="license-item">BPOM / P-IRT</div>
-    <div class="license-item">MITRA</div>
-  `;
-  
-  canvas.appendChild(licenseGroup);
-  buatElemenBisaDigeser(licenseGroup);
+.section-container {
+  background-color: #162238;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #233554;
 }
 
-function tambahKotakTransaksi() {
-  const canvas = document.getElementById('label-canvas');
-  
-  const elemLama = document.getElementById('kotak-transaksi-group');
-  if (elemLama) elemLama.remove();
-
-  const minPixels = 2 * PIXELS_PER_CM;
-  
-  const transGroup = document.createElement('div');
-  transGroup.className = 'transaction-group';
-  transGroup.id = 'kotak-transaksi-group';
-  transGroup.style.width = `${minPixels}px`;
-  transGroup.style.height = `${minPixels}px`;
-  
-  transGroup.innerHTML = `
-    <span>[ BARCODE ]</span>
-    <span style="font-size:7px; color:#16a34a; margin-top:2px;">Aman Scan</span>
-  `;
-  
-  canvas.appendChild(transGroup);
-  buatElemenBisaDigeser(transGroup);
+.section-header h3 {
+  color: #38bdf8;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
 }
 
-function jalankanAnalisisLayout() {
-  const panel = document.getElementById('ai-messages');
-  panel.innerHTML = ''; 
-
-  const barcode = document.getElementById('kotak-transaksi-group');
-  const lisensi = document.getElementById('kotak-lisensi-group');
-  
-  let laporan = [];
-
-  laporan.push({
-    tipe: 'info',
-    pesan: `📐 Bentuk label: <b>${currentConfig.shape.toUpperCase()}</b> (${currentConfig.widthCm} x ${currentConfig.heightCm} cm).`
-  });
-
-  if (barcode) {
-    const lebarPx = barcode.offsetWidth;
-    const lebarCm = (lebarPx / PIXELS_PER_CM).toFixed(1);
-    
-    if (lebarCm < 2) {
-      laporan.push({
-        tipe: 'warning',
-        pesan: `⚠️ Ukuran Barcode (${lebarCm} cm) terlalu kecil! Min 2x2 cm pada cetak.`
-      });
-    } else {
-      laporan.push({
-        tipe: 'success',
-        pesan: `✅ Barcode (${lebarCm} cm) aman dipindai kasir.`
-      });
-    }
-  } else {
-    laporan.push({
-      tipe: 'warning',
-      pesan: `💡 Tambahkan elemen Barcode/QRIS transaksi.`
-    });
-  }
-
-  if (lisensi) {
-    laporan.push({
-      tipe: 'success',
-      pesan: `✅ Seluruh logo legalitas berhasil dikelompokkan dengan rapi.`
-    });
-  }
-
-  laporan.forEach(item => {
-    const div = document.createElement('div');
-    div.className = `ai-card ${item.tipe}`;
-    div.innerHTML = item.pesan;
-    panel.appendChild(div);
-  });
-
-  if (window.innerWidth <= 768) {
-    document.getElementById('ai-sidebar').classList.add('active');
-  }
+/* Toolbar Grid Buttons */
+.toolbar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
-// 7. SIMULASI VISUAL NESTING CETAK A3+
-function prosesNestingCetak() {
-  const panelNesting = document.getElementById('nesting-results');
-  panelNesting.innerHTML = '';
-
-  const w = currentConfig.widthCm + CONFIG_A3_PLUS.bleedCm;
-  const h = currentConfig.heightCm + CONFIG_A3_PLUS.bleedCm;
-
-  const kolomA = Math.floor(CONFIG_A3_PLUS.printableWidthCm / w);
-  const barisA = Math.floor(CONFIG_A3_PLUS.printableHeightCm / h);
-  const totalA = kolomA * barisA;
-
-  const kolomB = Math.floor(CONFIG_A3_PLUS.printableWidthCm / h);
-  const barisB = Math.floor(CONFIG_A3_PLUS.printableHeightCm / w);
-  const totalB = kolomB * barisB;
-
-  let hasilTerbaik = (totalB > totalA) 
-    ? { orientasi: 'Lansekap (Diputar 90°)', total: totalB, baris: barisB, kolom: kolomB, rotasi: true }
-    : { orientasi: 'Potret (Standar)', total: totalA, baris: barisA, kolom: kolomA, rotasi: false };
-
-  const efisiensi = ((hasilTerbaik.total * currentConfig.widthCm * currentConfig.heightCm) / (32 * 48) * 100).toFixed(1);
-
-  panelNesting.innerHTML = `
-    <div class="ai-card info">
-      <b>Estimasi Kertas A3+:</b><br>
-      • Posisi: <b>${hasilTerbaik.orientasi}</b><br>
-      • Hasil: <b>${hasilTerbaik.total} pcs / lembar</b><br>
-      • Susunan: <b>${hasilTerbaik.baris} Baris x ${hasilTerbaik.kolom} Kolom</b><br>
-      • Efisiensi Bahan: <b>${efisiensi}% terpakai</b>
-    </div>
-  `;
-
-  // Render Simulasi Lembar Cetak Visual di Modal Popup
-  renderVisualA3Sheet(hasilTerbaik);
-
-  // Buka Modal Pop-up Visual A3+
-  document.getElementById('modal-a3').classList.add('active');
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-// Render Visual Potongan Label di Atas Lembar A3+
-function renderVisualA3Sheet(dataLayout) {
-  const sheet = document.getElementById('a3-sheet');
-  const summaryText = document.getElementById('a3-summary-info');
-  sheet.innerHTML = '';
+.btn-purple { background-color: #8b5cf6; }
+.btn-green { background-color: #10b981; }
+.btn-pink { background-color: #ec4899; }
+.btn-blue { background-color: #0284c7; }
+.btn-orange { background-color: #f59e0b; }
+.btn-yellow { background-color: #eab308; color: #000; }
+.btn-red { background-color: #ef4444; }
+.btn-teal { background-color: #14b8a6; }
 
-  summaryText.innerHTML = `Hasil Layout: ${dataLayout.total} pcs label (${dataLayout.baris} baris x ${dataLayout.kolom} kolom) di lembar A3+`;
-
-  // Skala Visual 1cm = 8px
-  const itemWidth = (dataLayout.rotasi ? currentConfig.heightCm : currentConfig.widthCm) * 8;
-  const itemHeight = (dataLayout.rotasi ? currentConfig.widthCm : currentConfig.heightCm) * 8;
-
-  for (let i = 0; i < dataLayout.total; i++) {
-    const item = document.createElement('div');
-    item.className = 'nest-item';
-    item.style.width = `${itemWidth}px`;
-    item.style.height = `${itemHeight}px`;
-    sheet.appendChild(item);
-  }
+.target-color-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  color: #000000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
 }
 
-function tutupModalA3() {
-  document.getElementById('modal-a3').classList.remove('active');
+.color-preview {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #000;
+  background-color: #ffffff;
+  border-radius: 2px;
 }
 
-function buatElemenBisaDigeser(elemen) {
-  let posX = 0, posY = 0, awalX = 0, awalY = 0;
+.full-width-action {
+  width: 100%;
+}
 
-  elemen.onmousedown = dragMouseDown;
-  elemen.ontouchstart = dragTouchStart;
+.btn-purple-large {
+  width: 100%;
+  background-color: #8b5cf6;
+  color: #ffffff;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-  function dragMouseDown(e) {
-    e.preventDefault();
-    awalX = e.clientX;
-    awalY = e.clientY;
-    document.onmouseup = closeDragElement;
-    document.onmousemove = elementDrag;
-  }
+/* BAGIAN 1: Kanvas Putih & Kotak Sakti Pink */
+.canvas-viewport {
+  background-color: #0f172a;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+}
 
-  function elementDrag(e) {
-    e.preventDefault();
-    posX = awalX - e.clientX;
-    posY = awalY - e.clientY;
-    awalX = e.clientX;
-    awalY = e.clientY;
-    elemen.style.top = (elemen.offsetTop - posY) + "px";
-    elemen.style.left = (elemen.offsetLeft - posX) + "px";
-  }
+.kanvas-putih {
+  width: 100%;
+  min-height: 250px;
+  background-color: #ffffff;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  function closeDragElement() {
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
+/* Kotak Sakti (Pink Selector) */
+.kotak-sakti-box {
+  width: 140px;
+  height: 140px;
+  border: 2px dashed #ec4899;
+  background-color: rgba(236, 72, 153, 0.08);
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  function dragTouchStart(e) {
-    let touch = e.touches[0];
-    awalX = touch.clientX;
-    awalY = touch.clientY;
-    document.ontouchend = closeTouchElement;
-    document.ontouchmove = touchDrag;
-  }
+.center-cross {
+  color: #ec4899;
+  font-weight: bold;
+  font-size: 18px;
+}
 
-  function touchDrag(e) {
-    let touch = e.touches[0];
-    posX = awalX - touch.clientX;
-    posY = awalY - touch.clientY;
-    awalX = touch.clientX;
-    awalY = touch.clientY;
-    elemen.style.top = (elemen.offsetTop - posY) + "px";
-    elemen.style.left = (elemen.offsetLeft - posX) + "px";
-  }
+/* Handle Bulat Pink Selector */
+.handle {
+  width: 12px;
+  height: 12px;
+  background-color: #ec4899;
+  border-radius: 50%;
+  position: absolute;
+}
 
-  function closeTouchElement() {
-    document.ontouchend = null;
-    document.ontouchmove = null;
-  }
+.handle-top-left { top: -6px; left: -6px; }
+.handle-top-right { top: -6px; right: -6px; }
+.handle-bottom-left { bottom: -6px; left: -6px; }
+.handle-bottom-right { bottom: -6px; right: -6px; }
+
+.handle-top { top: -6px; left: calc(50% - 6px); }
+.handle-bottom { bottom: -6px; left: calc(50% - 6px); }
+.handle-left { left: -6px; top: calc(50% - 6px); }
+.handle-right { right: -6px; top: calc(50% - 6px); }
+
+/* Rotate Handle Atas */
+.handle-rotate {
+  top: -24px;
+  left: calc(50% - 6px);
+}
+.handle-rotate::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 18px;
+  background-color: #ec4899;
+  top: 10px;
+  left: 5px;
 }
