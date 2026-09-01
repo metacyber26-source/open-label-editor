@@ -160,6 +160,16 @@
 
       <div class="action-group">
         <span style="font-size: 0.68rem; color: #94a3b8; text-align: center;">Ukuran & Rotasi</span>
+        
+        <!-- FITUR PENGATURAN MODEL/RASIO KOTAK -->
+        <div class="action-row" style="margin-bottom: 2px;">
+          <span style="font-size:0.65rem; color:#38bdf8;">Rasio:</span>
+          <select id="boxAspectRatioMode" class="inline-input" style="padding: 2px 4px; font-size: 0.68rem;" onchange="updateSelectedBoxRatio()">
+            <option value="square">⬜ 1:1 Bujur Sangkar</option>
+            <option value="free">⬛ Bebas (Persegi Panjang)</option>
+          </select>
+        </div>
+
         <div class="action-row">
           <button class="btn btn-action" id="btnScaleUp">➕ Perbesar</button>
           <button class="btn btn-action" id="btnScaleDown">➖ Perkecil</button>
@@ -251,7 +261,7 @@
 
     function saveProjectState() {
       try {
-        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg']));
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'lockUniScaling']));
         const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
@@ -299,6 +309,11 @@
     mainCanvas.on('object:modified', saveProjectState);
     mainCanvas.on('object:added', saveProjectState);
     mainCanvas.on('object:removed', saveProjectState);
+    
+    // Update Dropdown Rasio ketika Objek di-select
+    mainCanvas.on('selection:created', syncRatioDropdown);
+    mainCanvas.on('selection:updated', syncRatioDropdown);
+
     stagingCanvas.on('object:modified', saveProjectState);
     stagingCanvas.on('object:added', saveProjectState);
     stagingCanvas.on('object:removed', saveProjectState);
@@ -563,7 +578,19 @@
     function scaleSelected(factor) {
       const obj = mainCanvas.getActiveObject();
       if (!obj) return;
-      obj.scale(obj.scaleX * factor);
+
+      const mode = document.getElementById('boxAspectRatioMode').value;
+      if (mode === 'square' || obj.lockUniScaling) {
+        // Skala seragam 1:1
+        obj.scale(obj.scaleX * factor);
+      } else {
+        // Skala bebas
+        obj.set({
+          scaleX: obj.scaleX * factor,
+          scaleY: obj.scaleY * factor
+        });
+      }
+
       obj.setCoords();
       mainCanvas.renderAll();
     }
@@ -612,6 +639,36 @@
     bindContinuousControl('btnRotateCCW', () => rotateSelected(-2));
     bindContinuousControl('btnRotateCW', () => rotateSelected(2));
 
+    // LOGIKA PERUBAHAN MODEL (BUJUR SANGKAR VS BEBAS)
+    function updateSelectedBoxRatio() {
+      const activeObj = mainCanvas.getActiveObject();
+      const mode = document.getElementById('boxAspectRatioMode').value;
+      const isSquare = mode === 'square';
+
+      if (activeObj) {
+        activeObj.set({ lockUniScaling: isSquare });
+        if (isSquare) {
+          // Paksa ke bentuk Bujur Sangkar 1:1 saat diubah ke mode bujur sangkar
+          const size = Math.max(activeObj.getScaledWidth(), activeObj.getScaledHeight());
+          activeObj.set({
+            scaleX: size / activeObj.width,
+            scaleY: size / activeObj.height
+          });
+        }
+        activeObj.setCoords();
+        mainCanvas.renderAll();
+        saveProjectState();
+      }
+    }
+
+    function syncRatioDropdown() {
+      const activeObj = mainCanvas.getActiveObject();
+      if (activeObj) {
+        const dropdown = document.getElementById('boxAspectRatioMode');
+        dropdown.value = activeObj.lockUniScaling ? 'square' : 'free';
+      }
+    }
+
     // ==========================================
     // 6. KOTAK SAKTI & KOTAK LISENSI
     // ==========================================
@@ -627,6 +684,7 @@
     }
 
     function addMagicBox() {
+      const isSquare = document.getElementById('boxAspectRatioMode').value === 'square';
       const rect = new fabric.Rect({
         width: 120, height: 120,
         fill: 'rgba(236, 72, 153, 0.1)', stroke: '#ec4899', strokeWidth: 2,
@@ -638,7 +696,8 @@
       const magicBox = new fabric.Group([rect, plusText], {
         left: mainCanvas.width / 2, top: mainCanvas.height / 2,
         originX: 'center', originY: 'center', centeredScaling: true,
-        transparentCorners: false, cornerColor: '#ec4899', cornerStyle: 'circle'
+        transparentCorners: false, cornerColor: '#ec4899', cornerStyle: 'circle',
+        lockUniScaling: isSquare
       });
 
       magicBox.isMagicBox = true;
@@ -650,8 +709,12 @@
     }
 
     function addLicenseBox() {
+      const isSquare = document.getElementById('boxAspectRatioMode').value === 'square';
+      const width = isSquare ? 60 : 90;
+      const height = isSquare ? 60 : 45;
+
       const rect = new fabric.Rect({
-        width: 90, height: 45,
+        width: width, height: height,
         fill: 'rgba(6, 182, 212, 0.15)', stroke: '#06b6d4', strokeWidth: 2,
         strokeDashArray: [4, 4], originX: 'center', originY: 'center', rx: 4, ry: 4
       });
@@ -661,7 +724,8 @@
       const licenseBox = new fabric.Group([rect, labelText], {
         left: mainCanvas.width - 70, top: 40,
         originX: 'center', originY: 'center', centeredScaling: true,
-        transparentCorners: false, cornerColor: '#06b6d4', cornerStyle: 'circle'
+        transparentCorners: false, cornerColor: '#06b6d4', cornerStyle: 'circle',
+        lockUniScaling: isSquare
       });
 
       licenseBox.isLicenseBox = true;
@@ -706,7 +770,8 @@
         clonedObj.set({
           left: activeObj.left + 20,
           top: activeObj.top + 20,
-          evented: true
+          evented: true,
+          lockUniScaling: activeObj.lockUniScaling
         });
 
         if (activeObj.isMagicBox) {
@@ -773,7 +838,6 @@
         return;
       }
 
-      // Pastikan titik pusat gambar (Center) sebagai acuan presisi
       activeObj.set({ originX: 'center', originY: 'center' });
       activeObj.setCoords();
 
@@ -860,11 +924,9 @@
       const imgObj = cropOverlayObj.targetImageObj;
       const overlay = cropOverlayObj;
 
-      // 1. Sembunyikan garis panduan agar tidak ikut terpotong
       overlay.set('visible', false);
       stagingCanvas.renderAll();
 
-      // 2. Export tampilan gambar persis sesuai koordinat Meja Potong
       const dataURL = stagingCanvas.toDataURL({
         format: 'png',
         left: overlay.left - overlay.getScaledWidth() / 2,
@@ -874,7 +936,6 @@
         multiplier: 2
       });
 
-      // 3. Masking dengan bentuk potongan (Circle, Rect, Rounded)
       const w = overlay.getScaledWidth() * 2;
       const h = overlay.getScaledHeight() * 2;
 
@@ -902,7 +963,6 @@
 
         const croppedDataUrl = maskCanvas.toDataURL('image/png');
 
-        // 4. Masukkan hasil potongan presisi ke Meja Potong
         fabric.Image.fromURL(croppedDataUrl, function(newImg) {
           newImg.set({
             left: overlay.left,
