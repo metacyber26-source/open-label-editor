@@ -2,1306 +2,439 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Ultimate Pro & AI Edition</title>
-  
-  <!-- Fabric.js, JsBarcode, & Google Fonts -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor Label Ultimate HD</title>
+  <!-- Library Canvas & Cropper -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Pacifico&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
-    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-    
-    .dashboard-header {
-      width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
-      display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-    }
-    .dash-title { font-size: 0.9rem; font-weight: bold; color: #38bdf8; }
-    .dash-stats { display: flex; gap: 8px; font-size: 0.75rem; }
-    .stat-badge { background: #334155; padding: 4px 8px; border-radius: 4px; border: 1px solid #475569; }
-    .stat-badge span { color: #10b981; font-weight: bold; }
-
-    .section-box {
-      width: 100%; max-width: 650px; background: #1e293b; border: 1px solid #334155;
-      border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center;
+    :root {
+      --bg-main: #0b1329;
+      --card-bg: #16223b;
+      --btn-purple: #6366f1;
+      --btn-green: #10b981;
+      --btn-pink: #ec4899;
+      --btn-cyan: #06b6d4;
+      --btn-orange: #f59e0b;
+      --btn-red: #ef4444;
+      --btn-dark-red: #dc2626;
+      --text: #ffffff;
     }
 
-    h3 { font-size: 0.85rem; margin-bottom: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; width: 100%; text-align: left; }
+    body {
+      margin: 0;
+      padding: 15px;
+      background-color: var(--bg-main);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
 
-    .toolbar { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 100%; margin-bottom: 8px; }
-    
-    .btn { 
-      background: #3b82f6; color: white; border: none; padding: 6px 10px; 
-      border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
-      display: inline-flex; align-items: center; justify-content: center; user-select: none;
+    .app-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      gap: 15px;
     }
-    .btn-pink { background: #ec4899; }
-    .btn-green { background: #10b981; }
-    .btn-orange { background: #f59e0b; }
-    .btn-purple { background: #8b5cf6; }
-    .btn-red { background: #ef4444; }
-    .btn-cyan { background: #06b6d4; }
-    .btn-zoom { background: #0284c7; }
-    .btn-ai { background: linear-gradient(135deg, #a855f7, #ec4899); color: white; }
 
-    .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-    input[type="color"] { border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: transparent; }
-    .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid #233554;
+      border-radius: 8px;
+      padding: 12px;
+    }
 
-    .control-panel {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px;
-      padding: 8px; margin-top: 8px; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 8px;
+    h3 {
+      font-size: 14px;
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #93c5fd;
+      border-bottom: 1px solid #233554;
+      padding-bottom: 4px;
+      text-transform: uppercase;
     }
-    .dpad-group { display: flex; flex-direction: column; align-items: center; }
-    .dpad-row { display: flex; gap: 4px; }
-    .btn-dpad {
-      width: 34px; height: 34px; font-size: 0.9rem; border-radius: 6px;
-      background: #334155; color: #f8fafc; border: 1px solid #475569; cursor: pointer;
-    }
-    .btn-dpad:active { background: #0284c7; }
-    .action-group { display: flex; flex-direction: column; gap: 4px; }
-    .action-row { display: flex; gap: 4px; align-items: center; }
-    .btn-action { height: 34px; padding: 0 8px; font-size: 0.72rem; background: #1e293b; border: 1px solid #475569; color: white; cursor: pointer; border-radius: 4px; }
-    .btn-action:active { background: #ec4899; }
 
-    .gallery-container {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 6px; margin-bottom: 8px;
+    .btn-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
     }
-    .gallery-title { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .gallery-grid { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
-    .gallery-item {
-      position: relative; flex: 0 0 55px; height: 55px; border: 1px solid #475569;
-      border-radius: 4px; overflow: hidden; background: #1e293b; cursor: pointer;
+
+    button {
+      border: none;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 11px;
+      cursor: pointer;
     }
-    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
-    .gallery-item .btn-del-asset {
-      position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.9);
-      color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 16px; text-align: center; cursor: pointer;
+
+    .bg-purple { background: var(--btn-purple); }
+    .bg-green { background: var(--btn-green); }
+    .bg-pink { background: var(--btn-pink); }
+    .bg-cyan { background: var(--btn-cyan); }
+    .bg-orange { background: var(--btn-orange); }
+    .bg-red { background: var(--btn-red); }
+    .bg-dark-red { background: var(--btn-dark-red); }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
     }
-    
-    .inline-tool-box {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+
+    input, select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: white;
+      padding: 4px;
+      border-radius: 4px;
     }
-    .inline-input { background: #1e293b; border: 1px solid #475569; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; flex: 1; min-width: 100px; }
-    .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #94a3b8; }
-    .slider-group input { width: 80px; }
+
+    .cropper-box {
+      width: 100%;
+      height: 180px;
+      background: #000;
+      margin-bottom: 8px;
+    }
+
+    .canvas-container-outer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #main-canvas {
+      border: 1px solid #334155;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
 
-  <div class="dashboard-header">
-    <div class="dash-title">🏷️ Studio Label Pro (Ultimate HD)</div>
-    <div class="dash-stats">
-      <div class="stat-badge">Pengguna: <span id="userCount">1</span> Active</div>
-      <div class="stat-badge">Status: <span style="color:#ec4899;">Owner PRO</span></div>
-    </div>
-  </div>
+<div class="app-layout">
 
-  <!-- KANVAS UTAMA -->
-  <div class="section-box">
-    <h3>1. KANVAS UTAMA (HASIL LABEL FINAL)</h3>
-    <div class="toolbar">
-      <label class="btn btn-purple">
-        + Upload BG <input type="file" id="loadMainBg" accept="image/*" hidden>
-      </label>
-      <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
-      <button class="btn btn-pink" onclick="addMagicBox()">✨ + Kotak Sakti</button>
-      <button class="btn btn-cyan" onclick="addLicenseBox()">📜 + Kotak Lisensi</button>
-      <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
-
-      <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
-      <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
-      <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset</button>
-
-      <button class="btn btn-orange" onclick="equalizeSelectedSizes()">⚖️ Samakan Ukuran</button>
-      <button class="btn btn-orange" onclick="mergeSelected()">Gabung</button>
-      <button class="btn btn-orange" onclick="unmergeSelected()">Lepas</button>
-      <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
-      <button class="btn btn-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
+  <!-- LEFT: MEJA POTONG & BG -->
+  <div class="panel">
+    <h3>Meja Potong (Cropper)</h3>
+    <input type="file" id="img-input" accept="image/*" style="width: 100%; margin-bottom: 8px;">
+    
+    <div class="cropper-box">
+      <img id="cropper-img" src="" style="max-width: 100%; display: none;">
     </div>
 
-    <!-- FITUR LAYER STACK MANAGEMENT -->
-    <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📚 Layering (Tumpukan):</span>
-      <button class="btn btn-action" onclick="bringToFrontMain()">🔝 Paling Depan</button>
-      <button class="btn btn-action" onclick="bringForwardMain()">⬆️ Naik 1 Layer</button>
-      <button class="btn btn-action" onclick="sendBackwardMain()">⬇️ Turun 1 Layer</button>
-      <button class="btn btn-action" onclick="sendToBackMain()">🔝 Paling Belakang</button>
+    <div class="btn-grid">
+      <button class="bg-green" id="btn-crop-send">Masukkan ke Kanvas</button>
+      <button class="bg-red" id="btn-crop-clear">Hapus / Reset Meja Potong</button>
     </div>
 
-    <!-- FITUR AUTO POSISI & CUSTOM BG SHAPE -->
-    <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📍 Auto Posisi Lisensi:</span>
-      <button class="btn btn-cyan" onclick="autoPlaceLicense('top-right')">Kanan Atas</button>
-      <button class="btn btn-cyan" onclick="autoPlaceLicense('bottom-right')">Kanan Bawah</button>
-      <button class="btn btn-cyan" onclick="autoPlaceLicense('bottom-left')">Kiri Bawah</button>
-    </div>
-
-    <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#94a3b8;">Buat BG Polosan:</span>
-      <select id="bgShapeType" class="inline-input" style="flex: initial; width: 110px;">
-        <option value="rect">Persegi</option>
-        <option value="rounded">Rounded</option>
+    <h3>Buat BG Polosan</h3>
+    <div class="control-row">
+      <select id="bg-shape">
         <option value="circle">Lingkaran</option>
-        <option value="ellipse">Oval</option>
+        <option value="square">Persegi</option>
       </select>
-      <input type="color" id="bgColorPicker" value="#ffffff" title="Warna Latar">
-      <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
+      <input type="color" id="bg-color-picker" value="#ffffff">
+      <button class="bg-green" id="btn-make-bg">Buat Latar</button>
     </div>
-
-    <div style="margin-top: 8px;">
-      <canvas id="mainCanvas" width="500" height="250"></canvas>
-    </div>
-
-    <!-- FITUR EKSPOR ULTRA HD / PRINT READY -->
-    <div class="inline-tool-box" style="justify-content: space-between;">
-      <div style="display:flex; align-items:center; gap:6px;">
-        <span style="font-size:0.7rem; color:#10b981; font-weight:bold;">🖨️ Kualitas Unduh:</span>
-        <select id="exportDpiMode" class="inline-input" style="flex: initial; width: 160px;">
-          <option value="1">Standard (72 DPI Web)</option>
-          <option value="2">HD (150 DPI Cetak)</option>
-          <option value="4" selected>Ultra HD 300 DPI (Cetak Stiker)</option>
-        </select>
-      </div>
-      <button class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;" onclick="exportPNG()">📥 Unduh PNG HD</button>
-    </div>
-
-    <!-- CONTROLS & ASPECT RATIO -->
-    <div class="control-panel">
-      <div class="dpad-group">
-        <span style="font-size: 0.68rem; color: #94a3b8; margin-bottom: 2px;">Geser Presisi</span>
-        <div class="dpad-row">
-          <button class="btn btn-dpad" id="btnUp">⬆️</button>
-        </div>
-        <div class="dpad-row">
-          <button class="btn btn-dpad" id="btnLeft">⬅️</button>
-          <button class="btn btn-dpad" id="btnDown">⬇️</button>
-          <button class="btn btn-dpad" id="btnRight">➡️</button>
-        </div>
-      </div>
-
-      <div class="action-group">
-        <span style="font-size: 0.68rem; color: #94a3b8; text-align: center;">Ukuran & Rotasi</span>
-        
-        <div class="action-row" style="margin-bottom: 2px;">
-          <span style="font-size:0.65rem; color:#38bdf8;">Rasio:</span>
-          <select id="boxAspectRatioMode" class="inline-input" style="padding: 2px 4px; font-size: 0.68rem;" onchange="updateSelectedBoxRatio()">
-            <option value="square">⬜ 1:1 Bujur Sangkar</option>
-            <option value="free">⬛ Bebas (Persegi Panjang)</option>
-          </select>
-        </div>
-
-        <div class="action-row">
-          <button class="btn btn-action" id="btnScaleUp">➕ Perbesar</button>
-          <button class="btn btn-action" id="btnScaleDown">➖ Perkecil</button>
-        </div>
-        <div class="action-row">
-          <button class="btn btn-action" id="btnRotateCCW">🔄 Putar Kiri</button>
-          <button class="btn btn-action" id="btnRotateCW">🔁 Putar Kanan</button>
-        </div>
-      </div>
+    <div class="control-row">
+      <label><input type="checkbox" id="bg-transparent-toggle"> Transparan Latar</label>
     </div>
   </div>
 
-  <!-- MEJA POTONG / STAGING AREA -->
-  <div class="section-box">
-    <h3>2. MEJA POTONG & OLAH GAMBAR (STAGING AREA)</h3>
+  <!-- CENTER: KANVAS UTAMA -->
+  <div class="panel canvas-container-outer">
+    <h3>1. KANVAS UTAMA (HASIL LABEL FINAL)</h3>
     
-    <div class="gallery-container">
-      <div class="gallery-title">
-        <span>📁 Penyimpanan Aset Gambar Lokal</span>
-        <span id="assetCount">0 Aset</span>
-      </div>
-      <div class="gallery-grid" id="assetGallery"></div>
+    <!-- Top Action Toolbar -->
+    <div class="btn-grid">
+      <button class="bg-purple" onclick="document.getElementById('bg-file').click()">+ Upload BG</button>
+      <input type="file" id="bg-file" accept="image/*" style="display:none">
+      <button class="bg-green" id="btn-align-straight">Ratakan Label</button>
+      <button class="bg-pink" id="btn-add-sakti">✨ + Kotak Sakti</button>
+      <button class="bg-cyan" id="btn-add-lisensi">📁 + Kotak Lisensi</button>
+      <button class="bg-purple" id="btn-duplicate">📋 Duplikat</button>
+      <button class="bg-cyan" id="btn-zoom-in">🔍 Zoom +</button>
+      <button class="bg-cyan" id="btn-zoom-out">🔍 Zoom -</button>
+      <button class="bg-orange" id="btn-reset-rot">↺ Reset</button>
+      <button class="bg-orange" id="btn-same-size">🔔 Samakan Ukuran</button>
+      <button class="bg-orange" id="btn-group">Gabung</button>
+      <button class="bg-orange" id="btn-ungroup">Lepas</button>
+      <button class="bg-red" id="btn-delete">Hapus</button>
+      <button class="bg-dark-red" id="btn-clear-all">Reset</button>
     </div>
 
-    <div class="toolbar">
-      <label class="btn btn-purple">
-        + Multi Gambar <input type="file" id="loadStagingMultiImg" accept="image/*" multiple hidden>
-      </label>
-      <button class="btn" onclick="addStagingText()">+ Teks Seni</button>
-      <button class="btn btn-ai" onclick="autoRemoveBgAI()">🤖 AI Hapus BG</button>
-      <button class="btn btn-orange" onclick="enableColorPicker()">🧪 Pipet Warna</button>
-      
-      <div class="color-picker-wrapper">
-        <input type="color" id="removeColor" value="#ffffff">
-      </div>
-      <button class="btn btn-red" onclick="removeBackgroundStaging()">🪄 Hapus BG Warna</button>
-
-      <button class="btn btn-green" onclick="showCropOverlay('circle')">🎯 Panduan Lingkaran 1:1</button>
-      <button class="btn btn-green" onclick="showCropOverlay('square')">🎯 Panduan Persegi 1:1</button>
-      <button class="btn btn-green" onclick="showCropOverlay('rounded')">🎯 Panduan Lengkung 1:1</button>
-      
-      <button class="btn btn-orange" id="btnLockCrop" onclick="toggleLockCropOverlay()">🔒 Kunci Panduan</button>
-      <button class="btn btn-pink" onclick="applyNativeCrop()">✂️ Eksekusi Potong Presisi</button>
+    <!-- Layering Controls -->
+    <div class="btn-grid">
+      <span style="font-size: 11px; align-self: center;">📚 Layering:</span>
+      <button class="bg-purple" id="btn-front">🔝 Paling Depan</button>
+      <button class="bg-purple" id="btn-up">⬆ Naik 1 Layer</button>
+      <button class="bg-purple" id="btn-down">⬇ Turun 1 Layer</button>
+      <button class="bg-purple" id="btn-back">🔝 Paling Belakang</button>
     </div>
 
-    <!-- FITUR EDIT FONTS & CURVED TEXT -->
-    <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🔤 Teks Lanjutan:</span>
-      <select id="fontFamilySelector" class="inline-input" style="flex:initial; width:110px;" onchange="changeActiveTextFont()">
-        <option value="Segoe UI">Default</option>
-        <option value="Poppins">Poppins</option>
-        <option value="Montserrat">Montserrat</option>
-        <option value="Pacifico">Pacifico (Latin)</option>
-        <option value="Roboto">Roboto</option>
+    <!-- Auto Posisi Lisensi -->
+    <div class="btn-grid">
+      <span style="font-size: 11px; align-self: center;">📍 Auto Posisi Lisensi:</span>
+      <button class="bg-cyan" id="pos-top-right">Kanan Atas</button>
+      <button class="bg-cyan" id="pos-bottom-right">Kanan Bawah</button>
+      <button class="bg-cyan" id="pos-bottom-left">Kiri Bawah</button>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="main-canvas" width="450" height="450"></canvas>
+
+    <!-- User Count Aktual -->
+    <div style="margin-top: 10px; font-size: 12px; color: #94a3b8;">
+      Pengguna/Objek Aktif: <b id="user-count">0</b>
+    </div>
+
+    <!-- Export -->
+    <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+      <select id="export-quality">
+        <option value="3">Ultra HD 300 DPI (Cetak)</option>
+        <option value="1">Standard DPI</option>
       </select>
-      <button class="btn btn-purple" onclick="toggleCurvedText()">🔄 Teks Melengkung (Arc)</button>
-    </div>
-
-    <!-- FITUR SLIDER FILTER GAMBAR (BRIGHTNESS / CONTRAST) -->
-    <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🎨 Filter Foto:</span>
-      <div class="slider-group">
-        <span>Cerah</span>
-        <input type="range" id="brightnessSlider" min="-1" max="1" step="0.05" value="0" oninput="applyImageFilters()">
-      </div>
-      <div class="slider-group">
-        <span>Kontras</span>
-        <input type="range" id="contrastSlider" min="-1" max="1" step="0.05" value="0" oninput="applyImageFilters()">
-      </div>
-    </div>
-
-    <div class="inline-tool-box">
-      <input type="text" id="licenseCodeInput" class="inline-input" placeholder="ID Lisensi (misal: LIC-ICP2E-001)">
-      <button class="btn btn-cyan" onclick="generateLicenseStamp()">📜 + Stempel Lisensi</button>
-    </div>
-
-    <div class="inline-tool-box">
-      <input type="text" id="stampPriceValue" class="inline-input" placeholder="Price (Contoh: 15.000 / 50)">
-      <button class="btn btn-pink" onclick="generatePriceStamp()">🏷️ Stempel Price</button>
-    </div>
-
-    <div class="inline-tool-box">
-      <input type="text" id="barcodeValue" class="inline-input" placeholder="Isi Angka Barcode/PIRT/BPOM">
-      <button class="btn btn-zoom" onclick="generateSafeBarcode()">📊 + Barcode Aman Scan</button>
-    </div>
-
-    <button class="btn btn-purple" style="width:100%; margin-top:8px;" onclick="sendToMain()">
-      ⬆️ Masukkan Elemen Terpilih ke Kotak Sakti / Lisensi / Kanvas
-    </button>
-
-    <div style="margin-top: 8px;">
-      <canvas id="stagingCanvas" width="500" height="200"></canvas>
+      <button class="bg-green" id="btn-download">💾 Unduh PNG HD</button>
     </div>
   </div>
 
-  <canvas id="barcodeHiddenCanvas" style="display:none;"></canvas>
+  <!-- RIGHT: COLOR & STAMP OPTIONS -->
+  <div class="panel">
+    <h3>Stempel & Elemen Gambar</h3>
+    <div class="control-row">
+      <label>Transparansi Stempel:</label>
+      <input type="range" id="stamp-opacity" min="0" max="1" step="0.05" value="1">
+    </div>
 
-  <script>
-    const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
-    const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
-
-    let currentZoom = 1;
-    let pickColorMode = false;
-    let currentMainBgImage = null;
-    let localAssets = [];
-    let cropOverlayObj = null;
-
-    // ==========================================
-    // 0. FITUR SMART SNAP & ALIGNMENT GUIDES
-    // ==========================================
-    const SNAP_THRESHOLD = 10;
-    mainCanvas.on('object:moving', function(e) {
-      const obj = e.target;
-      const canvasWidth = mainCanvas.width;
-      const canvasHeight = mainCanvas.height;
-
-      const objCenterX = obj.left;
-      const objCenterY = obj.top;
-
-      // Snap to Center X
-      if (Math.abs(objCenterX - canvasWidth / 2) < SNAP_THRESHOLD) {
-        obj.set({ left: canvasWidth / 2 });
-      }
-      // Snap to Center Y
-      if (Math.abs(objCenterY - canvasHeight / 2) < SNAP_THRESHOLD) {
-        obj.set({ top: canvasHeight / 2 });
-      }
-    });
-
-    // ==========================================
-    // 1. DASHBOARD & AUTO-SAVE STATE
-    // ==========================================
-    function initUserCounter() {
-      let count = localStorage.getItem('label_studio_user_count') || Math.floor(Math.random() * 12) + 15;
-      document.getElementById('userCount').innerText = count;
-      localStorage.setItem('label_studio_user_count', count);
-    }
-
-    function saveProjectState() {
-      try {
-        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'lockUniScaling']));
-        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText']));
-        localStorage.setItem('label_studio_main', mainData);
-        localStorage.setItem('label_studio_staging', stagingData);
-        localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
-      } catch (e) {
-        console.warn("Progres gagal disimpan otomatis:", e);
-      }
-    }
-
-    function loadProjectState() {
-      const savedMain = localStorage.getItem('label_studio_main');
-      const savedStaging = localStorage.getItem('label_studio_staging');
-      const savedAssets = localStorage.getItem('label_studio_assets');
-
-      if (savedAssets) {
-        try { localAssets = JSON.parse(savedAssets); } catch(e) { localAssets = []; }
-        renderGallery();
-      }
-
-      if (savedMain) {
-        mainCanvas.loadFromJSON(savedMain, function() {
-          mainCanvas.getObjects().forEach(obj => {
-            if (obj.isMagicBox || obj.isLicenseBox) attachMagicBoxEvents(obj);
-          });
-          mainCanvas.renderAll();
-        });
-      }
-      if (savedStaging) {
-        stagingCanvas.loadFromJSON(savedStaging, function() {
-          stagingCanvas.renderAll();
-        });
-      }
-      initUserCounter();
-    }
-
-    function clearProjectData() {
-      if (confirm("Yakin ingin menghapus seluruh progres dan mulai dari awal?")) {
-        localStorage.removeItem('label_studio_main');
-        localStorage.removeItem('label_studio_staging');
-        localStorage.removeItem('label_studio_assets');
-        location.reload();
-      }
-    }
-
-    mainCanvas.on('object:modified', saveProjectState);
-    mainCanvas.on('object:added', saveProjectState);
-    mainCanvas.on('object:removed', saveProjectState);
+    <h3>Teks / Angka / Huruf</h3>
+    <button class="bg-purple" id="btn-add-text" style="width: 100%; margin-bottom: 8px;">+ Tambah Teks/Angka</button>
     
-    mainCanvas.on('selection:created', syncRatioDropdown);
-    mainCanvas.on('selection:updated', syncRatioDropdown);
+    <div class="control-row">
+      <label>Warna Huruf:</label>
+      <input type="color" id="text-color" value="#000000">
+    </div>
 
-    stagingCanvas.on('object:modified', saveProjectState);
-    stagingCanvas.on('object:added', saveProjectState);
-    stagingCanvas.on('object:removed', saveProjectState);
+    <div class="control-row">
+      <label>Warna Dasaran Teks:</label>
+      <input type="color" id="text-bg-color" value="#ffffff">
+    </div>
 
-    // ==========================================
-    // 2. GENERATOR LATAR & STEMPEL LISENSI
-    // ==========================================
-    function generateCustomBgShape() {
-      const shapeType = document.getElementById('bgShapeType').value;
-      const color = document.getElementById('bgColorPicker').value;
-      
-      let bgObj;
-      const w = mainCanvas.width;
-      const h = mainCanvas.height;
+    <div class="control-row">
+      <label><input type="checkbox" id="text-bg-transparent" checked> Dasaran Transparan</label>
+    </div>
 
-      if (shapeType === 'rect') {
-        bgObj = new fabric.Rect({ width: w, height: h, fill: color });
-      } else if (shapeType === 'rounded') {
-        bgObj = new fabric.Rect({ width: w - 20, height: h - 20, rx: 25, ry: 25, fill: color, left: 10, top: 10 });
-      } else if (shapeType === 'circle') {
-        bgObj = new fabric.Circle({ radius: Math.min(w, h) / 2 - 10, fill: color, left: w/2, top: h/2, originX: 'center', originY: 'center' });
-      } else if (shapeType === 'ellipse') {
-        bgObj = new fabric.Ellipse({ rx: w / 2 - 15, ry: h / 2 - 15, fill: color, left: w/2, top: h/2, originX: 'center', originY: 'center' });
-      }
+    <div class="control-row">
+      <label>Transparansi Huruf:</label>
+      <input type="range" id="text-opacity" min="0" max="1" step="0.05" value="1">
+    </div>
+  </div>
 
-      bgObj.set({ selectable: false, evented: false });
-      mainCanvas.setBackgroundImage(null, mainCanvas.renderAll.bind(mainCanvas));
-      
-      const existingBg = mainCanvas.getObjects().find(o => o.isGeneratedBg);
-      if (existingBg) mainCanvas.remove(existingBg);
+</div>
 
-      bgObj.isGeneratedBg = true;
-      mainCanvas.add(bgObj);
-      mainCanvas.sendToBack(bgObj);
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
+<script>
+  // Inisialisasi Canvas
+  const canvas = new fabric.Canvas('main-canvas', { preserveObjectStacking: true });
+  let cropper = null;
 
-    function generateLicenseStamp() {
-      const code = document.getElementById('licenseCodeInput').value.trim() || 'LIC-VERIFIED';
+  // Update Jumlah Objek Aktual
+  function updateObjCount() {
+    document.getElementById('user-count').innerText = canvas.getObjects().length;
+  }
+  canvas.on('object:added', updateObjCount);
+  canvas.on('object:removed', updateObjCount);
 
-      const rect = new fabric.Rect({
-        width: 120, height: 34, rx: 6, ry: 6, fill: '#06b6d4', stroke: '#0284c7', strokeWidth: 1.5, originX: 'center', originY: 'center'
-      });
+  // 1. MEJA POTONG (CROPPER LOGIC)
+  const imgInput = document.getElementById('img-input');
+  const cropImg = document.getElementById('cropper-img');
 
-      const iconText = new fabric.Text("🛡️ " + code, {
-        fontSize: 10, fontWeight: 'bold', fill: '#ffffff', originX: 'center', originY: 'center'
-      });
-
-      const stampGroup = new fabric.Group([rect, iconText], {
-        left: 70, top: 50, originX: 'center', originY: 'center'
-      });
-
-      stagingCanvas.add(stampGroup);
-      stagingCanvas.setActiveObject(stampGroup);
-      stagingCanvas.renderAll();
-      saveProjectState();
-    }
-
-    // ==========================================
-    // 3. STEMPEL PRICE & BARCODE
-    // ==========================================
-    function generatePriceStamp() {
-      const val = document.getElementById('stampPriceValue').value.trim();
-      if (!val) {
-        alert("Masukkan nilai harga terlebih dahulu!");
-        return;
-      }
-
-      const circle = new fabric.Circle({
-        radius: 40, fill: '#ffffff', stroke: '#ec4899', strokeWidth: 3, originX: 'center', originY: 'center'
-      });
-
-      const labelText = new fabric.Text("PRICE", {
-        fontSize: 11, fontWeight: 'bold', fill: '#ec4899', originX: 'center', originY: 'center', top: -16
-      });
-
-      const priceText = new fabric.Text(val, {
-        fontSize: 14, fontWeight: 'bold', fill: '#0f172a', originX: 'center', originY: 'center', top: 6
-      });
-
-      const stampGroup = new fabric.Group([circle, labelText, priceText], {
-        left: 80, top: 80, originX: 'center', originY: 'center'
-      });
-
-      stagingCanvas.add(stampGroup);
-      stagingCanvas.setActiveObject(stampGroup);
-      stagingCanvas.renderAll();
-      saveProjectState();
-    }
-
-    function generateSafeBarcode() {
-      const val = document.getElementById('barcodeValue').value.trim();
-      if (!val) {
-        alert("Masukkan kode angka untuk Barcode!");
-        return;
-      }
-
-      const hiddenCanvas = document.getElementById('barcodeHiddenCanvas');
-      
-      try {
-        JsBarcode(hiddenCanvas, val, {
-          format: "CODE128", lineColor: "#000000", background: "#ffffff",
-          width: 2, height: 50, displayValue: true, fontSize: 12, margin: 10
-        });
-
-        const dataURL = hiddenCanvas.toDataURL('image/png');
-        fabric.Image.fromURL(dataURL, function(img) {
-          img.set({ left: 60, top: 60, originX: 'center', originY: 'center' });
-          stagingCanvas.add(img);
-          stagingCanvas.setActiveObject(img);
-          stagingCanvas.renderAll();
-          saveProjectState();
-        }, { crossOrigin: 'anonymous' });
-      } catch (e) {
-        alert("Format karakter Barcode tidak valid.");
-      }
-    }
-
-    // ==========================================
-    // 4. RATAKAN BG & ASET GUDANG
-    // ==========================================
-    function autoFlattenBg() {
-      const bg = mainCanvas.backgroundImage || currentMainBgImage;
-      if (!bg) {
-        alert("Upload atau pilih gambar Background terlebih dahulu!");
-        return;
-      }
-      
-      const scaleX = mainCanvas.width / bg.width;
-      const scaleY = mainCanvas.height / bg.height;
-
-      bg.set({
-        scaleX: scaleX, scaleY: scaleY,
-        left: 0, top: 0, originX: 'left', originY: 'top', angle: 0
-      });
-
-      mainCanvas.setBackgroundImage(bg, () => {
-        mainCanvas.renderAll();
-        saveProjectState();
-        alert("Label berhasil diratakan penuh!");
-      });
-    }
-
-    document.getElementById('loadMainBg').addEventListener('change', function(e) {
-      if (!e.target.files[0]) return;
+  imgInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
       const reader = new FileReader();
-      reader.onload = function(event) {
-        fabric.Image.fromURL(event.target.result, function(img) {
-          currentMainBgImage = img;
-          autoFlattenBg();
-        }, { crossOrigin: 'anonymous' });
+      reader.onload = (evt) => {
+        cropImg.src = evt.target.result;
+        cropImg.style.display = 'block';
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropImg, { aspectRatio: NaN, viewMode: 1 });
       };
-      reader.readAsDataURL(e.target.files[0]);
-    });
-
-    document.getElementById('loadStagingMultiImg').addEventListener('change', function(e) {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
-
-      let loadedCount = 0;
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const dataUrl = event.target.result;
-          localAssets.push(dataUrl);
-          
-          if (loadedCount === 0) loadImageToStaging(dataUrl);
-          loadedCount++;
-          if (loadedCount === files.length) {
-            renderGallery();
-            saveProjectState();
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    function renderGallery() {
-      const galleryEl = document.getElementById('assetGallery');
-      const countEl = document.getElementById('assetCount');
-      galleryEl.innerHTML = '';
-      countEl.innerText = `${localAssets.length} Aset`;
-
-      localAssets.forEach((dataUrl, index) => {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-        
-        const img = document.createElement('img');
-        img.src = dataUrl;
-        img.onclick = () => loadImageToStaging(dataUrl);
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn-del-asset';
-        delBtn.innerHTML = '✕';
-        delBtn.onclick = (e) => {
-          e.stopPropagation();
-          deleteAsset(index);
-        };
-
-        item.appendChild(img);
-        item.appendChild(delBtn);
-        galleryEl.appendChild(item);
-      });
+      reader.readAsDataURL(file);
     }
+  });
 
-    function loadImageToStaging(dataUrl) {
-      fabric.Image.fromURL(dataUrl, function(img) {
-        img.scaleToWidth(130);
-        img.set({ 
-          left: stagingCanvas.width/2, 
-          top: stagingCanvas.height/2, 
-          originX: 'center', 
-          originY: 'center' 
-        });
-        stagingCanvas.add(img);
-        stagingCanvas.setActiveObject(img);
-        stagingCanvas.renderAll();
-      }, { crossOrigin: 'anonymous' });
+  document.getElementById('btn-crop-clear').addEventListener('click', () => {
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
     }
-
-    function deleteAsset(index) {
-      localAssets.splice(index, 1);
-      renderGallery();
-      saveProjectState();
-    }
-
-    // ==========================================
-    // 5. CONTROL PANEL & LAYERING STACK
-    // ==========================================
-    function bringToFrontMain() {
-      const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.bringToFront(); mainCanvas.renderAll(); saveProjectState(); }
-    }
-    function bringForwardMain() {
-      const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.bringForward(); mainCanvas.renderAll(); saveProjectState(); }
-    }
-    function sendBackwardMain() {
-      const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.sendBackward(); mainCanvas.renderAll(); saveProjectState(); }
-    }
-    function sendToBackMain() {
-      const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.sendToBack(); mainCanvas.renderAll(); saveProjectState(); }
-    }
-
-    function bindContinuousControl(buttonId, actionFunction) {
-      const btn = document.getElementById(buttonId);
-      let timer = null;
-
-      const start = (e) => {
-        if (e.cancelable) e.preventDefault();
-        actionFunction();
-        timer = setInterval(actionFunction, 50);
-      };
-
-      const stop = () => {
-        if (timer) clearInterval(timer);
-        timer = null;
-        saveProjectState();
-      };
-
-      btn.addEventListener('mousedown', start);
-      btn.addEventListener('mouseup', stop);
-      btn.addEventListener('mouseleave', stop);
-      btn.addEventListener('touchstart', start, { passive: false });
-      btn.addEventListener('touchend', stop);
-    }
-
-    function moveSelected(dx, dy) {
-      const obj = mainCanvas.getActiveObject();
-      if (!obj) return;
-      obj.set({ left: obj.left + dx, top: obj.top + dy });
-      obj.setCoords();
-      mainCanvas.renderAll();
-    }
-
-    function scaleSelected(factor) {
-      const obj = mainCanvas.getActiveObject();
-      if (!obj) return;
-
-      const mode = document.getElementById('boxAspectRatioMode').value;
-      if (mode === 'square' || obj.lockUniScaling) {
-        obj.scale(obj.scaleX * factor);
-      } else {
-        obj.set({ scaleX: obj.scaleX * factor, scaleY: obj.scaleY * factor });
-      }
-
-      obj.setCoords();
-      mainCanvas.renderAll();
-    }
-
-    function rotateSelected(angle) {
-      const obj = mainCanvas.getActiveObject();
-      if (!obj) return;
-      obj.set('angle', obj.angle + angle);
-      obj.setCoords();
-      mainCanvas.renderAll();
-    }
-
-    function equalizeSelectedSizes() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'activeSelection') {
-        alert("Pilih minimal 2 objek di Kanvas Utama (Shift + Klik)!");
-        return;
-      }
-
-      const objects = activeObj.getObjects();
-      if (objects.length < 2) return;
-
-      const baseWidth = objects[0].getScaledWidth();
-      const baseHeight = objects[0].getScaledHeight();
-
-      for (let i = 1; i < objects.length; i++) {
-        const target = objects[i];
-        target.set({
-          scaleX: baseWidth / target.width,
-          scaleY: baseHeight / target.height
-        });
-        target.setCoords();
-      }
-
-      mainCanvas.renderAll();
-      saveProjectState();
-      alert(`Ukuran disamakan: ${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px`);
-    }
-
-    bindContinuousControl('btnUp', () => moveSelected(0, -2));
-    bindContinuousControl('btnDown', () => moveSelected(0, 2));
-    bindContinuousControl('btnLeft', () => moveSelected(-2, 0));
-    bindContinuousControl('btnRight', () => moveSelected(2, 0));
-    bindContinuousControl('btnScaleUp', () => scaleSelected(1.02));
-    bindContinuousControl('btnScaleDown', () => scaleSelected(0.98));
-    bindContinuousControl('btnRotateCCW', () => rotateSelected(-2));
-    bindContinuousControl('btnRotateCW', () => rotateSelected(2));
-
-    function updateSelectedBoxRatio() {
-      const activeObj = mainCanvas.getActiveObject();
-      const mode = document.getElementById('boxAspectRatioMode').value;
-      const isSquare = mode === 'square';
-
-      if (activeObj) {
-        activeObj.set({ lockUniScaling: isSquare });
-        if (isSquare) {
-          const size = Math.max(activeObj.getScaledWidth(), activeObj.getScaledHeight());
-          activeObj.set({ scaleX: size / activeObj.width, scaleY: size / activeObj.height });
-        }
-        activeObj.setCoords();
-        mainCanvas.renderAll();
-        saveProjectState();
-      }
-    }
-
-    function syncRatioDropdown() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj) {
-        const dropdown = document.getElementById('boxAspectRatioMode');
-        dropdown.value = activeObj.lockUniScaling ? 'square' : 'free';
-      }
-    }
-
-    // ==========================================
-    // 6. KOTAK SAKTI & LISENSI
-    // ==========================================
-    function attachMagicBoxEvents(box) {
-      let lastClickTime = 0;
-      box.on('mousedown', function() {
-        const currentTime = new Date().getTime();
-        if (currentTime - lastClickTime < 300) { duplicateMainObj(); }
-        lastClickTime = currentTime;
-      });
-    }
-
-    function addMagicBox() {
-      const isSquare = document.getElementById('boxAspectRatioMode').value === 'square';
-      const rect = new fabric.Rect({
-        width: 120, height: 120,
-        fill: 'rgba(236, 72, 153, 0.1)', stroke: '#ec4899', strokeWidth: 2,
-        strokeDashArray: [6, 6], originX: 'center', originY: 'center'
-      });
-      const plusText = new fabric.Text('+', {
-        fontSize: 26, fill: '#ec4899', originX: 'center', originY: 'center', fontWeight: 'bold'
-      });
-      const magicBox = new fabric.Group([rect, plusText], {
-        left: mainCanvas.width / 2, top: mainCanvas.height / 2,
-        originX: 'center', originY: 'center', centeredScaling: true,
-        transparentCorners: false, cornerColor: '#ec4899', cornerStyle: 'circle',
-        lockUniScaling: isSquare
-      });
-
-      magicBox.isMagicBox = true;
-      attachMagicBoxEvents(magicBox);
-
-      mainCanvas.add(magicBox);
-      mainCanvas.setActiveObject(magicBox);
-      mainCanvas.renderAll();
-    }
-
-    function addLicenseBox() {
-      const isSquare = document.getElementById('boxAspectRatioMode').value === 'square';
-      const width = isSquare ? 60 : 90;
-      const height = isSquare ? 60 : 45;
-
-      const rect = new fabric.Rect({
-        width: width, height: height,
-        fill: 'rgba(6, 182, 212, 0.15)', stroke: '#06b6d4', strokeWidth: 2,
-        strokeDashArray: [4, 4], originX: 'center', originY: 'center', rx: 4, ry: 4
-      });
-      const labelText = new fabric.Text('📜 Lisensi', {
-        fontSize: 12, fill: '#06b6d4', originX: 'center', originY: 'center', fontWeight: 'bold'
-      });
-      const licenseBox = new fabric.Group([rect, labelText], {
-        left: mainCanvas.width - 70, top: 40,
-        originX: 'center', originY: 'center', centeredScaling: true,
-        transparentCorners: false, cornerColor: '#06b6d4', cornerStyle: 'circle',
-        lockUniScaling: isSquare
-      });
-
-      licenseBox.isLicenseBox = true;
-      attachMagicBoxEvents(licenseBox);
-
-      mainCanvas.add(licenseBox);
-      mainCanvas.setActiveObject(licenseBox);
-      mainCanvas.renderAll();
-    }
-
-    function autoPlaceLicense(position) {
-      let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox);
-      if (!targetBox) {
-        addLicenseBox();
-        targetBox = mainCanvas.getActiveObject();
-      }
-
-      const w = mainCanvas.width;
-      const h = mainCanvas.height;
-
-      if (position === 'top-right') {
-        targetBox.set({ left: w - 60, top: 35 });
-      } else if (position === 'bottom-right') {
-        targetBox.set({ left: w - 60, top: h - 35 });
-      } else if (position === 'bottom-left') {
-        targetBox.set({ left: 60, top: h - 35 });
-      }
-
-      targetBox.setCoords();
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
-
-    function duplicateMainObj() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj) {
-        alert("Pilih elemen terlebih dahulu!");
-        return;
-      }
-
-      activeObj.clone(function(clonedObj) {
-        clonedObj.set({
-          left: activeObj.left + 20, top: activeObj.top + 20,
-          evented: true, lockUniScaling: activeObj.lockUniScaling
-        });
-
-        if (activeObj.isMagicBox) {
-          clonedObj.isMagicBox = true;
-          attachMagicBoxEvents(clonedObj);
-        } else if (activeObj.isLicenseBox) {
-          clonedObj.isLicenseBox = true;
-          attachMagicBoxEvents(clonedObj);
-        }
-
-        mainCanvas.add(clonedObj);
-        mainCanvas.setActiveObject(clonedObj);
-        mainCanvas.renderAll();
-      });
-    }
-
-    function sendToMain() {
-      const activeStagingObj = stagingCanvas.getActiveObject();
-      if (!activeStagingObj || activeStagingObj.isCropOverlay) {
-        alert("Pilih elemen di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const activeMainObj = mainCanvas.getActiveObject();
-
-      activeStagingObj.clone(function(clonedObj) {
-        if (activeMainObj && (activeMainObj.isMagicBox || activeMainObj.isLicenseBox)) {
-          const targetWidth = activeMainObj.getScaledWidth();
-          const targetHeight = activeMainObj.getScaledHeight();
-          const targetLeft = activeMainObj.left;
-          const targetTop = activeMainObj.top;
-
-          const scaleX = targetWidth / clonedObj.width;
-          const scaleY = targetHeight / clonedObj.height;
-          const finalScale = Math.min(scaleX, scaleY);
-
-          clonedObj.set({
-            left: targetLeft, top: targetTop,
-            scaleX: finalScale, scaleY: finalScale,
-            originX: 'center', originY: 'center'
-          });
-
-          mainCanvas.remove(activeMainObj);
-        } else {
-          clonedObj.set({
-            left: mainCanvas.width / 2, top: mainCanvas.height / 2,
-            originX: 'center', originY: 'center'
-          });
-        }
-
-        mainCanvas.add(clonedObj);
-        mainCanvas.setActiveObject(clonedObj);
-        mainCanvas.renderAll();
-      });
-    }
-
-    // ==========================================
-    // 7. PEMOTONGAN PRESISI 1:1
-    // ==========================================
-    function showCropOverlay(shapeType) {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Aktifkan/Klik gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      activeObj.set({ originX: 'center', originY: 'center' });
-      activeObj.setCoords();
-
-      if (cropOverlayObj) stagingCanvas.remove(cropOverlayObj);
-
-      const center = activeObj.getCenterPoint();
-      const scaledW = activeObj.getScaledWidth();
-      const scaledH = activeObj.getScaledHeight();
-      const size = Math.min(scaledW, scaledH) * 0.7;
-
-      let frameShape;
-      if (shapeType === 'circle') {
-        frameShape = new fabric.Circle({
-          radius: size / 2, fill: 'rgba(16, 185, 129, 0.25)',
-          stroke: '#10b981', strokeWidth: 2, strokeDashArray: [4, 4],
-          originX: 'center', originY: 'center'
-        });
-      } else if (shapeType === 'square') {
-        frameShape = new fabric.Rect({
-          width: size, height: size, fill: 'rgba(16, 185, 129, 0.25)',
-          stroke: '#10b981', strokeWidth: 2, strokeDashArray: [4, 4],
-          originX: 'center', originY: 'center'
-        });
-      } else if (shapeType === 'rounded') {
-        frameShape = new fabric.Rect({
-          width: size, height: size, rx: 20, ry: 20, fill: 'rgba(16, 185, 129, 0.25)',
-          stroke: '#10b981', strokeWidth: 2, strokeDashArray: [4, 4],
-          originX: 'center', originY: 'center'
-        });
-      }
-
-      frameShape.set({
-        left: center.x, top: center.y,
-        cornerColor: '#10b981', cornerStyle: 'circle', transparentCorners: false, lockUniScaling: true
-      });
-
-      frameShape.isCropOverlay = true;
-      frameShape.cropShapeType = shapeType;
-      frameShape.targetImageObj = activeObj;
-
-      cropOverlayObj = frameShape;
-      stagingCanvas.add(cropOverlayObj);
-      stagingCanvas.setActiveObject(cropOverlayObj);
-      stagingCanvas.renderAll();
-      
-      const lockBtn = document.getElementById('btnLockCrop');
-      lockBtn.innerText = "🔒 Kunci Panduan";
-      lockBtn.classList.remove('btn-red');
-      lockBtn.classList.add('btn-orange');
-    }
-
-    function toggleLockCropOverlay() {
-      if (!cropOverlayObj) {
-        alert("Aktifkan panduan potong terlebih dahulu!");
-        return;
-      }
-
-      const isLocked = !cropOverlayObj.lockMovementX;
-      cropOverlayObj.set({
-        lockMovementX: isLocked, lockMovementY: isLocked,
-        lockScalingX: isLocked, lockScalingY: isLocked, lockRotation: isLocked
-      });
-
-      const lockBtn = document.getElementById('btnLockCrop');
-      if (isLocked) {
-        lockBtn.innerText = "🔓 Buka Kunci";
-        lockBtn.classList.remove('btn-orange');
-        lockBtn.classList.add('btn-red');
-      } else {
-        lockBtn.innerText = "🔒 Kunci Panduan";
-        lockBtn.classList.remove('btn-red');
-        lockBtn.classList.add('btn-orange');
-      }
-
-      stagingCanvas.renderAll();
-    }
-
-    function applyNativeCrop() {
-      if (!cropOverlayObj || !cropOverlayObj.targetImageObj) {
-        alert("Buat/Aktifkan panduan potong terlebih dahulu!");
-        return;
-      }
-
-      const imgObj = cropOverlayObj.targetImageObj;
-      const overlay = cropOverlayObj;
-
-      overlay.set('visible', false);
-      stagingCanvas.renderAll();
-
-      const dataURL = stagingCanvas.toDataURL({
-        format: 'png',
-        left: overlay.left - overlay.getScaledWidth() / 2,
-        top: overlay.top - overlay.getScaledHeight() / 2,
-        width: overlay.getScaledWidth(),
-        height: overlay.getScaledHeight(),
-        multiplier: 2
-      });
-
-      const w = overlay.getScaledWidth() * 2;
-      const h = overlay.getScaledHeight() * 2;
-
-      const maskCanvas = document.createElement('canvas');
-      const maskCtx = maskCanvas.getContext('2d');
-      maskCanvas.width = w;
-      maskCanvas.height = h;
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function() {
-        maskCtx.beginPath();
-        if (overlay.cropShapeType === 'circle') {
-          maskCtx.arc(w / 2, h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
-        } else if (overlay.cropShapeType === 'rounded') {
-          const r = Math.min(w, h) * 0.15;
-          maskCtx.roundRect(0, 0, w, h, r);
-        } else {
-          maskCtx.rect(0, 0, w, h);
-        }
-        maskCtx.closePath();
-        maskCtx.clip();
-
-        maskCtx.drawImage(img, 0, 0, w, h);
-
-        const croppedDataUrl = maskCanvas.toDataURL('image/png');
-
-        fabric.Image.fromURL(croppedDataUrl, function(newImg) {
-          newImg.set({
-            left: overlay.left, top: overlay.top,
-            originX: 'center', originY: 'center'
-          });
-          newImg.scaleToWidth(overlay.getScaledWidth());
-
-          stagingCanvas.remove(imgObj);
-          stagingCanvas.remove(overlay);
-          cropOverlayObj = null;
-
-          stagingCanvas.add(newImg);
-          stagingCanvas.setActiveObject(newImg);
-          stagingCanvas.renderAll();
-          saveProjectState();
-          alert("Pemotongan presisi berhasil! Siap dikirim ke Kanvas Utama.");
-        }, { crossOrigin: 'anonymous' });
-      };
-      img.src = dataURL;
-    }
-
-    // ==========================================
-    // 8. FONTS, CURVED TEXT, & FILTER FOTO
-    // ==========================================
-    function changeActiveTextFont() {
-      const activeObj = stagingCanvas.getActiveObject();
-      const fontName = document.getElementById('fontFamilySelector').value;
-      if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
-        activeObj.set({ fontFamily: fontName });
-        stagingCanvas.renderAll();
-        saveProjectState();
-      }
-    }
-
-    function toggleCurvedText() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
-        alert("Klik/Pilih elemen teks terlebih dahulu di Meja Potong!");
-        return;
-      }
-      
-      const text = activeObj.text;
-      const font = activeObj.fontFamily || 'Segoe UI';
-      const fill = activeObj.fill || '#ff0000';
-      
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      const size = 180;
-      tempCanvas.width = size;
-      tempCanvas.height = size;
-
-      tempCtx.font = `bold 16px ${font}`;
-      tempCtx.fillStyle = fill;
-      tempCtx.textAlign = 'center';
-
-      const radius = 60;
-      const angleStep = Math.PI / (text.length + 1);
-
-      tempCtx.save();
-      tempCtx.translate(size/2, size/2);
-      for (let i = 0; i < text.length; i++) {
-        tempCtx.save();
-        const angle = -Math.PI / 2 + (i - text.length / 2 + 0.5) * 0.25;
-        tempCtx.rotate(angle);
-        tempCtx.fillText(text[i], 0, -radius);
-        tempCtx.restore();
-      }
-      tempCtx.restore();
-
-      fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
+    cropImg.src = '';
+    cropImg.style.display = 'none';
+    imgInput.value = '';
+  });
+
+  // Kirim ke Kanvas Utama (Tegak Lurus & Auto Alignment)
+  document.getElementById('btn-crop-send').addEventListener('click', () => {
+    if (!cropper) return;
+    const cvs = cropper.getCroppedCanvas();
+    if (cvs) {
+      fabric.Image.fromURL(cvs.toDataURL(), (img) => {
         img.set({
-          left: activeObj.left, top: activeObj.top,
-          originX: 'center', originY: 'center'
+          angle: 0, // Dibuat tegak lurus
+          left: canvas.width / 2,
+          top: canvas.height / 2,
+          originX: 'center',
+          originY: 'center'
         });
-        stagingCanvas.remove(activeObj);
-        stagingCanvas.add(img);
-        stagingCanvas.setActiveObject(img);
-        stagingCanvas.renderAll();
-        saveProjectState();
+        if (img.width > canvas.width * 0.6) img.scaleToWidth(canvas.width * 0.4);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
       });
     }
+  });
 
-    function applyImageFilters() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') return;
-
-      const brightnessVal = parseFloat(document.getElementById('brightnessSlider').value);
-      const contrastVal = parseFloat(document.getElementById('contrastSlider').value);
-
-      activeObj.filters = [
-        new fabric.Image.filters.Brightness({ brightness: brightnessVal }),
-        new fabric.Image.filters.Contrast({ contrast: contrastVal })
-      ];
-
-      activeObj.applyFilters();
-      stagingCanvas.renderAll();
-    }
-
-    // ==========================================
-    // 9. OLAH GAMBAR UTILS & PIPET WARNA
-    // ==========================================
-    async function autoRemoveBgAI() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const originalElement = activeObj._element;
-      if (!originalElement) return;
-
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = originalElement.naturalWidth || originalElement.width;
-      tempCanvas.height = originalElement.naturalHeight || originalElement.height;
-      
-      try {
-        tempCtx.drawImage(originalElement, 0, 0);
-        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const data = imgData.data;
-
-        const corners = [
-          0, (tempCanvas.width - 1) * 4,
-          (tempCanvas.height - 1) * tempCanvas.width * 4,
-          ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4
-        ];
-
-        let bgR = 0, bgG = 0, bgB = 0;
-        corners.forEach(idx => {
-          bgR += data[idx]; bgG += data[idx + 1]; bgB += data[idx + 2];
-        });
-        bgR = Math.round(bgR / 4); bgG = Math.round(bgG / 4); bgB = Math.round(bgB / 4);
-
-        const threshold = 60;
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i], g = data[i + 1], b = data[i + 2];
-          const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-          if (diff < threshold) data[i + 3] = 0;
-        }
-
-        tempCtx.putImageData(imgData, 0, 0);
-
-        fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
-          newImg.set({
-            left: activeObj.left, top: activeObj.top,
-            scaleX: activeObj.scaleX, scaleY: activeObj.scaleY, angle: activeObj.angle,
-            originX: 'center', originY: 'center'
-          });
-          stagingCanvas.remove(activeObj);
-          stagingCanvas.add(newImg);
-          stagingCanvas.setActiveObject(newImg);
-          stagingCanvas.renderAll();
-        }, { crossOrigin: 'anonymous' });
-      } catch(e) {
-        alert("Gagal menghapus background secara otomatis.");
-      }
-    }
-
-    function enableColorPicker() {
-      pickColorMode = true;
-      alert("Klik titik warna pada Meja Potong!");
-    }
-
-    stagingCanvas.on('mouse:down', function(options) {
-      if (!pickColorMode) return;
-      const pointer = stagingCanvas.getPointer(options.e);
-      const ctx = stagingCanvas.getContext();
-      const pixel = ctx.getImageData(Math.round(pointer.x), Math.round(pointer.y), 1, 1).data;
-      const hexColor = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
-      document.getElementById('removeColor').value = hexColor;
-      pickColorMode = false;
-      removeBackgroundStaging();
+  // 2. KOTAK SAKTI & KOTAK LISENSI
+  document.getElementById('btn-add-sakti').addEventListener('click', () => {
+    const rect = new fabric.Rect({
+      left: canvas.width / 2, top: canvas.height / 2,
+      width: 80, height: 80, fill: '#f59e0b', stroke: '#ffffff', strokeWidth: 2,
+      originX: 'center', originY: 'center', angle: 0
     });
+    canvas.add(rect);
+  });
 
-    function removeBackgroundStaging() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') return;
-      const targetColor = document.getElementById('removeColor').value;
-      const removeColorFilter = new fabric.Image.filters.RemoveColor({
-        color: targetColor, distance: 0.2
+  document.getElementById('btn-add-lisensi').addEventListener('click', () => {
+    const group = new fabric.Group([
+      new fabric.Rect({ width: 70, height: 70, fill: '#ffffff', stroke: '#0284c7', strokeWidth: 2 }),
+      new fabric.Text('QR/PRO', { fontSize: 12, fill: '#0284c7', left: 10, top: 25 })
+    ], { left: canvas.width - 90, top: canvas.height - 90, angle: 0 });
+    canvas.add(group);
+  });
+
+  // 3. AUTO POSISI LISENSI
+  document.getElementById('pos-top-right').addEventListener('click', () => {
+    const obj = canvas.getActiveObject();
+    if (obj) { obj.set({ left: canvas.width - (obj.width*obj.scaleX)/2 - 10, top: (obj.height*obj.scaleY)/2 + 10 }); canvas.renderAll(); }
+  });
+  document.getElementById('pos-bottom-right').addEventListener('click', () => {
+    const obj = canvas.getActiveObject();
+    if (obj) { obj.set({ left: canvas.width - (obj.width*obj.scaleX)/2 - 10, top: canvas.height - (obj.height*obj.scaleY)/2 - 10 }); canvas.renderAll(); }
+  });
+  document.getElementById('pos-bottom-left').addEventListener('click', () => {
+    const obj = canvas.getActiveObject();
+    if (obj) { obj.set({ left: (obj.width*obj.scaleX)/2 + 10, top: canvas.height - (obj.height*obj.scaleY)/2 - 10 }); canvas.renderAll(); }
+  });
+
+  // 4. RATAKAN & TEGAK LURUS SEMUA (RATAKAN LABEL)
+  document.getElementById('btn-align-straight').addEventListener('click', () => {
+    canvas.getObjects().forEach(o => {
+      o.set({ angle: 0 });
+      o.centerH();
+    });
+    canvas.renderAll();
+  });
+
+  // 5. UPLOAD BACKGROUND
+  document.getElementById('bg-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (f) => {
+        fabric.Image.fromURL(f.target.result, (img) => {
+          canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+            scaleX: canvas.width / img.width,
+            scaleY: canvas.height / img.height
+          });
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // 6. DASARAN & WARNA
+  document.getElementById('btn-make-bg').addEventListener('click', () => {
+    const shape = document.getElementById('bg-shape').value;
+    const color = document.getElementById('bg-color-picker').value;
+    if (shape === 'square') {
+      canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
+    } else {
+      canvas.setBackgroundColor('transparent', canvas.renderAll.bind(canvas));
+      const circle = new fabric.Circle({
+        radius: canvas.width/2 - 5, fill: color, left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center'
       });
-      activeObj.filters = [removeColorFilter];
-      activeObj.applyFilters();
-      stagingCanvas.renderAll();
+      canvas.add(circle);
+      circle.sendToBack();
     }
+  });
 
-    function zoomMain(factor) {
-      currentZoom *= factor;
-      if (currentZoom < 0.5) currentZoom = 0.5;
-      if (currentZoom > 4) currentZoom = 4;
-      const center = mainCanvas.getCenter();
-      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
-      mainCanvas.renderAll();
+  document.getElementById('bg-transparent-toggle').addEventListener('change', (e) => {
+    if (e.target.checked) canvas.setBackgroundColor('transparent', canvas.renderAll.bind(canvas));
+  });
+
+  // 7. KONTROL TEKS & STEMPEL
+  document.getElementById('btn-add-text').addEventListener('click', () => {
+    const txt = new fabric.IText('Teks Label', {
+      left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center',
+      fill: document.getElementById('text-color').value, angle: 0
+    });
+    canvas.add(txt);
+    canvas.setActiveObject(txt);
+  });
+
+  document.getElementById('text-color').addEventListener('input', (e) => {
+    const obj = canvas.getActiveObject();
+    if (obj && (obj.type === 'i-text' || obj.type === 'text')) {
+      obj.set('fill', e.target.value);
+      canvas.renderAll();
     }
+  });
 
-    function resetZoomMain() {
-      currentZoom = 1;
-      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-      mainCanvas.renderAll();
+  document.getElementById('text-bg-color').addEventListener('input', (e) => {
+    const obj = canvas.getActiveObject();
+    if (obj && !document.getElementById('text-bg-transparent').checked) {
+      obj.set('textBackgroundColor', e.target.value);
+      canvas.renderAll();
     }
+  });
 
-    function addStagingText() {
-      const txt = prompt("Masukkan Teks Seni:", "Varian Rasa");
-      if (!txt) return;
-      const fontName = document.getElementById('fontFamilySelector').value || 'Segoe UI';
-      const textObj = new fabric.IText(txt, {
-        left: stagingCanvas.width/2, top: stagingCanvas.height/2, fontSize: 24, fill: '#ff0000',
-        fontFamily: fontName, fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
-      });
-      stagingCanvas.add(textObj);
-      stagingCanvas.setActiveObject(textObj);
-      stagingCanvas.renderAll();
+  document.getElementById('text-bg-transparent').addEventListener('change', (e) => {
+    const obj = canvas.getActiveObject();
+    if (obj) {
+      obj.set('textBackgroundColor', e.target.checked ? 'transparent' : document.getElementById('text-bg-color').value);
+      canvas.renderAll();
     }
+  });
 
-    function mergeSelected() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'activeSelection') return;
-      activeObj.toGroup();
-      mainCanvas.renderAll();
-    }
+  document.getElementById('stamp-opacity').addEventListener('input', (e) => {
+    const obj = canvas.getActiveObject();
+    if (obj) { obj.set('opacity', parseFloat(e.target.value)); canvas.renderAll(); }
+  });
 
-    function unmergeSelected() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'group') return;
-      activeObj.toActiveSelection();
-      mainCanvas.renderAll();
-    }
+  // 8. DOKUMEN LAINNYA & UNDUH HD
+  document.getElementById('btn-duplicate').addEventListener('click', () => {
+    const obj = canvas.getActiveObject();
+    if (obj) obj.clone(cl => { cl.set({ left: cl.left+10, top: cl.top+10 }); canvas.add(cl); });
+  });
 
-    function deleteMainObj() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj) {
-        mainCanvas.remove(activeObj);
-        mainCanvas.discardActiveObject();
-        mainCanvas.renderAll();
-      }
-    }
+  document.getElementById('btn-delete').addEventListener('click', () => {
+    canvas.getActiveObjects().forEach(o => canvas.remove(o));
+    canvas.discardActiveObject();
+  });
 
-    // ==========================================
-    // 10. EKSPOR HIGH-RES ULTRA HD (300 DPI)
-    // ==========================================
-    function exportPNG() {
-      const tempZoom = currentZoom;
-      resetZoomMain();
-      
-      const dpiMultiplier = parseFloat(document.getElementById('exportDpiMode').value) || 4;
+  document.getElementById('btn-clear-all').addEventListener('click', () => canvas.clear());
 
-      const dataURL = mainCanvas.toDataURL({
-        format: 'png',
-        quality: 1.0,
-        multiplier: dpiMultiplier
-      });
+  document.getElementById('btn-download').addEventListener('click', () => {
+    const mult = parseInt(document.getElementById('export-quality').value);
+    const link = document.createElement('a');
+    link.download = 'label-final-hd.png';
+    link.href = canvas.toDataURL({ format: 'png', multiplier: mult });
+    link.click();
+  });
+</script>
 
-      if (tempZoom !== 1) zoomMain(tempZoom);
-      
-      const link = document.createElement('a');
-      link.download = `label-desain-final-${dpiMultiplier * 72}DPI.png`;
-      link.href = dataURL;
-      link.click();
-    }
-
-    window.onload = loadProjectState;
-  </script>
 </body>
 </html>
