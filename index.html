@@ -15,22 +15,22 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
-    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; position: relative; }
+    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; padding-top: 60px; }
     
-    /* Tombol Geser Layar Floating (Pojok Kanan Atas) */
+    /* TOMBOL SCROLL MENGAMBANG (POJOK KANAN ATAS) */
     .floating-scroll-controls {
-      position: fixed; top: 15px; right: 15px; z-index: 9999;
-      display: flex; flex-direction: column; gap: 8px;
+      position: fixed; top: 12px; right: 12px; z-index: 9999;
+      display: flex; gap: 6px; background: rgba(15, 23, 42, 0.9);
+      padding: 6px; border-radius: 30px; border: 2px solid #ec4899;
+      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
     }
-    .btn-scroll-floating {
-      width: 45px; height: 45px; border-radius: 50%; border: 2px solid #ffffff;
+    .btn-scroll {
+      width: 42px; height: 42px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white;
-      font-size: 1.2rem; font-weight: bold; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.2s, background 0.2s;
+      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      user-select: none; transition: transform 0.1s, background 0.2s;
     }
-    .btn-scroll-floating:active { transform: scale(0.9); background: #3b82f6; }
+    .btn-scroll:active { transform: scale(0.9); background: #38bdf8; }
 
     .dashboard-header {
       width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
@@ -68,7 +68,7 @@
 
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: transparent; }
-    .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; }
+    .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; position: relative; }
 
     .control-panel {
       width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px;
@@ -107,14 +107,21 @@
     .inline-input { background: #1e293b; border: 1px solid #475569; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; flex: 1; min-width: 100px; }
     .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #94a3b8; }
     .slider-group input { width: 80px; }
+
+    /* LAYOUT TOOLBAR KOTAK SAKTI/LISENSI PRO */
+    .group-layout-bar {
+      display: none; width: 100%; background: #1e1b4b; border: 1px solid #6366f1;
+      padding: 6px 10px; border-radius: 6px; margin-top: 6px; justify-content: space-between; align-items: center;
+    }
+    .group-layout-bar.active { display: flex; }
   </style>
 </head>
 <body>
 
-  <!-- FITUR: TOMBOL GESER LAYAR MENCOLOK POJOK KANAN ATAS -->
+  <!-- TOMBOL GESER LAYAR PERMANEN (POJOK KANAN ATAS) -->
   <div class="floating-scroll-controls">
-    <button class="btn-scroll-floating" onclick="scrollToTop()" title="Geser ke Atas">⬆️</button>
-    <button class="btn-scroll-floating" onclick="scrollToBottom()" title="Geser ke Bawah">⬇️</button>
+    <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
+    <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
   </div>
 
   <div class="dashboard-header">
@@ -133,8 +140,8 @@
         + Upload BG <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
-      <button class="btn btn-pink" onclick="createMagicBoxGroup()">✨ + Kotak Sakti Group</button>
-      <button class="btn btn-cyan" onclick="createLicenseBoxGroup()">📜 + Kotak Lisensi Group</button>
+      <button class="btn btn-pink" id="btnMagicBoxAdder">✨ + Kotak Sakti</button>
+      <button class="btn btn-cyan" id="btnLicenseBoxAdder">📜 + Kotak Lisensi</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
@@ -149,23 +156,12 @@
       <button class="btn btn-dark-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
     </div>
 
-    <!-- FITUR KOTAK SAKTI & LISENSI MULTI-KLIK -->
-    <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#ec4899; font-weight:bold;">📦 Pengaturan Kotak Sakti / Lisensi:</span>
-      <div style="display:flex; align-items:center; gap:4px; font-size:0.75rem;">
-        <span>Jumlah Klik/Kotak:</span>
-        <input type="number" id="boxGroupCount" class="inline-input" value="3" min="1" max="10" style="width:50px; flex:initial;">
-      </div>
-      <div style="display:flex; align-items:center; gap:4px; font-size:0.75rem;">
-        <span>Bentuk:</span>
-        <select id="boxShapeForm" class="inline-input" style="width:110px; flex:initial;">
-          <option value="square">Bujur Sangkar</option>
-          <option value="rect">Persegi Panjang</option>
-        </select>
-      </div>
-      <div style="display:flex; gap:4px;">
-        <button class="btn btn-cyan" onclick="changeSelectedGroupLayout('horizontal')" title="Ubah Tata Letak Berjajar (Kiri-Kanan)">⬅️ Berjajar ➡️</button>
-        <button class="btn btn-cyan" onclick="changeSelectedGroupLayout('vertical')" title="Ubah Tata Letak Bertumpuk (Atas-Bawah)">⬆️ Bertumpuk ⬇️</button>
+    <!-- PANEL NAVIGASI SUSUNAN KOTAK GROUP (BERTUMPUK / BERJAJAR) -->
+    <div class="group-layout-bar" id="groupLayoutBar">
+      <span style="font-size: 0.72rem; color: #a5b4fc; font-weight: bold;">🔀 Ubah Susunan Kelompok Kotak:</span>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn btn-purple" onclick="setGroupArrangement('horizontal')" title="Ubah Berjajar Samping">⬅️ ➡️ Berjajar</button>
+        <button class="btn btn-purple" onclick="setGroupArrangement('vertical')" title="Ubah Bertumpuk Atas/Bawah">⬆️ ⬇️ Bertumpuk</button>
       </div>
     </div>
 
@@ -176,9 +172,7 @@
       <button class="btn btn-action" onclick="bringForwardMain()">⬆️ Naik 1 Layer</button>
       <button class="btn btn-action" onclick="sendBackwardMain()">⬇️ Turun 1 Layer</button>
       <button class="btn btn-action" onclick="sendToBackMain()">🔝 Paling Belakang</button>
-      <!-- REKOMENDASI UNDO / REDO -->
-      <button class="btn btn-action" onclick="undoMain()" style="margin-left:auto;">↩️ Undo</button>
-      <button class="btn btn-action" onclick="redoMain()">↪️ Redo</button>
+      <button class="btn btn-action btn-orange" onclick="undoMainCanvas()">↩️ Undo</button>
     </div>
 
     <!-- FITUR AUTO POSISI & CUSTOM BG SHAPE -->
@@ -199,7 +193,6 @@
       </select>
       <input type="color" id="bgColorPicker" value="#ffffff" title="Warna Latar">
       <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
-      <button class="btn btn-orange" onclick="toggleGridLines()">🏁 Toggle Garis Grid</button>
     </div>
 
     <div style="margin-top: 8px;">
@@ -288,7 +281,6 @@
       <button class="btn btn-orange" id="btnLockCrop" onclick="toggleLockCropOverlay()">🔒 Kunci Panduan</button>
       <button class="btn btn-pink" onclick="applyNativeCrop()">✂️ Eksekusi Potong Presisi</button>
       
-      <!-- TOMBOL HAPUS & CLEAR DI MEJA POTONG -->
       <button class="btn btn-red" onclick="deleteStagingObj()">🗑️ Hapus Elemen Staging</button>
       <button class="btn btn-dark-red" onclick="clearStagingCanvas()">🧹 Clear All Staging</button>
     </div>
@@ -306,7 +298,7 @@
       <button class="btn btn-purple" onclick="toggleCurvedText()">🔄 Teks Melengkung (Arc)</button>
     </div>
 
-    <!-- FITUR SLIDER FILTER GAMBAR (BRIGHTNESS / CONTRAST) -->
+    <!-- FITUR SLIDER FILTER GAMBAR -->
     <div class="inline-tool-box">
       <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🎨 Filter Foto:</span>
       <div class="slider-group">
@@ -334,7 +326,7 @@
       <button class="btn btn-zoom" onclick="generateSafeBarcode()">📊 + Barcode Aman Scan</button>
     </div>
 
-    <button class="btn btn-purple" style="width:100%; margin-top:8px; font-weight:bold; padding: 10px;" onclick="sendToMain()">
+    <button class="btn btn-purple" style="width:100%; margin-top:8px; padding: 10px;" onclick="sendToMain()">
       ⬆️ Masukkan Elemen Terpilih ke Kotak Sakti / Lisensi / Kanvas
     </button>
 
@@ -349,110 +341,94 @@
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
 
-    // MEJA POTONG: PADA SATU WAKTU HANYA BISA MENGAKTIFKAN 1 OBJEK
-    stagingCanvas.selection = false; // Nonaktifkan multi-select drag box pada meja potong
-
     let currentZoom = 1;
     let pickColorMode = false;
     let currentMainBgImage = null;
     let localAssets = [];
     let cropOverlayObj = null;
 
-    // HISTORY UNDO / REDO STATE
-    let historyStack = [];
-    let historyRedoStack = [];
-    let isHistoryLocked = false;
+    // HISTORY STACK UNTUK FITUR UNDO
+    let mainHistory = [];
 
-    function saveStateToHistory() {
-      if (isHistoryLocked) return;
-      if (historyStack.length > 20) historyStack.shift();
-      historyStack.push(JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'boxId', 'boxNumber', 'layoutDir', 'shapeForm', 'groupRef'])));
-      historyRedoStack = [];
+    function saveHistory() {
+      if (mainHistory.length > 20) mainHistory.shift();
+      mainHistory.push(JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling'])));
     }
 
-    function undoMain() {
-      if (historyStack.length > 1) {
-        historyRedoStack.push(historyStack.pop());
-        const state = historyStack[historyStack.length - 1];
-        isHistoryLocked = true;
-        mainCanvas.loadFromJSON(state, function() {
+    function undoMainCanvas() {
+      if (mainHistory.length > 1) {
+        mainHistory.pop(); // Hapus state saat ini
+        const prevState = mainHistory[mainHistory.length - 1];
+        mainCanvas.loadFromJSON(prevState, function() {
+          mainCanvas.getObjects().forEach(obj => {
+            if (obj.isMagicBox || obj.isLicenseBox || obj.isBoxGroup) attachBoxEvents(obj);
+          });
           mainCanvas.renderAll();
-          isHistoryLocked = false;
+          saveProjectState();
         });
       }
     }
 
-    function redoMain() {
-      if (historyRedoStack.length > 0) {
-        const state = historyRedoStack.pop();
-        historyStack.push(state);
-        isHistoryLocked = true;
-        mainCanvas.loadFromJSON(state, function() {
-          mainCanvas.renderAll();
-          isHistoryLocked = false;
-        });
+    // ATURAN MEJA POTONG: HANYA BOLEH MENGAFTIFKAN 1 OBJEK SAJA
+    stagingCanvas.on('selection:created', function(e) {
+      if (e.selected.length > 1) {
+        stagingCanvas.discardActiveObject();
+        stagingCanvas.setActiveObject(e.selected[0]);
+        stagingCanvas.renderAll();
       }
-    }
-
-    // ==========================================
-    // 0. SCROLLING & KEYBOARD SHORTCUTS
-    // ==========================================
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function scrollToBottom() {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-
-    window.addEventListener('keydown', function(e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-      if (e.key === 'Delete') {
-        deleteMainObj();
-        deleteStagingObj();
-      } else if (e.key === 'ArrowUp') { moveSelected(0, -2); e.preventDefault(); }
-      else if (e.key === 'ArrowDown') { moveSelected(0, 2); e.preventDefault(); }
-      else if (e.key === 'ArrowLeft') { moveSelected(-2, 0); e.preventDefault(); }
-      else if (e.key === 'ArrowRight') { moveSelected(2, 0); e.preventDefault(); }
-      else if (e.ctrlKey && e.key === 'z') { undoMain(); }
-      else if (e.ctrlKey && e.key === 'y') { redoMain(); }
     });
 
+    // SISTEM SCROLL LAYAR PRESISI & TAHAN SCROLL
+    function setupScrollButton(btnId, direction) {
+      const btn = document.getElementById(btnId);
+      let scrollTimer = null;
+
+      const performScroll = (speed) => {
+        window.scrollBy({ top: direction * speed, behavior: 'smooth' });
+      };
+
+      const start = (e) => {
+        if (e.cancelable) e.preventDefault();
+        performScroll(30); // Klik 1x geser sedikit
+        scrollTimer = setInterval(() => {
+          performScroll(80); // Tahan untuk geser cepat
+        }, 80);
+      };
+
+      const stop = () => {
+        if (scrollTimer) clearInterval(scrollTimer);
+        scrollTimer = null;
+      };
+
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', stop);
+      btn.addEventListener('mouseleave', stop);
+      btn.addEventListener('touchstart', start, { passive: false });
+      btn.addEventListener('touchend', stop);
+    }
+
+    setupScrollButton('btnScrollUp', -1);
+    setupScrollButton('btnScrollDown', 1);
+
+    // ==========================================
     // SMART SNAP & ALIGNMENT GUIDES
+    // ==========================================
     const SNAP_THRESHOLD = 10;
     mainCanvas.on('object:moving', function(e) {
       const obj = e.target;
       const canvasWidth = mainCanvas.width;
       const canvasHeight = mainCanvas.height;
 
-      if (Math.abs(obj.left - canvasWidth / 2) < SNAP_THRESHOLD) { obj.set({ left: canvasWidth / 2 }); }
-      if (Math.abs(obj.top - canvasHeight / 2) < SNAP_THRESHOLD) { obj.set({ top: canvasHeight / 2 }); }
-    });
-
-    // GRID OVERLAY
-    let isGridVisible = false;
-    function toggleGridLines() {
-      isGridVisible = !isGridVisible;
-      mainCanvas.renderAll();
-    }
-    mainCanvas.on('after:render', function() {
-      if (!isGridVisible) return;
-      const ctx = mainCanvas.getContext();
-      ctx.save();
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
-      ctx.lineWidth = 1;
-      const gridSize = 25;
-      for (let x = 0; x < mainCanvas.width; x += gridSize) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, mainCanvas.height); ctx.stroke();
+      if (Math.abs(obj.left - canvasWidth / 2) < SNAP_THRESHOLD) {
+        obj.set({ left: canvasWidth / 2 });
       }
-      for (let y = 0; y < mainCanvas.height; y += gridSize) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(mainCanvas.width, y); ctx.stroke();
+      if (Math.abs(obj.top - canvasHeight / 2) < SNAP_THRESHOLD) {
+        obj.set({ top: canvasHeight / 2 });
       }
-      ctx.restore();
     });
 
     // ==========================================
-    // 1. DASHBOARD & AUTO-SAVE STATE
+    // DASHBOARD & AUTO-SAVE STATE
     // ==========================================
     function initUserCounter() {
       let count = localStorage.getItem('label_studio_user_count') || Math.floor(Math.random() * 12) + 15;
@@ -461,9 +437,8 @@
     }
 
     function saveProjectState() {
-      saveStateToHistory();
       try {
-        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'lockUniScaling', 'boxId', 'boxNumber', 'layoutDir', 'shapeForm', 'groupRef']));
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling']));
         const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
@@ -486,15 +461,12 @@
       if (savedMain) {
         mainCanvas.loadFromJSON(savedMain, function() {
           mainCanvas.getObjects().forEach(obj => {
-            if (obj.isMagicBox || obj.isLicenseBox) attachMagicBoxEvents(obj);
+            if (obj.isMagicBox || obj.isLicenseBox || obj.isBoxGroup) attachBoxEvents(obj);
           });
           mainCanvas.renderAll();
-          saveStateToHistory();
+          saveHistory();
         });
-      } else {
-        saveStateToHistory();
       }
-
       if (savedStaging) {
         stagingCanvas.loadFromJSON(savedStaging, function() {
           stagingCanvas.renderAll();
@@ -512,126 +484,33 @@
       }
     }
 
-    mainCanvas.on('object:modified', saveProjectState);
-    mainCanvas.on('object:added', saveProjectState);
-    mainCanvas.on('object:removed', saveProjectState);
+    mainCanvas.on('object:modified', () => { saveProjectState(); saveHistory(); });
+    mainCanvas.on('object:added', () => { saveProjectState(); });
+    mainCanvas.on('object:removed', () => { saveProjectState(); saveHistory(); });
     
-    mainCanvas.on('selection:created', syncRatioDropdown);
-    mainCanvas.on('selection:updated', syncRatioDropdown);
+    mainCanvas.on('selection:created', onMainSelectionChanged);
+    mainCanvas.on('selection:updated', onMainSelectionChanged);
+    mainCanvas.on('selection:cleared', function() {
+      document.getElementById('groupLayoutBar').classList.remove('active');
+    });
+
+    function onMainSelectionChanged() {
+      syncRatioDropdown();
+      const activeObj = mainCanvas.getActiveObject();
+      const layoutBar = document.getElementById('groupLayoutBar');
+      if (activeObj && activeObj.isBoxGroup) {
+        layoutBar.classList.add('active');
+      } else {
+        layoutBar.classList.remove('active');
+      }
+    }
 
     stagingCanvas.on('object:modified', saveProjectState);
     stagingCanvas.on('object:added', saveProjectState);
     stagingCanvas.on('object:removed', saveProjectState);
 
     // ==========================================
-    // 2. GENERATOR KOTAK SAKTI & LISENSI GROUP (FITUR BARU 1)
-    // ==========================================
-    function createBoxGroup(type) {
-      const count = parseInt(document.getElementById('boxGroupCount').value) || 1;
-      const form = document.getElementById('boxShapeForm').value;
-      const groupId = 'group_' + Date.now();
-      
-      const isSquare = form === 'square';
-      const baseWidth = isSquare ? 70 : 100;
-      const baseHeight = isSquare ? 70 : 50;
-      const gap = 5;
-
-      const objectsGroup = [];
-      const startX = mainCanvas.width / 2;
-      const startY = 30 + baseHeight / 2;
-
-      for (let i = 0; i < count; i++) {
-        const boxNum = i + 1;
-        const color = type === 'magic' ? '#ec4899' : '#06b6d4';
-        const bgFill = type === 'magic' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(6, 182, 212, 0.15)';
-        const titleText = type === 'magic' ? `✨ Sakti #${boxNum}` : `📜 Lisensi #${boxNum}`;
-
-        const rect = new fabric.Rect({
-          width: baseWidth, height: baseHeight, rx: 6, ry: 6,
-          fill: bgFill, stroke: color, strokeWidth: 2, strokeDashArray: [5, 5],
-          originX: 'center', originY: 'center'
-        });
-
-        const label = new fabric.Text(titleText, {
-          fontSize: 11, fontWeight: 'bold', fill: color, originX: 'center', originY: 'center'
-        });
-
-        // Posisi default bertumpuk (Atas-Bawah)
-        const offsetY = i * (baseHeight + gap);
-
-        const subGroup = new fabric.Group([rect, label], {
-          left: startX,
-          top: startY + offsetY,
-          originX: 'center', originY: 'center',
-          lockUniScaling: isSquare
-        });
-
-        subGroup.isMagicBox = (type === 'magic');
-        subGroup.isLicenseBox = (type === 'license');
-        subGroup.boxId = groupId;
-        subGroup.boxNumber = boxNum;
-        subGroup.layoutDir = 'vertical';
-        subGroup.shapeForm = form;
-
-        attachMagicBoxEvents(subGroup);
-        objectsGroup.push(subGroup);
-      }
-
-      // Kelompokkan menjadi 1 objek perintah gabungan (Group)
-      const finalGroup = new fabric.Group(objectsGroup, {
-        left: mainCanvas.width / 2,
-        top: mainCanvas.height / 2,
-        originX: 'center', originY: 'center',
-        subTargetCheck: true
-      });
-
-      finalGroup.groupRef = groupId;
-      finalGroup.isBoxGroup = true;
-      finalGroup.layoutDir = 'vertical';
-      finalGroup.shapeForm = form;
-
-      mainCanvas.add(finalGroup);
-      mainCanvas.setActiveObject(finalGroup);
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
-
-    function createMagicBoxGroup() { createBoxGroup('magic'); }
-    function createLicenseBoxGroup() { createBoxGroup('license'); }
-
-    // Merubah Tata Letak Kelompok (Berjajar vs Bertumpuk)
-    function changeSelectedGroupLayout(direction) {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || !activeObj.isBoxGroup) {
-        alert("Pilih Kelompok Kotak Sakti/Lisensi terlebih dahulu!");
-        return;
-      }
-
-      const items = activeObj.getObjects();
-      activeObj.layoutDir = direction;
-
-      let currentPos = 0;
-      items.forEach((item, idx) => {
-        const w = item.getScaledWidth();
-        const h = item.getScaledHeight();
-        if (direction === 'horizontal') {
-          // Berjajar (Kiri ke Kanan)
-          item.set({ left: currentPos, top: 0 });
-          currentPos += w + 8;
-        } else {
-          // Bertumpuk (Atas ke Bawah)
-          item.set({ left: 0, top: currentPos });
-          currentPos += h + 8;
-        }
-      });
-
-      activeObj.addWithUpdate();
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
-
-    // ==========================================
-    // 3. GENERATOR LATAR & STEMPEL LISENSI
+    // GENERATOR LATAR & STEMPEL LISENSI
     // ==========================================
     function generateCustomBgShape() {
       const shapeType = document.getElementById('bgShapeType').value;
@@ -743,7 +622,7 @@
     }
 
     // ==========================================
-    // 4. RATAKAN BG & ASET GUDANG
+    // RATAKAN BG & ASET GUDANG
     // ==========================================
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
@@ -830,7 +709,6 @@
     }
 
     function loadImageToStaging(dataUrl) {
-      // MEJA POTONG CUMA BOLEH 1 OBJEK AKTIF
       fabric.Image.fromURL(dataUrl, function(img) {
         img.scaleToWidth(130);
         img.set({ 
@@ -840,6 +718,8 @@
           originX: 'center', 
           originY: 'center' 
         });
+        stagingCanvas.clear();
+        stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
         stagingCanvas.add(img);
         stagingCanvas.setActiveObject(img);
         stagingCanvas.renderAll();
@@ -853,7 +733,7 @@
     }
 
     // ==========================================
-    // 5. CONTROL PANEL & LAYERING STACK
+    // CONTROL PANEL & LAYERING STACK
     // ==========================================
     function bringToFrontMain() {
       const obj = mainCanvas.getActiveObject();
@@ -874,7 +754,6 @@
 
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
-      if (!btn) return;
       let timer = null;
 
       const start = (e) => {
@@ -1007,7 +886,118 @@
       }
     }
 
-    function attachMagicBoxEvents(box) {
+    // ==========================================
+    // SISTEM KOTAK SAKTI & LISENSI BERTUMPUK / BERJAJAR
+    // ==========================================
+    let clickTimerMagic = null;
+    let clickCountMagic = 0;
+    let clickTimerLicense = null;
+    let clickCountLicense = 0;
+
+    document.getElementById('btnMagicBoxAdder').addEventListener('click', function() {
+      clickCountMagic++;
+      if (clickTimerMagic) clearTimeout(clickTimerMagic);
+      clickTimerMagic = setTimeout(() => {
+        createBoxGroup('magic', clickCountMagic);
+        clickCountMagic = 0;
+      }, 350);
+    });
+
+    document.getElementById('btnLicenseBoxAdder').addEventListener('click', function() {
+      clickCountLicense++;
+      if (clickTimerLicense) clearTimeout(clickTimerLicense);
+      clickTimerLicense = setTimeout(() => {
+        createBoxGroup('license', clickCountLicense);
+        clickCountLicense = 0;
+      }, 350);
+    });
+
+    function createBoxGroup(type, count, mode = 'vertical') {
+      const isSquare = document.getElementById('boxAspectRatioMode').value === 'square';
+      const isMagic = type === 'magic';
+      
+      const width = isMagic ? 110 : (isSquare ? 70 : 100);
+      const height = isMagic ? (isSquare ? 110 : 80) : (isSquare ? 70 : 50);
+      const strokeColor = isMagic ? '#ec4899' : '#06b6d4';
+      const fillColor = isMagic ? 'rgba(236, 72, 153, 0.12)' : 'rgba(6, 182, 212, 0.12)';
+      const titlePrefix = isMagic ? '✨ Sakti' : '📜 Lisensi';
+
+      const boxElements = [];
+
+      for (let i = 0; i < count; i++) {
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (mode === 'vertical') {
+          offsetY = i * 14;
+          offsetX = i * 4;
+        } else {
+          offsetX = i * (width + 10);
+        }
+
+        const rect = new fabric.Rect({
+          width: width, height: height,
+          fill: fillColor, stroke: strokeColor, strokeWidth: 2,
+          strokeDashArray: [5, 5], originX: 'center', originY: 'center',
+          rx: isMagic ? 4 : 6, ry: isMagic ? 4 : 6,
+          left: offsetX, top: offsetY
+        });
+
+        const numText = new fabric.Text(`${i + 1}`, {
+          fontSize: 14, fill: strokeColor, fontWeight: 'bold',
+          originX: 'center', originY: 'center', left: offsetX - (width/2 - 12), top: offsetY - (height/2 - 12)
+        });
+
+        const labelText = new fabric.Text(`${titlePrefix} #${i + 1}`, {
+          fontSize: 11, fill: strokeColor, fontWeight: 'bold',
+          originX: 'center', originY: 'center', left: offsetX, top: offsetY
+        });
+
+        boxElements.push(rect, labelText, numText);
+      }
+
+      const boxGroup = new fabric.Group(boxElements, {
+        left: mainCanvas.width / 2, top: mainCanvas.height / 2,
+        originX: 'center', originY: 'center', centeredScaling: true,
+        transparentCorners: false, cornerColor: strokeColor, cornerStyle: 'circle',
+        lockUniScaling: isSquare, angle: 0
+      });
+
+      boxGroup.isBoxGroup = true;
+      boxGroup.boxType = type;
+      boxGroup.boxCount = count;
+      boxGroup.arrangementMode = mode;
+      boxGroup.nextFillIndex = 0; // Untuk auto fill meja potong
+      if (isMagic) boxGroup.isMagicBox = true; else boxGroup.isLicenseBox = true;
+
+      attachBoxEvents(boxGroup);
+
+      mainCanvas.add(boxGroup);
+      mainCanvas.setActiveObject(boxGroup);
+      mainCanvas.renderAll();
+      saveProjectState();
+    }
+
+    function setGroupArrangement(mode) {
+      const activeObj = mainCanvas.getActiveObject();
+      if (activeObj && activeObj.isBoxGroup) {
+        const type = activeObj.boxType;
+        const count = activeObj.boxCount;
+        const left = activeObj.left;
+        const top = activeObj.top;
+
+        mainCanvas.remove(activeObj);
+        createBoxGroup(type, count, mode);
+        
+        const newGroup = mainCanvas.getActiveObject();
+        newGroup.set({ left: left, top: top });
+        newGroup.setCoords();
+        mainCanvas.renderAll();
+        saveProjectState();
+      }
+    }
+
+    function attachBoxEvents(box) {
       let lastClickTime = 0;
       box.on('mousedown', function() {
         const currentTime = new Date().getTime();
@@ -1017,9 +1007,9 @@
     }
 
     function autoPlaceLicense(position) {
-      let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox || (o.isBoxGroup && o.getObjects().some(sub => sub.isLicenseBox)));
+      let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox || (o.isBoxGroup && o.boxType === 'license'));
       if (!targetBox) {
-        createLicenseBoxGroup();
+        createBoxGroup('license', 1, 'vertical');
         targetBox = mainCanvas.getActiveObject();
       }
 
@@ -1027,11 +1017,11 @@
       const h = mainCanvas.height;
 
       if (position === 'top-right') {
-        targetBox.set({ left: w - 80, top: 50, angle: 0 });
+        targetBox.set({ left: w - 70, top: 40, angle: 0 });
       } else if (position === 'bottom-right') {
-        targetBox.set({ left: w - 80, top: h - 50, angle: 0 });
+        targetBox.set({ left: w - 70, top: h - 40, angle: 0 });
       } else if (position === 'bottom-left') {
-        targetBox.set({ left: 80, top: h - 50, angle: 0 });
+        targetBox.set({ left: 70, top: h - 40, angle: 0 });
       }
 
       targetBox.setCoords();
@@ -1048,97 +1038,71 @@
 
       activeObj.clone(function(clonedObj) {
         clonedObj.set({
-          left: activeObj.left + 20, top: activeObj.top + 20,
+          left: activeObj.left + 25, top: activeObj.top + 25,
           evented: true, lockUniScaling: activeObj.lockUniScaling
         });
 
-        if (activeObj.isMagicBox) clonedObj.isMagicBox = true;
-        if (activeObj.isLicenseBox) clonedObj.isLicenseBox = true;
-        if (activeObj.isBoxGroup) clonedObj.isBoxGroup = true;
-
-        attachMagicBoxEvents(clonedObj);
+        if (activeObj.isBoxGroup) {
+          clonedObj.isBoxGroup = true;
+          clonedObj.boxType = activeObj.boxType;
+          clonedObj.boxCount = activeObj.boxCount;
+          clonedObj.arrangementMode = activeObj.arrangementMode;
+          clonedObj.nextFillIndex = 0;
+          attachBoxEvents(clonedObj);
+        }
 
         mainCanvas.add(clonedObj);
         mainCanvas.setActiveObject(clonedObj);
         mainCanvas.renderAll();
-        saveProjectState();
       });
     }
 
-    // ==========================================
-    // 6. LOGIKA OTOMATIS MENGISI KOTAK (FITUR BARU 2)
-    // ==========================================
+    // KIRIM GAMBAR DARI MEJA POTONG KE KANVAS UTAMA (AUTOFILL URUTAN KOTAK SAKTI/LISENSI)
     function sendToMain() {
       const activeStagingObj = stagingCanvas.getActiveObject();
       if (!activeStagingObj || activeStagingObj.isCropOverlay) {
-        alert("Pilih 1 elemen di Meja Potong terlebih dahulu!");
+        alert("Pilih elemen di Meja Potong terlebih dahulu!");
         return;
       }
 
-      // Cari Kotak Sakti/Lisensi paling awal (Nomor 1 paling atas / paling kiri)
-      let targetSlot = null;
-      const allObjects = mainCanvas.getObjects();
-
-      // Cek apakah ada Box Group aktif
-      for (let obj of allObjects) {
-        if (obj.isBoxGroup) {
-          const subBoxes = obj.getObjects();
-          // Cari slot kosong terdepan berdasarkan urutan nomor 1, 2, 3...
-          for (let sub of subBoxes) {
-            if (!sub.hasFilledContent) {
-              targetSlot = { group: obj, subBox: sub };
-              break;
-            }
-          }
-        } else if ((obj.isMagicBox || obj.isLicenseBox) && !obj.hasFilledContent) {
-          targetSlot = { group: null, subBox: obj };
-        }
-        if (targetSlot) break;
-      }
+      const activeMainObj = mainCanvas.getActiveObject();
 
       activeStagingObj.clone(function(clonedObj) {
         clonedObj.set({ angle: 0 });
 
-        if (targetSlot) {
-          const sub = targetSlot.subBox;
-          const group = targetSlot.group;
+        if (activeMainObj && activeMainObj.isBoxGroup) {
+          const groupCount = activeMainObj.boxCount;
+          const currentIndex = activeMainObj.nextFillIndex || 0;
 
-          let absLeft, absTop, targetW, targetH;
+          const groupBounds = activeMainObj.getBoundingRect();
+          const scaleX = groupBounds.width / clonedObj.width;
+          const scaleY = groupBounds.height / clonedObj.height;
+          const finalScale = Math.min(scaleX, scaleY) * 0.8;
 
-          if (group) {
-            const matrix = sub.calcTransformMatrix();
-            const options = fabric.util.qrDecompose(matrix);
-            absLeft = options.translateX;
-            absTop = options.translateY;
-            targetW = sub.getScaledWidth() * group.scaleX;
-            targetH = sub.getScaledHeight() * group.scaleY;
+          let targetX = activeMainObj.left;
+          let targetY = activeMainObj.top;
+
+          if (activeMainObj.arrangementMode === 'vertical') {
+            targetY += (currentIndex * 12) - (groupCount * 6);
           } else {
-            absLeft = sub.left;
-            absTop = sub.top;
-            targetW = sub.getScaledWidth();
-            targetH = sub.getScaledHeight();
+            targetX += (currentIndex * 35) - (groupCount * 15);
           }
 
-          const scaleX = targetW / clonedObj.width;
-          const scaleY = targetH / clonedObj.height;
-          const finalScale = Math.min(scaleX, scaleY);
-
           clonedObj.set({
-            left: absLeft,
-            top: absTop,
+            left: targetX,
+            top: targetY,
             scaleX: finalScale,
             scaleY: finalScale,
             originX: 'center',
             originY: 'center'
           });
 
-          sub.hasFilledContent = true; // Tandai slot ini sudah terisi
+          activeMainObj.nextFillIndex = (currentIndex + 1) % groupCount;
         } else {
-          // Jika tidak ada kotak aktif/kosong, tempatkan di tengah kanvas
           clonedObj.set({
-            left: mainCanvas.width / 2,
+            left: mainCanvas.width / 2, 
             top: mainCanvas.height / 2,
-            originX: 'center',
+            originX: 'center', 
             originY: 'center'
           });
         }
@@ -1151,7 +1115,7 @@
     }
 
     // ==========================================
-    // 7. PEMOTONGAN PRESISI 1:1 & KONTROL MEJA POTONG
+    // PEMOTONGAN PRESISI 1:1 & KONTROL MEJA POTONG
     // ==========================================
     function deleteStagingObj() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1332,7 +1296,7 @@
     }
 
     // ==========================================
-    // 8. FONTS, CURVED TEXT, & FILTER FOTO
+    // FONTS, CURVED TEXT, & FILTER FOTO
     // ==========================================
     function changeActiveTextFont() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1409,7 +1373,7 @@
     }
 
     // ==========================================
-    // 9. OLAH GAMBAR UTILS & PIPET WARNA
+    // OLAH GAMBAR UTILS & PIPET WARNA
     // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1521,6 +1485,8 @@
         left: stagingCanvas.width/2, top: stagingCanvas.height/2, fontSize: 24, fill: '#ff0000',
         fontFamily: fontName, fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
       });
+      stagingCanvas.clear();
+      stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
       stagingCanvas.add(textObj);
       stagingCanvas.setActiveObject(textObj);
       stagingCanvas.renderAll();
@@ -1553,7 +1519,7 @@
     }
 
     // ==========================================
-    // 10. EKSPOR HIGH-RES ULTRA HD (300 DPI)
+    // EKSPOR HIGH-RES ULTRA HD (300 DPI)
     // ==========================================
     function exportPNG() {
       const tempZoom = currentZoom;
