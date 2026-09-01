@@ -15,32 +15,32 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
-    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; padding-top: 60px; }
+    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
     
-    /* TOMBOL SCROLL MENGAMBANG (POJOK KANAN ATAS) */
-    .floating-scroll-controls {
-      position: fixed; top: 12px; right: 12px; z-index: 9999;
-      display: flex; gap: 6px; background: rgba(15, 23, 42, 0.9);
-      padding: 6px; border-radius: 30px; border: 2px solid #ec4899;
-      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
-    }
-    .btn-scroll {
-      width: 42px; height: 42px; border-radius: 50%; border: none;
-      background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white;
-      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      user-select: none; transition: transform 0.1s, background 0.2s;
-    }
-    .btn-scroll:active { transform: scale(0.9); background: #38bdf8; }
-
     .dashboard-header {
       width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+      position: relative;
     }
-    .dash-title { font-size: 0.9rem; font-weight: bold; color: #38bdf8; }
-    .dash-stats { display: flex; gap: 8px; font-size: 0.75rem; }
+    .dash-title { font-size: 0.9rem; font-weight: bold; color: #38bdf8; display: flex; flex-direction: column; gap: 4px; }
+    .dash-stats { display: flex; gap: 8px; font-size: 0.75rem; align-items: center; }
     .stat-badge { background: #334155; padding: 4px 8px; border-radius: 4px; border: 1px solid #475569; }
     .stat-badge span { color: #10b981; font-weight: bold; }
+
+    /* TOMBOL SCROLL MENGAMBANG (DISESUAIKAN PRESISI) */
+    .floating-scroll-controls {
+      display: flex; gap: 6px; background: rgba(15, 23, 42, 0.9);
+      padding: 4px; border-radius: 30px; border: 2px solid #ec4899;
+      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4); margin-left: 10px;
+    }
+    .btn-scroll {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white;
+      font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      user-select: none; transition: transform 0.1s, background 0.2s;
+    }
+    .btn-scroll:active { transform: scale(0.9); background: #38bdf8; }
 
     .section-box {
       width: 100%; max-width: 650px; background: #1e293b; border: 1px solid #334155;
@@ -118,17 +118,18 @@
 </head>
 <body>
 
-  <!-- TOMBOL GESER LAYAR PERMANEN (POJOK KANAN ATAS) -->
-  <div class="floating-scroll-controls">
-    <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
-    <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
-  </div>
-
   <div class="dashboard-header">
-    <div class="dash-title">🏷️ Studio Label Pro (Ultimate HD)</div>
+    <div class="dash-title">
+      <span>🏷️ Studio Label Pro</span>
+      <span style="font-size: 0.75rem; color: #94a3b8;">(Ultimate HD)</span>
+    </div>
     <div class="dash-stats">
-      <div class="stat-badge">Pengguna: <span id="userCount">1</span> Active</div>
-      <div class="stat-badge">Status: <span style="color:#ec4899;">Owner PRO</span></div>
+      <div class="stat-badge">Pengguna: <span id="userCount">21</span> Active</div>
+      <!-- TOMBOL GESER LAYAR PERMANEN -->
+      <div class="floating-scroll-controls">
+        <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
+        <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
+      </div>
     </div>
   </div>
 
@@ -369,7 +370,6 @@
       }
     }
 
-    // ATURAN MEJA POTONG: HANYA BOLEH MENGAFTIFKAN 1 OBJEK SAJA
     stagingCanvas.on('selection:created', function(e) {
       if (e.selected.length > 1) {
         stagingCanvas.discardActiveObject();
@@ -378,7 +378,7 @@
       }
     });
 
-    // SISTEM SCROLL LAYAR PRESISI & TAHAN SCROLL
+    // SISTEM SCROLL LAYAR PRESISI
     function setupScrollButton(btnId, direction) {
       const btn = document.getElementById(btnId);
       let scrollTimer = null;
@@ -389,9 +389,9 @@
 
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
-        performScroll(30); // Klik 1x geser sedikit
+        performScroll(30);
         scrollTimer = setInterval(() => {
-          performScroll(80); // Tahan untuk geser cepat
+          performScroll(80);
         }, 80);
       };
 
@@ -410,9 +410,7 @@
     setupScrollButton('btnScrollUp', -1);
     setupScrollButton('btnScrollDown', 1);
 
-    // ==========================================
     // SMART SNAP & ALIGNMENT GUIDES
-    // ==========================================
     const SNAP_THRESHOLD = 10;
     mainCanvas.on('object:moving', function(e) {
       const obj = e.target;
@@ -427,11 +425,8 @@
       }
     });
 
-    // ==========================================
-    // DASHBOARD & AUTO-SAVE STATE
-    // ==========================================
     function initUserCounter() {
-      let count = localStorage.getItem('label_studio_user_count') || Math.floor(Math.random() * 12) + 15;
+      let count = localStorage.getItem('label_studio_user_count') || 21;
       document.getElementById('userCount').innerText = count;
       localStorage.setItem('label_studio_user_count', count);
     }
@@ -509,9 +504,7 @@
     stagingCanvas.on('object:added', saveProjectState);
     stagingCanvas.on('object:removed', saveProjectState);
 
-    // ==========================================
     // GENERATOR LATAR & STEMPEL LISENSI
-    // ==========================================
     function generateCustomBgShape() {
       const shapeType = document.getElementById('bgShapeType').value;
       const color = document.getElementById('bgColorPicker').value;
@@ -621,9 +614,6 @@
       }
     }
 
-    // ==========================================
-    // RATAKAN BG & ASET GUDANG
-    // ==========================================
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
       if (!bg) {
@@ -732,9 +722,6 @@
       saveProjectState();
     }
 
-    // ==========================================
-    // CONTROL PANEL & LAYERING STACK
-    // ==========================================
     function bringToFrontMain() {
       const obj = mainCanvas.getActiveObject();
       if (obj) { obj.bringToFront(); mainCanvas.renderAll(); saveProjectState(); }
@@ -887,7 +874,7 @@
     }
 
     // ==========================================
-    // SISTEM KOTAK SAKTI & LISENSI BERTUMPUK / BERJAJAR
+    // SISTEM KOTAK SAKTI & LISENSI BERTUMPUK RAPI (GAMBAR KANAN)
     // ==========================================
     let clickTimerMagic = null;
     let clickCountMagic = 0;
@@ -916,23 +903,25 @@
       const isSquare = document.getElementById('boxAspectRatioMode').value === 'square';
       const isMagic = type === 'magic';
       
-      const width = isMagic ? 110 : (isSquare ? 70 : 100);
+      const width = isMagic ? 110 : (isSquare ? 70 : 90);
       const height = isMagic ? (isSquare ? 110 : 80) : (isSquare ? 70 : 50);
       const strokeColor = isMagic ? '#ec4899' : '#06b6d4';
-      const fillColor = isMagic ? 'rgba(236, 72, 153, 0.12)' : 'rgba(6, 182, 212, 0.12)';
+      const fillColor = isMagic ? 'rgba(236, 72, 153, 0.08)' : 'rgba(6, 182, 212, 0.08)';
       const titlePrefix = isMagic ? '✨ Sakti' : '📜 Lisensi';
 
       const boxElements = [];
+      const gap = 8; // Jarak presisi antar kotak
 
       for (let i = 0; i < count; i++) {
         let offsetX = 0;
         let offsetY = 0;
 
         if (mode === 'vertical') {
-          offsetY = i * 14;
-          offsetX = i * 4;
+          offsetY = i * (height + gap);
+          offsetX = 0; // Sejajar vertikal tanpa serong/diagonal
         } else {
-          offsetX = i * (width + 10);
+          offsetX = i * (width + gap);
+          offsetY = 0;
         }
 
         const rect = new fabric.Rect({
@@ -943,12 +932,13 @@
           left: offsetX, top: offsetY
         });
 
-        const numText = new fabric.Text(`${i + 1}`, {
-          fontSize: 14, fill: strokeColor, fontWeight: 'bold',
+        // Selalu pakai label #1 seperti contoh acuan kanan
+        const numText = new fabric.Text(`1`, {
+          fontSize: 13, fill: strokeColor, fontWeight: 'bold',
           originX: 'center', originY: 'center', left: offsetX - (width/2 - 12), top: offsetY - (height/2 - 12)
         });
 
-        const labelText = new fabric.Text(`${titlePrefix} #${i + 1}`, {
+        const labelText = new fabric.Text(`${titlePrefix} #1`, {
           fontSize: 11, fill: strokeColor, fontWeight: 'bold',
           originX: 'center', originY: 'center', left: offsetX, top: offsetY
         });
@@ -956,8 +946,10 @@
         boxElements.push(rect, labelText, numText);
       }
 
+      const defaultLeft = isMagic ? mainCanvas.width * 0.7 : mainCanvas.width * 0.3;
+
       const boxGroup = new fabric.Group(boxElements, {
-        left: mainCanvas.width / 2, top: mainCanvas.height / 2,
+        left: defaultLeft, top: mainCanvas.height / 2,
         originX: 'center', originY: 'center', centeredScaling: true,
         transparentCorners: false, cornerColor: strokeColor, cornerStyle: 'circle',
         lockUniScaling: isSquare, angle: 0
@@ -967,7 +959,7 @@
       boxGroup.boxType = type;
       boxGroup.boxCount = count;
       boxGroup.arrangementMode = mode;
-      boxGroup.nextFillIndex = 0; // Untuk auto fill meja potong
+      boxGroup.nextFillIndex = 0;
       if (isMagic) boxGroup.isMagicBox = true; else boxGroup.isLicenseBox = true;
 
       attachBoxEvents(boxGroup);
@@ -1057,7 +1049,6 @@
       });
     }
 
-    // KIRIM GAMBAR DARI MEJA POTONG KE KANVAS UTAMA (AUTOFILL URUTAN KOTAK SAKTI/LISENSI)
     function sendToMain() {
       const activeStagingObj = stagingCanvas.getActiveObject();
       if (!activeStagingObj || activeStagingObj.isCropOverlay) {
@@ -1114,9 +1105,6 @@
       });
     }
 
-    // ==========================================
-    // PEMOTONGAN PRESISI 1:1 & KONTROL MEJA POTONG
-    // ==========================================
     function deleteStagingObj() {
       const activeObj = stagingCanvas.getActiveObject();
       if (activeObj) {
@@ -1295,9 +1283,6 @@
       img.src = dataURL;
     }
 
-    // ==========================================
-    // FONTS, CURVED TEXT, & FILTER FOTO
-    // ==========================================
     function changeActiveTextFont() {
       const activeObj = stagingCanvas.getActiveObject();
       const fontName = document.getElementById('fontFamilySelector').value;
@@ -1372,9 +1357,6 @@
       stagingCanvas.renderAll();
     }
 
-    // ==========================================
-    // OLAH GAMBAR UTILS & PIPET WARNA
-    // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -1518,9 +1500,6 @@
       }
     }
 
-    // ==========================================
-    // EKSPOR HIGH-RES ULTRA HD (300 DPI)
-    // ==========================================
     function exportPNG() {
       const tempZoom = currentZoom;
       resetZoomMain();
