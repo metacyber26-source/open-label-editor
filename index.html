@@ -8,15 +8,17 @@
   <meta http-equiv="Expires" content="0" />
   <title>Label Design Studio - Ultimate Pro & AI Edition</title>
   
+  <!-- Fabric.js, JsBarcode, & Google Fonts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Pacifico&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
     body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
     
     .dashboard-header {
-      width: 100%; max-width: 600px; background: linear-gradient(135deg, #1e293b, #0f172a);
+      width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
       display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
     }
@@ -26,7 +28,7 @@
     .stat-badge span { color: #10b981; font-weight: bold; }
 
     .section-box {
-      width: 100%; max-width: 600px; background: #1e293b; border: 1px solid #334155;
+      width: 100%; max-width: 650px; background: #1e293b; border: 1px solid #334155;
       border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center;
     }
 
@@ -64,7 +66,7 @@
     }
     .btn-dpad:active { background: #0284c7; }
     .action-group { display: flex; flex-direction: column; gap: 4px; }
-    .action-row { display: flex; gap: 4px; }
+    .action-row { display: flex; gap: 4px; align-items: center; }
     .btn-action { height: 34px; padding: 0 8px; font-size: 0.72rem; background: #1e293b; border: 1px solid #475569; color: white; cursor: pointer; border-radius: 4px; }
     .btn-action:active { background: #ec4899; }
 
@@ -87,18 +89,21 @@
       width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
     }
     .inline-input { background: #1e293b; border: 1px solid #475569; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; flex: 1; min-width: 100px; }
+    .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #94a3b8; }
+    .slider-group input { width: 80px; }
   </style>
 </head>
 <body>
 
   <div class="dashboard-header">
-    <div class="dash-title">🏷️ Studio Label Pro</div>
+    <div class="dash-title">🏷️ Studio Label Pro (Ultimate HD)</div>
     <div class="dash-stats">
       <div class="stat-badge">Pengguna: <span id="userCount">1</span> Active</div>
       <div class="stat-badge">Status: <span style="color:#ec4899;">Owner PRO</span></div>
     </div>
   </div>
 
+  <!-- KANVAS UTAMA -->
   <div class="section-box">
     <h3>1. KANVAS UTAMA (HASIL LABEL FINAL)</h3>
     <div class="toolbar">
@@ -118,10 +123,19 @@
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
-      <button class="btn btn-green" onclick="exportPNG()">Unduh PNG</button>
       <button class="btn btn-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
     </div>
 
+    <!-- FITUR LAYER STACK MANAGEMENT -->
+    <div class="inline-tool-box">
+      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📚 Layering (Tumpukan):</span>
+      <button class="btn btn-action" onclick="bringToFrontMain()">🔝 Paling Depan</button>
+      <button class="btn btn-action" onclick="bringForwardMain()">⬆️ Naik 1 Layer</button>
+      <button class="btn btn-action" onclick="sendBackwardMain()">⬇️ Turun 1 Layer</button>
+      <button class="btn btn-action" onclick="sendToBackMain()">🔝 Paling Belakang</button>
+    </div>
+
+    <!-- FITUR AUTO POSISI & CUSTOM BG SHAPE -->
     <div class="inline-tool-box">
       <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📍 Auto Posisi Lisensi:</span>
       <button class="btn btn-cyan" onclick="autoPlaceLicense('top-right')">Kanan Atas</button>
@@ -145,6 +159,20 @@
       <canvas id="mainCanvas" width="500" height="250"></canvas>
     </div>
 
+    <!-- FITUR EKSPOR ULTRA HD / PRINT READY -->
+    <div class="inline-tool-box" style="justify-content: space-between;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:0.7rem; color:#10b981; font-weight:bold;">🖨️ Kualitas Unduh:</span>
+        <select id="exportDpiMode" class="inline-input" style="flex: initial; width: 160px;">
+          <option value="1">Standard (72 DPI Web)</option>
+          <option value="2">HD (150 DPI Cetak)</option>
+          <option value="4" selected>Ultra HD 300 DPI (Cetak Stiker)</option>
+        </select>
+      </div>
+      <button class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;" onclick="exportPNG()">📥 Unduh PNG HD</button>
+    </div>
+
+    <!-- CONTROLS & ASPECT RATIO -->
     <div class="control-panel">
       <div class="dpad-group">
         <span style="font-size: 0.68rem; color: #94a3b8; margin-bottom: 2px;">Geser Presisi</span>
@@ -161,7 +189,6 @@
       <div class="action-group">
         <span style="font-size: 0.68rem; color: #94a3b8; text-align: center;">Ukuran & Rotasi</span>
         
-        <!-- FITUR PENGATURAN MODEL/RASIO KOTAK -->
         <div class="action-row" style="margin-bottom: 2px;">
           <span style="font-size:0.65rem; color:#38bdf8;">Rasio:</span>
           <select id="boxAspectRatioMode" class="inline-input" style="padding: 2px 4px; font-size: 0.68rem;" onchange="updateSelectedBoxRatio()">
@@ -182,6 +209,7 @@
     </div>
   </div>
 
+  <!-- MEJA POTONG / STAGING AREA -->
   <div class="section-box">
     <h3>2. MEJA POTONG & OLAH GAMBAR (STAGING AREA)</h3>
     
@@ -212,6 +240,32 @@
       
       <button class="btn btn-orange" id="btnLockCrop" onclick="toggleLockCropOverlay()">🔒 Kunci Panduan</button>
       <button class="btn btn-pink" onclick="applyNativeCrop()">✂️ Eksekusi Potong Presisi</button>
+    </div>
+
+    <!-- FITUR EDIT FONTS & CURVED TEXT -->
+    <div class="inline-tool-box">
+      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🔤 Teks Lanjutan:</span>
+      <select id="fontFamilySelector" class="inline-input" style="flex:initial; width:110px;" onchange="changeActiveTextFont()">
+        <option value="Segoe UI">Default</option>
+        <option value="Poppins">Poppins</option>
+        <option value="Montserrat">Montserrat</option>
+        <option value="Pacifico">Pacifico (Latin)</option>
+        <option value="Roboto">Roboto</option>
+      </select>
+      <button class="btn btn-purple" onclick="toggleCurvedText()">🔄 Teks Melengkung (Arc)</button>
+    </div>
+
+    <!-- FITUR SLIDER FILTER GAMBAR (BRIGHTNESS / CONTRAST) -->
+    <div class="inline-tool-box">
+      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🎨 Filter Foto:</span>
+      <div class="slider-group">
+        <span>Cerah</span>
+        <input type="range" id="brightnessSlider" min="-1" max="1" step="0.05" value="0" oninput="applyImageFilters()">
+      </div>
+      <div class="slider-group">
+        <span>Kontras</span>
+        <input type="range" id="contrastSlider" min="-1" max="1" step="0.05" value="0" oninput="applyImageFilters()">
+      </div>
     </div>
 
     <div class="inline-tool-box">
@@ -251,6 +305,28 @@
     let cropOverlayObj = null;
 
     // ==========================================
+    // 0. FITUR SMART SNAP & ALIGNMENT GUIDES
+    // ==========================================
+    const SNAP_THRESHOLD = 10;
+    mainCanvas.on('object:moving', function(e) {
+      const obj = e.target;
+      const canvasWidth = mainCanvas.width;
+      const canvasHeight = mainCanvas.height;
+
+      const objCenterX = obj.left;
+      const objCenterY = obj.top;
+
+      // Snap to Center X
+      if (Math.abs(objCenterX - canvasWidth / 2) < SNAP_THRESHOLD) {
+        obj.set({ left: canvasWidth / 2 });
+      }
+      // Snap to Center Y
+      if (Math.abs(objCenterY - canvasHeight / 2) < SNAP_THRESHOLD) {
+        obj.set({ top: canvasHeight / 2 });
+      }
+    });
+
+    // ==========================================
     // 1. DASHBOARD & AUTO-SAVE STATE
     // ==========================================
     function initUserCounter() {
@@ -262,7 +338,7 @@
     function saveProjectState() {
       try {
         const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'lockUniScaling']));
-        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj']));
+        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
         localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
@@ -310,7 +386,6 @@
     mainCanvas.on('object:added', saveProjectState);
     mainCanvas.on('object:removed', saveProjectState);
     
-    // Update Dropdown Rasio ketika Objek di-select
     mainCanvas.on('selection:created', syncRatioDropdown);
     mainCanvas.on('selection:updated', syncRatioDropdown);
 
@@ -542,8 +617,25 @@
     }
 
     // ==========================================
-    // 5. CONTROL PANEL D-PAD & SAMAKAN UKURAN
+    // 5. CONTROL PANEL & LAYERING STACK
     // ==========================================
+    function bringToFrontMain() {
+      const obj = mainCanvas.getActiveObject();
+      if (obj) { obj.bringToFront(); mainCanvas.renderAll(); saveProjectState(); }
+    }
+    function bringForwardMain() {
+      const obj = mainCanvas.getActiveObject();
+      if (obj) { obj.bringForward(); mainCanvas.renderAll(); saveProjectState(); }
+    }
+    function sendBackwardMain() {
+      const obj = mainCanvas.getActiveObject();
+      if (obj) { obj.sendBackward(); mainCanvas.renderAll(); saveProjectState(); }
+    }
+    function sendToBackMain() {
+      const obj = mainCanvas.getActiveObject();
+      if (obj) { obj.sendToBack(); mainCanvas.renderAll(); saveProjectState(); }
+    }
+
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
       let timer = null;
@@ -581,14 +673,9 @@
 
       const mode = document.getElementById('boxAspectRatioMode').value;
       if (mode === 'square' || obj.lockUniScaling) {
-        // Skala seragam 1:1
         obj.scale(obj.scaleX * factor);
       } else {
-        // Skala bebas
-        obj.set({
-          scaleX: obj.scaleX * factor,
-          scaleY: obj.scaleY * factor
-        });
+        obj.set({ scaleX: obj.scaleX * factor, scaleY: obj.scaleY * factor });
       }
 
       obj.setCoords();
@@ -606,7 +693,7 @@
     function equalizeSelectedSizes() {
       const activeObj = mainCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'activeSelection') {
-        alert("Pilih minimal 2 objek di Kanvas Utama (gunakan Shift + Klik)!");
+        alert("Pilih minimal 2 objek di Kanvas Utama (Shift + Klik)!");
         return;
       }
 
@@ -639,7 +726,6 @@
     bindContinuousControl('btnRotateCCW', () => rotateSelected(-2));
     bindContinuousControl('btnRotateCW', () => rotateSelected(2));
 
-    // LOGIKA PERUBAHAN MODEL (BUJUR SANGKAR VS BEBAS)
     function updateSelectedBoxRatio() {
       const activeObj = mainCanvas.getActiveObject();
       const mode = document.getElementById('boxAspectRatioMode').value;
@@ -648,12 +734,8 @@
       if (activeObj) {
         activeObj.set({ lockUniScaling: isSquare });
         if (isSquare) {
-          // Paksa ke bentuk Bujur Sangkar 1:1 saat diubah ke mode bujur sangkar
           const size = Math.max(activeObj.getScaledWidth(), activeObj.getScaledHeight());
-          activeObj.set({
-            scaleX: size / activeObj.width,
-            scaleY: size / activeObj.height
-          });
+          activeObj.set({ scaleX: size / activeObj.width, scaleY: size / activeObj.height });
         }
         activeObj.setCoords();
         mainCanvas.renderAll();
@@ -670,15 +752,13 @@
     }
 
     // ==========================================
-    // 6. KOTAK SAKTI & KOTAK LISENSI
+    // 6. KOTAK SAKTI & LISENSI
     // ==========================================
     function attachMagicBoxEvents(box) {
       let lastClickTime = 0;
       box.on('mousedown', function() {
         const currentTime = new Date().getTime();
-        if (currentTime - lastClickTime < 300) {
-          duplicateMainObj();
-        }
+        if (currentTime - lastClickTime < 300) { duplicateMainObj(); }
         lastClickTime = currentTime;
       });
     }
@@ -768,10 +848,8 @@
 
       activeObj.clone(function(clonedObj) {
         clonedObj.set({
-          left: activeObj.left + 20,
-          top: activeObj.top + 20,
-          evented: true,
-          lockUniScaling: activeObj.lockUniScaling
+          left: activeObj.left + 20, top: activeObj.top + 20,
+          evented: true, lockUniScaling: activeObj.lockUniScaling
         });
 
         if (activeObj.isMagicBox) {
@@ -829,7 +907,7 @@
     }
 
     // ==========================================
-    // 7. PEMOTONGAN PRESISI BERBASIS CANVAS RASTERIZATION (FIX MELENCENG)
+    // 7. PEMOTONGAN PRESISI 1:1
     // ==========================================
     function showCropOverlay(shapeType) {
       const activeObj = stagingCanvas.getActiveObject();
@@ -965,10 +1043,8 @@
 
         fabric.Image.fromURL(croppedDataUrl, function(newImg) {
           newImg.set({
-            left: overlay.left,
-            top: overlay.top,
-            originX: 'center',
-            originY: 'center'
+            left: overlay.left, top: overlay.top,
+            originX: 'center', originY: 'center'
           });
           newImg.scaleToWidth(overlay.getScaledWidth());
 
@@ -987,7 +1063,84 @@
     }
 
     // ==========================================
-    // 8. OLAH GAMBAR UTILS & PIPET WARNA
+    // 8. FONTS, CURVED TEXT, & FILTER FOTO
+    // ==========================================
+    function changeActiveTextFont() {
+      const activeObj = stagingCanvas.getActiveObject();
+      const fontName = document.getElementById('fontFamilySelector').value;
+      if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+        activeObj.set({ fontFamily: fontName });
+        stagingCanvas.renderAll();
+        saveProjectState();
+      }
+    }
+
+    function toggleCurvedText() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
+        alert("Klik/Pilih elemen teks terlebih dahulu di Meja Potong!");
+        return;
+      }
+      
+      const text = activeObj.text;
+      const font = activeObj.fontFamily || 'Segoe UI';
+      const fill = activeObj.fill || '#ff0000';
+      
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      const size = 180;
+      tempCanvas.width = size;
+      tempCanvas.height = size;
+
+      tempCtx.font = `bold 16px ${font}`;
+      tempCtx.fillStyle = fill;
+      tempCtx.textAlign = 'center';
+
+      const radius = 60;
+      const angleStep = Math.PI / (text.length + 1);
+
+      tempCtx.save();
+      tempCtx.translate(size/2, size/2);
+      for (let i = 0; i < text.length; i++) {
+        tempCtx.save();
+        const angle = -Math.PI / 2 + (i - text.length / 2 + 0.5) * 0.25;
+        tempCtx.rotate(angle);
+        tempCtx.fillText(text[i], 0, -radius);
+        tempCtx.restore();
+      }
+      tempCtx.restore();
+
+      fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
+        img.set({
+          left: activeObj.left, top: activeObj.top,
+          originX: 'center', originY: 'center'
+        });
+        stagingCanvas.remove(activeObj);
+        stagingCanvas.add(img);
+        stagingCanvas.setActiveObject(img);
+        stagingCanvas.renderAll();
+        saveProjectState();
+      });
+    }
+
+    function applyImageFilters() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') return;
+
+      const brightnessVal = parseFloat(document.getElementById('brightnessSlider').value);
+      const contrastVal = parseFloat(document.getElementById('contrastSlider').value);
+
+      activeObj.filters = [
+        new fabric.Image.filters.Brightness({ brightness: brightnessVal }),
+        new fabric.Image.filters.Contrast({ contrast: contrastVal })
+      ];
+
+      activeObj.applyFilters();
+      stagingCanvas.renderAll();
+    }
+
+    // ==========================================
+    // 9. OLAH GAMBAR UTILS & PIPET WARNA
     // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1092,9 +1245,10 @@
     function addStagingText() {
       const txt = prompt("Masukkan Teks Seni:", "Varian Rasa");
       if (!txt) return;
+      const fontName = document.getElementById('fontFamilySelector').value || 'Segoe UI';
       const textObj = new fabric.IText(txt, {
         left: stagingCanvas.width/2, top: stagingCanvas.height/2, fontSize: 24, fill: '#ff0000',
-        fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
+        fontFamily: fontName, fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
       });
       stagingCanvas.add(textObj);
       stagingCanvas.setActiveObject(textObj);
@@ -1124,13 +1278,25 @@
       }
     }
 
+    // ==========================================
+    // 10. EKSPOR HIGH-RES ULTRA HD (300 DPI)
+    // ==========================================
     function exportPNG() {
       const tempZoom = currentZoom;
       resetZoomMain();
-      const dataURL = mainCanvas.toDataURL({ format: 'png', quality: 1.0, multiplier: 2 });
+      
+      const dpiMultiplier = parseFloat(document.getElementById('exportDpiMode').value) || 4;
+
+      const dataURL = mainCanvas.toDataURL({
+        format: 'png',
+        quality: 1.0,
+        multiplier: dpiMultiplier
+      });
+
       if (tempZoom !== 1) zoomMain(tempZoom);
+      
       const link = document.createElement('a');
-      link.download = 'label-desain-final.png';
+      link.download = `label-desain-final-${dpiMultiplier * 72}DPI.png`;
       link.href = dataURL;
       link.click();
     }
