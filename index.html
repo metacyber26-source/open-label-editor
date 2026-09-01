@@ -18,13 +18,12 @@
         <button onclick="tambahKotakLisensi()" class="btn-secondary">+ Lisensi</button>
         <button onclick="tambahKotakTransaksi()" class="btn-secondary">+ Barcode</button>
         <button onclick="jalankanAnalisisLayout()" class="btn-ai">✨ Analisis AI</button>
-        <button onclick="prosesNestingCetak()" class="btn-print">🖨️ Cetak A3+</button>
-        <!-- Tombol Khusus untuk Buka/Tutup Panel di HP -->
+        <button onclick="prosesNestingCetak()" class="btn-print">🖨️ Preview Cetak A3+</button>
         <button onclick="togglePanelAI()" class="btn-toggle">📋 Panel Info</button>
       </div>
     </header>
 
-    <!-- Area Kerja / Kanvas Utama -->
+    <!-- BAGIAN 2: Area Meja Kerja (Workspace/Background Gelap) -->
     <main class="workspace">
       <div class="canvas-container">
         <!-- Pengaturan Ukuran Label Fisik Umum -->
@@ -41,14 +40,14 @@
           </select>
         </div>
 
-        <!-- Kanvas Editor Interaktif -->
+        <!-- BAGIAN 1: Tempat Label yang Dikerjakan (Kotak Putih Editor) -->
         <div id="label-canvas" class="canvas-preview persegi">
           <div class="safe-zone-guide">Batas Aman Presisi (Safe Zone)</div>
         </div>
       </div>
     </main>
 
-    <!-- Panel Samping Info & AI (Bisa Buka/Tutup) -->
+    <!-- Panel Samping Info & AI -->
     <aside id="ai-sidebar" class="ai-panel">
       <div class="panel-header">
         <h3>Asisten Rekomendasi</h3>
@@ -56,16 +55,33 @@
       </div>
       
       <div id="ai-messages">
-        <p class="hint">Sistem akan menganalisis hirarki desain, keterbacaan barcode, dan posisi lisensi legalitas produk Anda.</p>
+        <p class="hint">Sistem akan menganalisis hierarki desain, keterbacaan barcode, dan posisi lisensi legalitas produk Anda.</p>
       </div>
 
       <hr class="divider">
 
       <h3>Kalkulator Lembar Cetak (A3+)</h3>
       <div id="nesting-results">
-        <p class="hint">Tekan tombol "🖨️ Cetak A3+" untuk melihat estimasi hasil cetak.</p>
+        <p class="hint">Tekan tombol "🖨️ Preview Cetak A3+" untuk melihat hasil tata letak lembar cetak.</p>
       </div>
     </aside>
+  </div>
+
+  <!-- POPUP VISUAL MEJA CUTTING / LEMBAR A3+ -->
+  <div id="modal-a3" class="modal-a3-overlay">
+    <div class="modal-a3-content">
+      <div class="modal-header">
+        <h3>🖨️ Visual Meja Potong & Lembar Cetak A3+ (32 x 48 cm)</h3>
+        <button onclick="tutupModalA3()" class="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="a3-summary-info" style="margin-bottom: 10px; font-size: 13px; font-weight: bold; color: #0284c7;"></p>
+        <!-- Simulation Board Sheet -->
+        <div class="a3-sheet-wrapper">
+          <div id="a3-sheet" class="a3-sheet"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
