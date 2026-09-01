@@ -2,10 +2,10 @@
 // SMART LABEL STUDIO - GENERAL AUTOMATION ENGINE
 // =================================================================
 
-// Konversi Rasio Skala Layar (1 cm = 37.8 piksel pada standar monitor 96 DPI)
+// Konversi Skala Layar (1 cm = 37.8 px pada monitor 96 DPI)
 const PIXELS_PER_CM = 37.8;
 
-// Konfigurasi Kertas Cetak A3+ Industri
+// Konfigurasi Kertas Cetak A3+
 const CONFIG_A3_PLUS = {
   sheetWidthCm: 32,
   sheetHeightCm: 48,
@@ -14,19 +14,25 @@ const CONFIG_A3_PLUS = {
   bleedCm: 0.5
 };
 
-// State Dimensi Aktif Label
+// State Dimensi Aktif
 let currentConfig = {
   widthCm: 15,
   heightCm: 7,
   shape: 'persegi'
 };
 
-// Inisialisasi Pertama saat Halaman Dimuat
+// Inisialisasi Pertama
 window.onload = function() {
   updateUkuranKanvas();
 };
 
-// 1. Fungsi Mengubah Ukuran Fisik Kanvas Layar Otomatis
+// 1. Fungsi Buka / Tutup Panel Info di Layar HP
+function togglePanelAI() {
+  const panel = document.getElementById('ai-sidebar');
+  panel.classList.toggle('active');
+}
+
+// 2. Mengubah Ukuran Fisik Kanvas Layar Otomatis
 function updateUkuranKanvas() {
   const lebarInput = parseFloat(document.getElementById('input-lebar').value) || 10;
   const tinggiInput = parseFloat(document.getElementById('input-tinggi').value) || 5;
@@ -39,7 +45,7 @@ function updateUkuranKanvas() {
   canvas.style.height = `${tinggiInput * PIXELS_PER_CM}px`;
 }
 
-// 2. Fungsi Mengubah Bentuk Label Secara Otomatis
+// 3. Mengubah Bentuk Label
 function updateBentukKanvas() {
   const bentuk = document.getElementById('select-bentuk').value;
   const canvas = document.getElementById('label-canvas');
@@ -48,11 +54,10 @@ function updateBentukKanvas() {
   canvas.className = `canvas-preview ${bentuk}`;
 }
 
-// 3. Modul Fitur "+ Kotak Lisensi & Legalitas" (Group Engine)
+// 4. Fitur "+ Kotak Lisensi"
 function tambahKotakLisensi() {
   const canvas = document.getElementById('label-canvas');
   
-  // Hapus jika sudah ada sebelumnya agar tidak duplikat
   const elemLama = document.getElementById('kotak-lisensi-group');
   if (elemLama) elemLama.remove();
 
@@ -60,25 +65,23 @@ function tambahKotakLisensi() {
   licenseGroup.className = 'license-group';
   licenseGroup.id = 'kotak-lisensi-group';
   
-  // Otomatisasi Penyatuan Barisan Sertifikasi Legalitas
   licenseGroup.innerHTML = `
     <div class="license-item">HALAL</div>
     <div class="license-item">BPOM / P-IRT</div>
-    <div class="license-item">MITRA / SPONSOR</div>
+    <div class="license-item">MITRA</div>
   `;
   
   canvas.appendChild(licenseGroup);
   buatElemenBisaDigeser(licenseGroup);
 }
 
-// 4. Modul Fitur "+ Barcode & QRIS" (Auto-Guard Minimal 2x2 cm)
+// 5. Fitur "+ Barcode" (Minimal 2x2 cm)
 function tambahKotakTransaksi() {
   const canvas = document.getElementById('label-canvas');
   
   const elemLama = document.getElementById('kotak-transaksi-group');
   if (elemLama) elemLama.remove();
 
-  // Menetapkan Ukuran Fisik Minimal 2cm x 2cm
   const minPixels = 2 * PIXELS_PER_CM;
   
   const transGroup = document.createElement('div');
@@ -96,7 +99,7 @@ function tambahKotakTransaksi() {
   buatElemenBisaDigeser(transGroup);
 }
 
-// 5. Engine Analisis AI (Pemeriksaan Keterbacaan & Marketing)
+// 6. Analisis AI Layout & Kelayakan
 function jalankanAnalisisLayout() {
   const panel = document.getElementById('ai-messages');
   panel.innerHTML = ''; 
@@ -106,13 +109,11 @@ function jalankanAnalisisLayout() {
   
   let laporan = [];
 
-  // Analisis 1: Dimensi & Bentuk Label
   laporan.push({
     tipe: 'info',
-    pesan: `📐 Bentuk label terdeteksi: <b>${currentConfig.shape.toUpperCase()}</b> (${currentConfig.widthCm} x ${currentConfig.heightCm} cm).`
+    pesan: `📐 Bentuk label: <b>${currentConfig.shape.toUpperCase()}</b> (${currentConfig.widthCm} x ${currentConfig.heightCm} cm).`
   });
 
-  // Analisis 2: Barcode & QRIS
   if (barcode) {
     const lebarPx = barcode.offsetWidth;
     const lebarCm = (lebarPx / PIXELS_PER_CM).toFixed(1);
@@ -120,39 +121,42 @@ function jalankanAnalisisLayout() {
     if (lebarCm < 2) {
       laporan.push({
         tipe: 'warning',
-        pesan: `⚠️ Ukuran Barcode (${lebarCm} cm) terlalu kecil! Minimal 2x2 cm pada hasil cetak agar terbaca mesin scanner kasir.`
+        pesan: `⚠️ Ukuran Barcode (${lebarCm} cm) terlalu kecil! Min 2x2 cm pada cetak.`
       });
     } else {
       laporan.push({
         tipe: 'success',
-        pesan: `✅ Barcode berukuran ${lebarCm} cm. Ukuran ideal dan aman dipindai.`
+        pesan: `✅ Barcode (${lebarCm} cm) aman dipindai kasir.`
       });
     }
   } else {
     laporan.push({
       tipe: 'warning',
-      pesan: `💡 Tambahkan elemen Barcode/QRIS transaksi untuk kelengkapan label dagang.`
+      pesan: `💡 Tambahkan elemen Barcode/QRIS transaksi.`
     });
   }
 
-  // Analisis 3: Lisensi & Legalitas
   if (lisensi) {
     laporan.push({
       tipe: 'success',
-      pesan: `✅ Seluruh logo legalitas (Halal, BPOM, Mitra) berhasil dikelompokkan (Grouped) dengan tinggi seragam secara presisi.`
+      pesan: `✅ Seluruh logo legalitas berhasil dikelompokkan dengan rapi.`
     });
   }
 
-  // Tampilkan Hasil Analisis ke Layar
   laporan.forEach(item => {
     const div = document.createElement('div');
     div.className = `ai-card ${item.tipe}`;
     div.innerHTML = item.pesan;
     panel.appendChild(div);
   });
+
+  // Jika di HP, otomatis buka panelnya saat tombol diklik
+  if (window.innerWidth <= 768) {
+    document.getElementById('ai-sidebar').classList.add('active');
+  }
 }
 
-// 6. Engine Simulasi Lembar Cetak A3+ (Automated Nesting Engine)
+// 7. Estimasi Cetak Lembar A3+ (Nesting)
 function prosesNestingCetak() {
   const panelNesting = document.getElementById('nesting-results');
   panelNesting.innerHTML = '';
@@ -160,39 +164,43 @@ function prosesNestingCetak() {
   const w = currentConfig.widthCm + CONFIG_A3_PLUS.bleedCm;
   const h = currentConfig.heightCm + CONFIG_A3_PLUS.bleedCm;
 
-  // Hitung Opsi A (Potret)
   const kolomA = Math.floor(CONFIG_A3_PLUS.printableWidthCm / w);
   const barisA = Math.floor(CONFIG_A3_PLUS.printableHeightCm / h);
   const totalA = kolomA * barisA;
 
-  // Hitung Opsi B (Lansekap / Diputar 90 Derajat)
   const kolomB = Math.floor(CONFIG_A3_PLUS.printableWidthCm / h);
   const barisB = Math.floor(CONFIG_A3_PLUS.printableHeightCm / w);
   const totalB = kolomB * barisB;
 
-  // Pilih Orientasi Paling Hemat Kertas
   let hasilTerbaik = (totalB > totalA) 
     ? { orientasi: 'Lansekap (Diputar 90°)', total: totalB, susunan: `${barisB} Baris x ${kolomB} Kolom` }
     : { orientasi: 'Potret (Standar)', total: totalA, susunan: `${barisA} Baris x ${kolomA} Kolom` };
 
   const efisiensi = ((hasilTerbaik.total * currentConfig.widthCm * currentConfig.heightCm) / (32 * 48) * 100).toFixed(1);
 
-  // Tampilkan Hasil Kalkulasi Cetak
   panelNesting.innerHTML = `
     <div class="ai-card info">
-      <b>Hasil Estimasi Kertas A3+:</b><br>
-      • Posisi Optimum: <b>${hasilTerbaik.orientasi}</b><br>
-      • Muat Label: <b>${hasilTerbaik.total} pcs / lembar</b><br>
-      • Susunan Potong: <b>${hasilTerbaik.susunan}</b><br>
+      <b>Estimasi Kertas A3+:</b><br>
+      • Posisi: <b>${hasilTerbaik.orientasi}</b><br>
+      • Hasil: <b>${hasilTerbaik.total} pcs / lembar</b><br>
+      • Susunan: <b>${hasilTerbaik.susunan}</b><br>
       • Efisiensi Bahan: <b>${efisiensi}% terpakai</b>
     </div>
   `;
+
+  // Jika di HP, otomatis buka panelnya saat tombol diklik
+  if (window.innerWidth <= 768) {
+    document.getElementById('ai-sidebar').classList.add('active');
+  }
 }
 
-// 7. Utilitas Helper (Drag and Drop Elemen Kanvas)
+// 8. Fitur Geser Elemen (Drag & Drop)
 function buatElemenBisaDigeser(elemen) {
   let posX = 0, posY = 0, awalX = 0, awalY = 0;
+
+  // Mendukung Sentuhan Jari di HP (Touch) & Klik Mouse di PC
   elemen.onmousedown = dragMouseDown;
+  elemen.ontouchstart = dragTouchStart;
 
   function dragMouseDown(e) {
     e.preventDefault();
@@ -215,5 +223,28 @@ function buatElemenBisaDigeser(elemen) {
   function closeDragElement() {
     document.onmouseup = null;
     document.onmousemove = null;
+  }
+
+  function dragTouchStart(e) {
+    let touch = e.touches[0];
+    awalX = touch.clientX;
+    awalY = touch.clientY;
+    document.ontouchend = closeTouchElement;
+    document.ontouchmove = touchDrag;
+  }
+
+  function touchDrag(e) {
+    let touch = e.touches[0];
+    posX = awalX - touch.clientX;
+    posY = awalY - touch.clientY;
+    awalX = touch.clientX;
+    awalY = touch.clientY;
+    elemen.style.top = (elemen.offsetTop - posY) + "px";
+    elemen.style.left = (elemen.offsetLeft - posX) + "px";
+  }
+
+  function closeTouchElement() {
+    document.ontouchend = null;
+    document.ontouchmove = null;
   }
 }
