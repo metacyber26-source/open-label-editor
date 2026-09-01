@@ -15,7 +15,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
     body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
     
-    /* DASHBOARD OWNER & STATUS HEADER */
     .dashboard-header {
       width: 100%; max-width: 600px; background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
@@ -53,7 +52,6 @@
     input[type="color"] { border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: transparent; }
     .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; }
 
-    /* KONTROL MODEL D-PAD & RE-SIZE */
     .control-panel {
       width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px;
       padding: 8px; margin-top: 8px; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 8px;
@@ -70,7 +68,6 @@
     .btn-action { height: 34px; padding: 0 8px; font-size: 0.72rem; background: #1e293b; border: 1px solid #475569; color: white; cursor: pointer; border-radius: 4px; }
     .btn-action:active { background: #ec4899; }
 
-    /* GALERI ASET LOKAL */
     .gallery-container {
       width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 6px; margin-bottom: 8px;
     }
@@ -86,7 +83,6 @@
       color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 16px; text-align: center; cursor: pointer;
     }
     
-    /* TOOLBOX MODAL / FORM INLINE */
     .inline-tool-box {
       width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
     }
@@ -126,7 +122,6 @@
       <button class="btn btn-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
     </div>
 
-    <!-- REKOMENDASI PENEMPATAN LISENSI -->
     <div class="inline-tool-box">
       <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📍 Auto Posisi Lisensi:</span>
       <button class="btn btn-cyan" onclick="autoPlaceLicense('top-right')">Kanan Atas</button>
@@ -201,14 +196,12 @@
       </div>
       <button class="btn btn-red" onclick="removeBackgroundStaging()">🪄 Hapus BG Warna</button>
 
-      <!-- PANDUAN BINGKAI CROP D-PAD INTERAKTIF -->
       <button class="btn btn-green" onclick="showCropOverlay('circle')">🎯 Panduan Lingkaran 1:1</button>
       <button class="btn btn-green" onclick="showCropOverlay('square')">🎯 Panduan Persegi 1:1</button>
       <button class="btn btn-green" onclick="showCropOverlay('rounded')">🎯 Panduan Lengkung 1:1</button>
       <button class="btn btn-pink" onclick="applyInteractiveCrop()">✂️ Eksekusi Potong Presisi</button>
     </div>
 
-    <!-- GENERATOR STEMPEL LISENSI DIGITAL / MULTI LISENSI -->
     <div class="inline-tool-box">
       <input type="text" id="licenseCodeInput" class="inline-input" placeholder="ID Lisensi (misal: LIC-ICP2E-001)">
       <button class="btn btn-cyan" onclick="generateLicenseStamp()">📜 + Stempel Lisensi</button>
@@ -236,14 +229,14 @@
   <canvas id="barcodeHiddenCanvas" style="display:none;"></canvas>
 
   <script>
-    const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff' });
-    const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc' });
+    const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
+    const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
 
     let currentZoom = 1;
     let pickColorMode = false;
     let currentMainBgImage = null;
     let localAssets = [];
-    let cropOverlayObj = null; // Storing active interactive crop frame
+    let cropOverlayObj = null;
 
     // ==========================================
     // 1. DASHBOARD & AUTO-SAVE STATE
@@ -256,13 +249,13 @@
 
     function saveProjectState() {
       try {
-        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox']));
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg']));
         const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
         localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
       } catch (e) {
-        console.warn("Gagal menyimpan otomatis:", e);
+        console.warn("Progres gagal disimpan otomatis (Storage penuh):", e);
       }
     }
 
@@ -272,7 +265,7 @@
       const savedAssets = localStorage.getItem('label_studio_assets');
 
       if (savedAssets) {
-        localAssets = JSON.parse(savedAssets);
+        try { localAssets = JSON.parse(savedAssets); } catch(e) { localAssets = []; }
         renderGallery();
       }
 
@@ -346,7 +339,7 @@
       const code = document.getElementById('licenseCodeInput').value.trim() || 'LIC-VERIFIED';
 
       const rect = new fabric.Rect({
-        width: 110, height: 34, rx: 6, ry: 6, fill: '#06b6d4', stroke: '#0284c7', strokeWidth: 1.5, originX: 'center', originY: 'center'
+        width: 120, height: 34, rx: 6, ry: 6, fill: '#06b6d4', stroke: '#0284c7', strokeWidth: 1.5, originX: 'center', originY: 'center'
       });
 
       const iconText = new fabric.Text("🛡️ " + code, {
@@ -369,7 +362,7 @@
     function generatePriceStamp() {
       const val = document.getElementById('stampPriceValue').value.trim();
       if (!val) {
-        alert("Masukkan nilai harga terlebih dahulu (Contoh: 15.000 atau 50)");
+        alert("Masukkan nilai harga terlebih dahulu!");
         return;
       }
 
@@ -382,7 +375,7 @@
       });
 
       const priceText = new fabric.Text(val, {
-        fontSize: 16, fontWeight: 'bold', fill: '#0f172a', originX: 'center', originY: 'center', top: 6
+        fontSize: 14, fontWeight: 'bold', fill: '#0f172a', originX: 'center', originY: 'center', top: 6
       });
 
       const stampGroup = new fabric.Group([circle, labelText, priceText], {
@@ -423,9 +416,9 @@
           stagingCanvas.setActiveObject(img);
           stagingCanvas.renderAll();
           saveProjectState();
-        });
+        }, { crossOrigin: 'anonymous' });
       } catch (e) {
-        alert("Format karakter Barcode tidak valid. Gunakan kombinasi angka/huruf standar.");
+        alert("Format karakter Barcode tidak valid.");
       }
     }
 
@@ -450,7 +443,7 @@
       mainCanvas.setBackgroundImage(bg, () => {
         mainCanvas.renderAll();
         saveProjectState();
-        alert("Label berhasil diratakan penuh ke kanvas utama!");
+        alert("Label berhasil diratakan penuh!");
       });
     }
 
@@ -461,7 +454,7 @@
         fabric.Image.fromURL(event.target.result, function(img) {
           currentMainBgImage = img;
           autoFlattenBg();
-        });
+        }, { crossOrigin: 'anonymous' });
       };
       reader.readAsDataURL(e.target.files[0]);
     });
@@ -505,7 +498,6 @@
         const delBtn = document.createElement('button');
         delBtn.className = 'btn-del-asset';
         delBtn.innerHTML = '✕';
-        delBtn.title = 'Hapus Aset';
         delBtn.onclick = (e) => {
           e.stopPropagation();
           deleteAsset(index);
@@ -524,7 +516,7 @@
         stagingCanvas.add(img);
         stagingCanvas.setActiveObject(img);
         stagingCanvas.renderAll();
-      });
+      }, { crossOrigin: 'anonymous' });
     }
 
     function deleteAsset(index) {
@@ -541,13 +533,12 @@
       let timer = null;
 
       const start = (e) => {
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         actionFunction();
-        timer = setInterval(actionFunction, 60);
+        timer = setInterval(actionFunction, 50);
       };
 
       const stop = (e) => {
-        e.preventDefault();
         if (timer) clearInterval(timer);
         timer = null;
         saveProjectState();
@@ -556,7 +547,7 @@
       btn.addEventListener('mousedown', start);
       btn.addEventListener('mouseup', stop);
       btn.addEventListener('mouseleave', stop);
-      btn.addEventListener('touchstart', start);
+      btn.addEventListener('touchstart', start, { passive: false });
       btn.addEventListener('touchend', stop);
     }
 
@@ -564,6 +555,7 @@
       const obj = mainCanvas.getActiveObject();
       if (!obj) return;
       obj.set({ left: obj.left + dx, top: obj.top + dy });
+      obj.setCoords();
       mainCanvas.renderAll();
     }
 
@@ -571,6 +563,7 @@
       const obj = mainCanvas.getActiveObject();
       if (!obj) return;
       obj.scale(obj.scaleX * factor);
+      obj.setCoords();
       mainCanvas.renderAll();
     }
 
@@ -578,14 +571,14 @@
       const obj = mainCanvas.getActiveObject();
       if (!obj) return;
       obj.set('angle', obj.angle + angle);
+      obj.setCoords();
       mainCanvas.renderAll();
     }
 
-    // Menyamakan Ukuran Objek yang Dipilih (Multi Selection / Pair Detection)
     function equalizeSelectedSizes() {
       const activeObj = mainCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'activeSelection') {
-        alert("Pilih minimal 2 objek di Kanvas Utama (gunakan Shift + Klik) untuk menyamakan ukurannya!");
+        alert("Pilih minimal 2 objek di Kanvas Utama (gunakan Shift + Klik)!");
         return;
       }
 
@@ -597,18 +590,16 @@
 
       for (let i = 1; i < objects.length; i++) {
         const target = objects[i];
-        const currentW = target.width;
-        const currentH = target.height;
-
         target.set({
-          scaleX: baseWidth / currentW,
-          scaleY: baseHeight / currentH
+          scaleX: baseWidth / target.width,
+          scaleY: baseHeight / target.height
         });
+        target.setCoords();
       }
 
       mainCanvas.renderAll();
       saveProjectState();
-      alert(`Ukuran seluruh logo/objek berhasil disamakan presisi (${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px)!`);
+      alert(`Ukuran objek disamakan presisi (${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px)!`);
     }
 
     bindContinuousControl('btnUp', () => moveSelected(0, -2));
@@ -773,7 +764,7 @@
     }
 
     // ==========================================
-    // 7. CROP OVERLAY INTERAKTIF (MEJA POTONG)
+    // 7. CROP OVERLAY INTERAKTIF (PERBAIKAN PRESISI)
     // ==========================================
     function showCropOverlay(shapeType) {
       const activeObj = stagingCanvas.getActiveObject();
@@ -822,34 +813,35 @@
 
     function applyInteractiveCrop() {
       if (!cropOverlayObj || !cropOverlayObj.targetImageObj) {
-        alert("Tampilkan panduan pemotong (🎯 Panduan Lingkaran) terlebih dahulu dan paskan ke posisi gambar!");
+        alert("Tampilkan panduan pemotong terlebih dahulu dan paskan ke posisi gambar!");
         return;
       }
 
       const imgObj = cropOverlayObj.targetImageObj;
       const overlay = cropOverlayObj;
 
-      // Hitung posisi relatif overlay terhadap titik tengah gambar
+      // Perhitungan posisi relatif dari pusat gambar (Center Origin Offset)
       const relLeft = (overlay.left - imgObj.left) / imgObj.scaleX;
       const relTop = (overlay.top - imgObj.top) / imgObj.scaleY;
-      const cropSize = overlay.getScaledWidth() / imgObj.scaleX;
+      const cropWidth = overlay.getScaledWidth() / imgObj.scaleX;
+      const cropHeight = overlay.getScaledHeight() / imgObj.scaleY;
 
       let clipPath;
       if (overlay.cropShapeType === 'circle') {
         clipPath = new fabric.Circle({
-          radius: cropSize / 2,
+          radius: cropWidth / 2,
           left: relLeft, top: relTop,
           originX: 'center', originY: 'center'
         });
       } else if (overlay.cropShapeType === 'square') {
         clipPath = new fabric.Rect({
-          width: cropSize, height: cropSize,
+          width: cropWidth, height: cropHeight,
           left: relLeft, top: relTop,
           originX: 'center', originY: 'center'
         });
       } else if (overlay.cropShapeType === 'rounded') {
         clipPath = new fabric.Rect({
-          width: cropSize, height: cropSize, rx: cropSize * 0.15, ry: cropSize * 0.15,
+          width: cropWidth, height: cropHeight, rx: cropWidth * 0.15, ry: cropHeight * 0.15,
           left: relLeft, top: relTop,
           originX: 'center', originY: 'center'
         });
@@ -862,11 +854,11 @@
       stagingCanvas.setActiveObject(imgObj);
       stagingCanvas.renderAll();
       saveProjectState();
-      alert("Pemotongan presisi berhasil dilakukan!");
+      alert("Pemotongan presisi berhasil!");
     }
 
     // ==========================================
-    // 8. OLAH GAMBAR UTILS
+    // 8. OLAH GAMBAR UTILS & PIPET WARNA
     // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -882,47 +874,51 @@
       const tempCtx = tempCanvas.getContext('2d');
       tempCanvas.width = originalElement.naturalWidth || originalElement.width;
       tempCanvas.height = originalElement.naturalHeight || originalElement.height;
-      tempCtx.drawImage(originalElement, 0, 0);
+      
+      try {
+        tempCtx.drawImage(originalElement, 0, 0);
+        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const data = imgData.data;
 
-      const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imgData.data;
+        const corners = [
+          0, (tempCanvas.width - 1) * 4,
+          (tempCanvas.height - 1) * tempCanvas.width * 4,
+          ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4
+        ];
 
-      const corners = [
-        0, (tempCanvas.width - 1) * 4,
-        (tempCanvas.height - 1) * tempCanvas.width * 4,
-        ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4
-      ];
-
-      let bgR = 0, bgG = 0, bgB = 0;
-      corners.forEach(idx => {
-        bgR += data[idx]; bgG += data[idx + 1]; bgB += data[idx + 2];
-      });
-      bgR = Math.round(bgR / 4); bgG = Math.round(bgG / 4); bgB = Math.round(bgB / 4);
-
-      const threshold = 60;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-        const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-        if (diff < threshold) data[i + 3] = 0;
-      }
-
-      tempCtx.putImageData(imgData, 0, 0);
-
-      fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
-        newImg.set({
-          left: activeObj.left, top: activeObj.top,
-          scaleX: activeObj.scaleX, scaleY: activeObj.scaleY, angle: activeObj.angle
+        let bgR = 0, bgG = 0, bgB = 0;
+        corners.forEach(idx => {
+          bgR += data[idx]; bgG += data[idx + 1]; bgB += data[idx + 2];
         });
-        stagingCanvas.remove(activeObj);
-        stagingCanvas.add(newImg);
-        stagingCanvas.setActiveObject(newImg);
-        stagingCanvas.renderAll();
-      });
+        bgR = Math.round(bgR / 4); bgG = Math.round(bgG / 4); bgB = Math.round(bgB / 4);
+
+        const threshold = 60;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+          if (diff < threshold) data[i + 3] = 0;
+        }
+
+        tempCtx.putImageData(imgData, 0, 0);
+
+        fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
+          newImg.set({
+            left: activeObj.left, top: activeObj.top,
+            scaleX: activeObj.scaleX, scaleY: activeObj.scaleY, angle: activeObj.angle
+          });
+          stagingCanvas.remove(activeObj);
+          stagingCanvas.add(newImg);
+          stagingCanvas.setActiveObject(newImg);
+          stagingCanvas.renderAll();
+        }, { crossOrigin: 'anonymous' });
+      } catch(e) {
+        alert("Gambar tidak dapat diproses secara otomatis karena masalah keamanan browser (CORS).");
+      }
     }
 
     function enableColorPicker() {
       pickColorMode = true;
-      alert("Klik warna latar pada gambar di Meja Potong!");
+      alert("Klik titik warna latar gambar pada Meja Potong!");
     }
 
     stagingCanvas.on('mouse:down', function(options) {
