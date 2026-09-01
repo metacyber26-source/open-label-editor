@@ -15,10 +15,12 @@
         <span class="subtitle">Universal Packaging & Layout AI</span>
       </div>
       <div class="actions">
-        <button onclick="tambahKotakLisensi()" class="btn-secondary">+ Kotak Lisensi & Legalitas</button>
-        <button onclick="tambahKotakTransaksi()" class="btn-secondary">+ Barcode & QRIS</button>
-        <button onclick="jalankanAnalisisLayout()" class="btn-ai">✨ Analisis Tata Letak AI</button>
-        <button onclick="prosesNestingCetak()" class="btn-print">🖨️ Simulasi Lembar Cetak A3+</button>
+        <button onclick="tambahKotakLisensi()" class="btn-secondary">+ Lisensi</button>
+        <button onclick="tambahKotakTransaksi()" class="btn-secondary">+ Barcode</button>
+        <button onclick="jalankanAnalisisLayout()" class="btn-ai">✨ Analisis AI</button>
+        <button onclick="prosesNestingCetak()" class="btn-print">🖨️ Cetak A3+</button>
+        <!-- Tombol Khusus untuk Buka/Tutup Panel di HP -->
+        <button onclick="togglePanelAI()" class="btn-toggle">📋 Panel Info</button>
       </div>
     </header>
 
@@ -27,7 +29,7 @@
       <div class="canvas-container">
         <!-- Pengaturan Ukuran Label Fisik Umum -->
         <div class="dimension-bar">
-          <label>Ukuran Label Fisik (cm):</label>
+          <label>Ukuran Label (cm):</label>
           <input type="number" id="input-lebar" value="15" min="1" onchange="updateUkuranKanvas()">
           <span>x</span>
           <input type="number" id="input-tinggi" value="7" min="1" onchange="updateUkuranKanvas()">
@@ -46,18 +48,22 @@
       </div>
     </main>
 
-    <!-- Panel Samping Info & AI -->
-    <aside class="ai-panel">
-      <h3>Asisten Rekomendasi Marketing</h3>
+    <!-- Panel Samping Info & AI (Bisa Buka/Tutup) -->
+    <aside id="ai-sidebar" class="ai-panel">
+      <div class="panel-header">
+        <h3>Asisten Rekomendasi</h3>
+        <button class="btn-close-panel" onclick="togglePanelAI()">&times;</button>
+      </div>
+      
       <div id="ai-messages">
-        <p class="hint">Sistem akan secara otomatis menganalisis hierarki desain, keterbacaan barcode, dan posisi lisensi legalitas produk Anda.</p>
+        <p class="hint">Sistem akan menganalisis hirarki desain, keterbacaan barcode, dan posisi lisensi legalitas produk Anda.</p>
       </div>
 
       <hr class="divider">
 
-      <h3>Kalkulator Lembar Cetak (Nesting A3+)</h3>
+      <h3>Kalkulator Lembar Cetak (A3+)</h3>
       <div id="nesting-results">
-        <p class="hint">Tekan tombol "Simulasi Lembar Cetak A3+" untuk melihat efisiensi bahan stiker.</p>
+        <p class="hint">Tekan tombol "🖨️ Cetak A3+" untuk melihat estimasi hasil cetak.</p>
       </div>
     </aside>
   </div>
