@@ -199,7 +199,9 @@
       <button class="btn btn-green" onclick="showCropOverlay('circle')">🎯 Panduan Lingkaran 1:1</button>
       <button class="btn btn-green" onclick="showCropOverlay('square')">🎯 Panduan Persegi 1:1</button>
       <button class="btn btn-green" onclick="showCropOverlay('rounded')">🎯 Panduan Lengkung 1:1</button>
-      <button class="btn btn-pink" onclick="applyInteractiveCrop()">✂️ Eksekusi Potong Presisi</button>
+      
+      <button class="btn btn-orange" id="btnLockCrop" onclick="toggleLockCropOverlay()">🔒 Kunci Panduan</button>
+      <button class="btn btn-pink" onclick="applyNativeCrop()">✂️ Eksekusi Potong Presisi</button>
     </div>
 
     <div class="inline-tool-box">
@@ -250,12 +252,12 @@
     function saveProjectState() {
       try {
         const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg']));
-        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay']));
+        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
         localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
       } catch (e) {
-        console.warn("Progres gagal disimpan otomatis (Storage penuh):", e);
+        console.warn("Progres gagal disimpan otomatis:", e);
       }
     }
 
@@ -399,14 +401,8 @@
       
       try {
         JsBarcode(hiddenCanvas, val, {
-          format: "CODE128",
-          lineColor: "#000000",
-          background: "#ffffff",
-          width: 2,
-          height: 50,
-          displayValue: true,
-          fontSize: 12,
-          margin: 10
+          format: "CODE128", lineColor: "#000000", background: "#ffffff",
+          width: 2, height: 50, displayValue: true, fontSize: 12, margin: 10
         });
 
         const dataURL = hiddenCanvas.toDataURL('image/png');
@@ -512,7 +508,7 @@
     function loadImageToStaging(dataUrl) {
       fabric.Image.fromURL(dataUrl, function(img) {
         img.scaleToWidth(130);
-        img.set({ left: 40, top: 30 });
+        img.set({ left: stagingCanvas.width/2, top: stagingCanvas.height/2, originX: 'center', originY: 'center' });
         stagingCanvas.add(img);
         stagingCanvas.setActiveObject(img);
         stagingCanvas.renderAll();
@@ -538,7 +534,7 @@
         timer = setInterval(actionFunction, 50);
       };
 
-      const stop = (e) => {
+      const stop = () => {
         if (timer) clearInterval(timer);
         timer = null;
         saveProjectState();
@@ -599,7 +595,7 @@
 
       mainCanvas.renderAll();
       saveProjectState();
-      alert(`Ukuran objek disamakan presisi (${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px)!`);
+      alert(`Ukuran disamakan: ${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px`);
     }
 
     bindContinuousControl('btnUp', () => moveSelected(0, -2));
@@ -612,7 +608,7 @@
     bindContinuousControl('btnRotateCW', () => rotateSelected(2));
 
     // ==========================================
-    // 6. KOTAK SAKTI & KOTAK LISENSI PRESISI
+    // 6. KOTAK SAKTI & KOTAK LISENSI
     // ==========================================
     function attachMagicBoxEvents(box) {
       let lastClickTime = 0;
@@ -673,7 +669,6 @@
 
     function autoPlaceLicense(position) {
       let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox);
-      
       if (!targetBox) {
         addLicenseBox();
         targetBox = mainCanvas.getActiveObject();
@@ -726,7 +721,7 @@
     function sendToMain() {
       const activeStagingObj = stagingCanvas.getActiveObject();
       if (!activeStagingObj || activeStagingObj.isCropOverlay) {
-        alert("Pilih elemen gambar/lisensi di Meja Potong terlebih dahulu!");
+        alert("Pilih elemen di Meja Potong terlebih dahulu!");
         return;
       }
 
@@ -764,40 +759,44 @@
     }
 
     // ==========================================
-    // 7. CROP OVERLAY INTERAKTIF (PERBAIKAN PRESISI)
+    // 7. PEMOTONGAN PRESISI BERBASIS CANVAS NATIVE
     // ==========================================
     function showCropOverlay(shapeType) {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu sebelum memotong!");
+        alert("Aktifkan/Klik gambar di Meja Potong terlebih dahulu!");
         return;
       }
 
       if (cropOverlayObj) stagingCanvas.remove(cropOverlayObj);
 
+      const center = activeObj.getCenterPoint();
       const bounds = activeObj.getBoundingRect();
       const size = Math.min(bounds.width, bounds.height) * 0.7;
 
       let frameShape;
       if (shapeType === 'circle') {
         frameShape = new fabric.Circle({
-          radius: size / 2, fill: 'rgba(16, 185, 129, 0.2)', stroke: '#10b981',
-          strokeWidth: 2, strokeDashArray: [4, 4], originX: 'center', originY: 'center'
+          radius: size / 2, fill: 'rgba(16, 185, 129, 0.25)',
+          stroke: '#10b981', strokeWidth: 2, strokeDashArray: [4, 4],
+          originX: 'center', originY: 'center'
         });
       } else if (shapeType === 'square') {
         frameShape = new fabric.Rect({
-          width: size, height: size, fill: 'rgba(16, 185, 129, 0.2)', stroke: '#10b981',
-          strokeWidth: 2, strokeDashArray: [4, 4], originX: 'center', originY: 'center'
+          width: size, height: size, fill: 'rgba(16, 185, 129, 0.25)',
+          stroke: '#10b981', strokeWidth: 2, strokeDashArray: [4, 4],
+          originX: 'center', originY: 'center'
         });
       } else if (shapeType === 'rounded') {
         frameShape = new fabric.Rect({
-          width: size, height: size, rx: 15, ry: 15, fill: 'rgba(16, 185, 129, 0.2)', stroke: '#10b981',
-          strokeWidth: 2, strokeDashArray: [4, 4], originX: 'center', originY: 'center'
+          width: size, height: size, rx: 20, ry: 20, fill: 'rgba(16, 185, 129, 0.25)',
+          stroke: '#10b981', strokeWidth: 2, strokeDashArray: [4, 4],
+          originX: 'center', originY: 'center'
         });
       }
 
       frameShape.set({
-        left: activeObj.left, top: activeObj.top,
+        left: center.x, top: center.y,
         cornerColor: '#10b981', cornerStyle: 'circle', transparentCorners: false, lockUniScaling: true
       });
 
@@ -809,52 +808,107 @@
       stagingCanvas.add(cropOverlayObj);
       stagingCanvas.setActiveObject(cropOverlayObj);
       stagingCanvas.renderAll();
+      
+      const lockBtn = document.getElementById('btnLockCrop');
+      lockBtn.innerText = "🔒 Kunci Panduan";
+      lockBtn.classList.remove('btn-red');
+      lockBtn.classList.add('btn-orange');
     }
 
-    function applyInteractiveCrop() {
+    function toggleLockCropOverlay() {
+      if (!cropOverlayObj) {
+        alert("Aktifkan panduan potong terlebih dahulu!");
+        return;
+      }
+
+      const isLocked = !cropOverlayObj.lockMovementX;
+      cropOverlayObj.set({
+        lockMovementX: isLocked, lockMovementY: isLocked,
+        lockScalingX: isLocked, lockScalingY: isLocked, lockRotation: isLocked
+      });
+
+      const lockBtn = document.getElementById('btnLockCrop');
+      if (isLocked) {
+        lockBtn.innerText = "🔓 Buka Kunci";
+        lockBtn.classList.remove('btn-orange');
+        lockBtn.classList.add('btn-red');
+      } else {
+        lockBtn.innerText = "🔒 Kunci Panduan";
+        lockBtn.classList.remove('btn-red');
+        lockBtn.classList.add('btn-orange');
+      }
+
+      stagingCanvas.renderAll();
+    }
+
+    function applyNativeCrop() {
       if (!cropOverlayObj || !cropOverlayObj.targetImageObj) {
-        alert("Tampilkan panduan pemotong terlebih dahulu dan paskan ke posisi gambar!");
+        alert("Buat/Aktifkan panduan potong terlebih dahulu!");
         return;
       }
 
       const imgObj = cropOverlayObj.targetImageObj;
       const overlay = cropOverlayObj;
 
-      // Perhitungan posisi relatif dari pusat gambar (Center Origin Offset)
-      const relLeft = (overlay.left - imgObj.left) / imgObj.scaleX;
-      const relTop = (overlay.top - imgObj.top) / imgObj.scaleY;
-      const cropWidth = overlay.getScaledWidth() / imgObj.scaleX;
-      const cropHeight = overlay.getScaledHeight() / imgObj.scaleY;
-
-      let clipPath;
-      if (overlay.cropShapeType === 'circle') {
-        clipPath = new fabric.Circle({
-          radius: cropWidth / 2,
-          left: relLeft, top: relTop,
-          originX: 'center', originY: 'center'
-        });
-      } else if (overlay.cropShapeType === 'square') {
-        clipPath = new fabric.Rect({
-          width: cropWidth, height: cropHeight,
-          left: relLeft, top: relTop,
-          originX: 'center', originY: 'center'
-        });
-      } else if (overlay.cropShapeType === 'rounded') {
-        clipPath = new fabric.Rect({
-          width: cropWidth, height: cropHeight, rx: cropWidth * 0.15, ry: cropHeight * 0.15,
-          left: relLeft, top: relTop,
-          originX: 'center', originY: 'center'
-        });
-      }
-
-      imgObj.set({ clipPath: clipPath });
-      stagingCanvas.remove(cropOverlayObj);
-      cropOverlayObj = null;
-
-      stagingCanvas.setActiveObject(imgObj);
+      // Sembunyikan garis panduan saat melakukan rasterization
+      overlay.set('visible', false);
       stagingCanvas.renderAll();
-      saveProjectState();
-      alert("Pemotongan presisi berhasil!");
+
+      const imgBounds = imgObj.getBoundingRect(true);
+      const cropBounds = overlay.getBoundingRect(true);
+
+      // Hitung koordinat potong pada elemen image asli
+      const element = imgObj._element;
+      const scaleX = element.naturalWidth / imgBounds.width;
+      const scaleY = element.naturalHeight / imgBounds.height;
+
+      const cropX = (cropBounds.left - imgBounds.left) * scaleX;
+      const cropY = (cropBounds.top - imgBounds.top) * scaleY;
+      const cropW = cropBounds.width * scaleX;
+      const cropH = cropBounds.height * scaleY;
+
+      // Kanvas sementara (Native HTML5 Canvas)
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = cropW;
+      tempCanvas.height = cropH;
+
+      tempCtx.beginPath();
+      if (overlay.cropShapeType === 'circle') {
+        tempCtx.arc(cropW / 2, cropH / 2, Math.min(cropW, cropH) / 2, 0, Math.PI * 2);
+      } else if (overlay.cropShapeType === 'rounded') {
+        const r = Math.min(cropW, cropH) * 0.15;
+        tempCtx.roundRect(0, 0, cropW, cropH, r);
+      } else {
+        tempCtx.rect(0, 0, cropW, cropH);
+      }
+      tempCtx.closePath();
+      tempCtx.clip();
+
+      // Gambar bagian aset yang dipotong
+      tempCtx.drawImage(element, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+      const croppedDataUrl = tempCanvas.toDataURL('image/png');
+
+      // Ganti objek di Meja Potong dengan versi terpotong
+      fabric.Image.fromURL(croppedDataUrl, function(newImg) {
+        newImg.set({
+          left: overlay.left,
+          top: overlay.top,
+          originX: 'center',
+          originY: 'center'
+        });
+
+        stagingCanvas.remove(imgObj);
+        stagingCanvas.remove(overlay);
+        cropOverlayObj = null;
+
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
+        stagingCanvas.renderAll();
+        saveProjectState();
+        alert("Pemotongan berhasil! Siap dikirim ke Kanvas Utama.");
+      }, { crossOrigin: 'anonymous' });
     }
 
     // ==========================================
@@ -904,7 +958,8 @@
         fabric.Image.fromURL(tempCanvas.toDataURL(), function(newImg) {
           newImg.set({
             left: activeObj.left, top: activeObj.top,
-            scaleX: activeObj.scaleX, scaleY: activeObj.scaleY, angle: activeObj.angle
+            scaleX: activeObj.scaleX, scaleY: activeObj.scaleY, angle: activeObj.angle,
+            originX: 'center', originY: 'center'
           });
           stagingCanvas.remove(activeObj);
           stagingCanvas.add(newImg);
@@ -912,13 +967,13 @@
           stagingCanvas.renderAll();
         }, { crossOrigin: 'anonymous' });
       } catch(e) {
-        alert("Gambar tidak dapat diproses secara otomatis karena masalah keamanan browser (CORS).");
+        alert("Gagal menghapus background secara otomatis.");
       }
     }
 
     function enableColorPicker() {
       pickColorMode = true;
-      alert("Klik titik warna latar gambar pada Meja Potong!");
+      alert("Klik titik warna pada Meja Potong!");
     }
 
     stagingCanvas.on('mouse:down', function(options) {
@@ -963,8 +1018,8 @@
       const txt = prompt("Masukkan Teks Seni:", "Varian Rasa");
       if (!txt) return;
       const textObj = new fabric.IText(txt, {
-        left: 50, top: 50, fontSize: 24, fill: '#ff0000',
-        fontWeight: 'bold', stroke: '#000000', strokeWidth: 1
+        left: stagingCanvas.width/2, top: stagingCanvas.height/2, fontSize: 24, fill: '#ff0000',
+        fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
       });
       stagingCanvas.add(textObj);
       stagingCanvas.setActiveObject(textObj);
