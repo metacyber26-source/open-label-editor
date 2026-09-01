@@ -87,10 +87,10 @@ body {
 .btn-toggle {
   background: #059669;
   color: #ffffff;
-  display: none; /* Sembunyi secara default di komputer */
+  display: none;
 }
 
-/* Workspace & Canvas */
+/* BAGIAN 2: Workspace / Meja Kerja Utama */
 .workspace {
   background: #334155;
   display: flex;
@@ -133,7 +133,7 @@ body {
   border-radius: 4px;
 }
 
-/* Dynamic Physical Canvas */
+/* BAGIAN 1: Tempat Label Yang Dikerjakan */
 .canvas-preview {
   background: #ffffff;
   border: 2px dashed #94a3b8;
@@ -208,7 +208,7 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Sidebar Panel & Responsive Floating Drawer */
+/* Sidebar Panel */
 .ai-panel {
   background: #ffffff;
   border-left: 1px solid #e2e8f0;
@@ -237,7 +237,7 @@ body {
   font-size: 24px;
   color: #64748b;
   cursor: pointer;
-  display: none; /* Sembunyi di PC */
+  display: none;
 }
 
 .divider {
@@ -277,32 +277,120 @@ body {
   color: #0369a1;
 }
 
-/* PENYESUAIAN KHUSUS LAYAR HP / TABLET (TAMPILAN MOBILE) */
+/* TAMPILAN MODAL POPUP LEMBAR A3+ (MEJA POTONG VISUAL) */
+.modal-a3-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-a3-overlay.active {
+  display: flex;
+}
+
+.modal-a3-content {
+  background: #ffffff;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  background: #1e293b;
+  color: #ffffff;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 15px;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.a3-sheet-wrapper {
+  background: #cbd5e1;
+  padding: 15px;
+  border-radius: 8px;
+  overflow: auto;
+  max-width: 100%;
+}
+
+/* Lembar Fisik A3+ (Skala Visual 1cm = 8px) */
+.a3-sheet {
+  background: #ffffff;
+  width: 256px;  /* 32 cm x 8px */
+  height: 384px; /* 48 cm x 8px */
+  border: 1px solid #64748b;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.nest-item {
+  background: #e0f2fe;
+  border: 1px solid #0284c7;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+/* RESPONSIVE LAYAR HP */
 @media (max-width: 768px) {
   .app-container {
     grid-template-columns: 1fr;
   }
 
   .btn-toggle {
-    display: inline-block; /* Tombol Panel Info Muncul di HP */
+    display: inline-block;
   }
 
   .btn-close-panel {
-    display: block; /* Tombol X Muncul di HP */
+    display: block;
   }
 
   .ai-panel {
     position: fixed;
     top: 0;
-    right: -100%; /* Sembunyi di kanan luar layar */
+    right: -100%;
     width: 85%;
     height: 100vh;
     z-index: 999;
     box-shadow: -5px 0 25px rgba(0,0,0,0.3);
   }
 
-  /* Saat Panel Dibuka */
   .ai-panel.active {
-    right: 0; /* Meluncur masuk ke dalam layar HP */
+    right: 0;
   }
 }
