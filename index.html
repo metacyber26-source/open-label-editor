@@ -15,8 +15,23 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
-    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; position: relative; }
     
+    /* Tombol Geser Layar Floating (Pojok Kanan Atas) */
+    .floating-scroll-controls {
+      position: fixed; top: 15px; right: 15px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .btn-scroll-floating {
+      width: 45px; height: 45px; border-radius: 50%; border: 2px solid #ffffff;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white;
+      font-size: 1.2rem; font-weight: bold; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn-scroll-floating:active { transform: scale(0.9); background: #3b82f6; }
+
     .dashboard-header {
       width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
@@ -96,6 +111,12 @@
 </head>
 <body>
 
+  <!-- FITUR: TOMBOL GESER LAYAR MENCOLOK POJOK KANAN ATAS -->
+  <div class="floating-scroll-controls">
+    <button class="btn-scroll-floating" onclick="scrollToTop()" title="Geser ke Atas">⬆️</button>
+    <button class="btn-scroll-floating" onclick="scrollToBottom()" title="Geser ke Bawah">⬇️</button>
+  </div>
+
   <div class="dashboard-header">
     <div class="dash-title">🏷️ Studio Label Pro (Ultimate HD)</div>
     <div class="dash-stats">
@@ -112,8 +133,8 @@
         + Upload BG <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
-      <button class="btn btn-pink" onclick="addMagicBoxGroup()">✨ + Kotak Sakti Multi</button>
-      <button class="btn btn-cyan" onclick="addLicenseBoxGroup()">📜 + Kotak Lisensi Multi</button>
+      <button class="btn btn-pink" onclick="createMagicBoxGroup()">✨ + Kotak Sakti Group</button>
+      <button class="btn btn-cyan" onclick="createLicenseBoxGroup()">📜 + Kotak Lisensi Group</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
@@ -128,19 +149,24 @@
       <button class="btn btn-dark-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
     </div>
 
-    <!-- PENGATURAN GRUP KOTAK SAKTI & LISENSI INTERAKTIF -->
-    <div class="inline-tool-box" style="background: #1e293b; border-color: #ec4899;">
-      <span style="font-size:0.7rem; color:#ec4899; font-weight:bold;">✨ Konfigurasi Kelompok Kotak:</span>
-      <span style="font-size:0.68rem; color:#94a3b8;">Jumlah:</span>
-      <input type="number" id="boxGroupCount" class="inline-input" value="3" min="1" max="10" style="flex:initial; width:50px;">
-      <span style="font-size:0.68rem; color:#94a3b8;">Bentuk:</span>
-      <select id="boxGroupShape" class="inline-input" style="flex:initial; width:110px;">
-        <option value="square">Bujur Sangkar</option>
-        <option value="rect">Persegi</option>
-      </select>
-      <span style="font-size:0.68rem; color:#94a3b8; margin-left:4px;">Arrangement:</span>
-      <button class="btn btn-action" onclick="changeActiveGroupArrangement('horizontal')" title="Ubah Berjajar (Panah Kiri/Kanan)">⬅️ ➡️ Berjajar</button>
-      <button class="btn btn-action" onclick="changeActiveGroupArrangement('vertical')" title="Ubah Bertumpuk (Panah Atas/Bawah)">⬆️ ⬇️ Bertumpuk</button>
+    <!-- FITUR KOTAK SAKTI & LISENSI MULTI-KLIK -->
+    <div class="inline-tool-box">
+      <span style="font-size:0.7rem; color:#ec4899; font-weight:bold;">📦 Pengaturan Kotak Sakti / Lisensi:</span>
+      <div style="display:flex; align-items:center; gap:4px; font-size:0.75rem;">
+        <span>Jumlah Klik/Kotak:</span>
+        <input type="number" id="boxGroupCount" class="inline-input" value="3" min="1" max="10" style="width:50px; flex:initial;">
+      </div>
+      <div style="display:flex; align-items:center; gap:4px; font-size:0.75rem;">
+        <span>Bentuk:</span>
+        <select id="boxShapeForm" class="inline-input" style="width:110px; flex:initial;">
+          <option value="square">Bujur Sangkar</option>
+          <option value="rect">Persegi Panjang</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:4px;">
+        <button class="btn btn-cyan" onclick="changeSelectedGroupLayout('horizontal')" title="Ubah Tata Letak Berjajar (Kiri-Kanan)">⬅️ Berjajar ➡️</button>
+        <button class="btn btn-cyan" onclick="changeSelectedGroupLayout('vertical')" title="Ubah Tata Letak Bertumpuk (Atas-Bawah)">⬆️ Bertumpuk ⬇️</button>
+      </div>
     </div>
 
     <!-- FITUR LAYER STACK MANAGEMENT -->
@@ -150,6 +176,9 @@
       <button class="btn btn-action" onclick="bringForwardMain()">⬆️ Naik 1 Layer</button>
       <button class="btn btn-action" onclick="sendBackwardMain()">⬇️ Turun 1 Layer</button>
       <button class="btn btn-action" onclick="sendToBackMain()">🔝 Paling Belakang</button>
+      <!-- REKOMENDASI UNDO / REDO -->
+      <button class="btn btn-action" onclick="undoMain()" style="margin-left:auto;">↩️ Undo</button>
+      <button class="btn btn-action" onclick="redoMain()">↪️ Redo</button>
     </div>
 
     <!-- FITUR AUTO POSISI & CUSTOM BG SHAPE -->
@@ -170,6 +199,7 @@
       </select>
       <input type="color" id="bgColorPicker" value="#ffffff" title="Warna Latar">
       <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
+      <button class="btn btn-orange" onclick="toggleGridLines()">🏁 Toggle Garis Grid</button>
     </div>
 
     <div style="margin-top: 8px;">
@@ -192,14 +222,14 @@
     <!-- CONTROLS & ASPECT RATIO -->
     <div class="control-panel">
       <div class="dpad-group">
-        <span style="font-size: 0.68rem; color: #94a3b8; margin-bottom: 2px;">Geser Presisi / Navigasi Grup</span>
+        <span style="font-size: 0.68rem; color: #94a3b8; margin-bottom: 2px;">Geser Presisi</span>
         <div class="dpad-row">
-          <button class="btn btn-dpad" id="btnUp" title="Geser Atas / Bertumpuk Vertikal">⬆️</button>
+          <button class="btn btn-dpad" id="btnUp">⬆️</button>
         </div>
         <div class="dpad-row">
-          <button class="btn btn-dpad" id="btnLeft" title="Geser Kiri / Berjajar Horizontal">⬅️</button>
-          <button class="btn btn-dpad" id="btnDown" title="Geser Bawah / Bertumpuk Vertikal">⬇️</button>
-          <button class="btn btn-dpad" id="btnRight" title="Geser Kanan / Berjajar Horizontal">➡️</button>
+          <button class="btn btn-dpad" id="btnLeft">⬅️</button>
+          <button class="btn btn-dpad" id="btnDown">⬇️</button>
+          <button class="btn btn-dpad" id="btnRight">➡️</button>
         </div>
       </div>
 
@@ -304,7 +334,7 @@
       <button class="btn btn-zoom" onclick="generateSafeBarcode()">📊 + Barcode Aman Scan</button>
     </div>
 
-    <button class="btn btn-purple" style="width:100%; margin-top:8px;" onclick="sendToMain()">
+    <button class="btn btn-purple" style="width:100%; margin-top:8px; font-weight:bold; padding: 10px;" onclick="sendToMain()">
       ⬆️ Masukkan Elemen Terpilih ke Kotak Sakti / Lisensi / Kanvas
     </button>
 
@@ -319,44 +349,106 @@
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
 
+    // MEJA POTONG: PADA SATU WAKTU HANYA BISA MENGAKTIFKAN 1 OBJEK
+    stagingCanvas.selection = false; // Nonaktifkan multi-select drag box pada meja potong
+
     let currentZoom = 1;
     let pickColorMode = false;
     let currentMainBgImage = null;
     let localAssets = [];
     let cropOverlayObj = null;
 
-    // ==========================================
-    // MEJA POTONG: KEBIJAKAN HANYA 1 OBJEK AKTIF
-    // ==========================================
-    stagingCanvas.on('selection:created', enforceSingleSelectionStaging);
-    stagingCanvas.on('selection:updated', enforceSingleSelectionStaging);
+    // HISTORY UNDO / REDO STATE
+    let historyStack = [];
+    let historyRedoStack = [];
+    let isHistoryLocked = false;
 
-    function enforceSingleSelectionStaging(e) {
-      if (e.selected && e.selected.length > 1) {
-        stagingCanvas.discardActiveObject();
-        stagingCanvas.setActiveObject(e.selected[0]);
-        stagingCanvas.renderAll();
+    function saveStateToHistory() {
+      if (isHistoryLocked) return;
+      if (historyStack.length > 20) historyStack.shift();
+      historyStack.push(JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'boxId', 'boxNumber', 'layoutDir', 'shapeForm', 'groupRef'])));
+      historyRedoStack = [];
+    }
+
+    function undoMain() {
+      if (historyStack.length > 1) {
+        historyRedoStack.push(historyStack.pop());
+        const state = historyStack[historyStack.length - 1];
+        isHistoryLocked = true;
+        mainCanvas.loadFromJSON(state, function() {
+          mainCanvas.renderAll();
+          isHistoryLocked = false;
+        });
+      }
+    }
+
+    function redoMain() {
+      if (historyRedoStack.length > 0) {
+        const state = historyRedoStack.pop();
+        historyStack.push(state);
+        isHistoryLocked = true;
+        mainCanvas.loadFromJSON(state, function() {
+          mainCanvas.renderAll();
+          isHistoryLocked = false;
+        });
       }
     }
 
     // ==========================================
-    // 0. FITUR SMART SNAP & ALIGNMENT GUIDES
+    // 0. SCROLLING & KEYBOARD SHORTCUTS
     // ==========================================
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function scrollToBottom() {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    window.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'Delete') {
+        deleteMainObj();
+        deleteStagingObj();
+      } else if (e.key === 'ArrowUp') { moveSelected(0, -2); e.preventDefault(); }
+      else if (e.key === 'ArrowDown') { moveSelected(0, 2); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { moveSelected(-2, 0); e.preventDefault(); }
+      else if (e.key === 'ArrowRight') { moveSelected(2, 0); e.preventDefault(); }
+      else if (e.ctrlKey && e.key === 'z') { undoMain(); }
+      else if (e.ctrlKey && e.key === 'y') { redoMain(); }
+    });
+
+    // SMART SNAP & ALIGNMENT GUIDES
     const SNAP_THRESHOLD = 10;
     mainCanvas.on('object:moving', function(e) {
       const obj = e.target;
       const canvasWidth = mainCanvas.width;
       const canvasHeight = mainCanvas.height;
 
-      const objCenterX = obj.left;
-      const objCenterY = obj.top;
+      if (Math.abs(obj.left - canvasWidth / 2) < SNAP_THRESHOLD) { obj.set({ left: canvasWidth / 2 }); }
+      if (Math.abs(obj.top - canvasHeight / 2) < SNAP_THRESHOLD) { obj.set({ top: canvasHeight / 2 }); }
+    });
 
-      if (Math.abs(objCenterX - canvasWidth / 2) < SNAP_THRESHOLD) {
-        obj.set({ left: canvasWidth / 2 });
+    // GRID OVERLAY
+    let isGridVisible = false;
+    function toggleGridLines() {
+      isGridVisible = !isGridVisible;
+      mainCanvas.renderAll();
+    }
+    mainCanvas.on('after:render', function() {
+      if (!isGridVisible) return;
+      const ctx = mainCanvas.getContext();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.lineWidth = 1;
+      const gridSize = 25;
+      for (let x = 0; x < mainCanvas.width; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, mainCanvas.height); ctx.stroke();
       }
-      if (Math.abs(objCenterY - canvasHeight / 2) < SNAP_THRESHOLD) {
-        obj.set({ top: canvasHeight / 2 });
+      for (let y = 0; y < mainCanvas.height; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(mainCanvas.width, y); ctx.stroke();
       }
+      ctx.restore();
     });
 
     // ==========================================
@@ -369,11 +461,9 @@
     }
 
     function saveProjectState() {
+      saveStateToHistory();
       try {
-        const mainData = JSON.stringify(mainCanvas.toJSON([
-          'isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'lockUniScaling', 
-          'isSmartBoxGroup', 'groupArrangement', 'subBoxIndex', 'boxType'
-        ]));
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isGeneratedBg', 'lockUniScaling', 'boxId', 'boxNumber', 'layoutDir', 'shapeForm', 'groupRef']));
         const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
@@ -396,11 +486,15 @@
       if (savedMain) {
         mainCanvas.loadFromJSON(savedMain, function() {
           mainCanvas.getObjects().forEach(obj => {
-            if (obj.isMagicBox || obj.isLicenseBox || obj.isSmartBoxGroup) attachMagicBoxEvents(obj);
+            if (obj.isMagicBox || obj.isLicenseBox) attachMagicBoxEvents(obj);
           });
           mainCanvas.renderAll();
+          saveStateToHistory();
         });
+      } else {
+        saveStateToHistory();
       }
+
       if (savedStaging) {
         stagingCanvas.loadFromJSON(savedStaging, function() {
           stagingCanvas.renderAll();
@@ -430,7 +524,114 @@
     stagingCanvas.on('object:removed', saveProjectState);
 
     // ==========================================
-    // 2. GENERATOR LATAR & STEMPEL LISENSI
+    // 2. GENERATOR KOTAK SAKTI & LISENSI GROUP (FITUR BARU 1)
+    // ==========================================
+    function createBoxGroup(type) {
+      const count = parseInt(document.getElementById('boxGroupCount').value) || 1;
+      const form = document.getElementById('boxShapeForm').value;
+      const groupId = 'group_' + Date.now();
+      
+      const isSquare = form === 'square';
+      const baseWidth = isSquare ? 70 : 100;
+      const baseHeight = isSquare ? 70 : 50;
+      const gap = 5;
+
+      const objectsGroup = [];
+      const startX = mainCanvas.width / 2;
+      const startY = 30 + baseHeight / 2;
+
+      for (let i = 0; i < count; i++) {
+        const boxNum = i + 1;
+        const color = type === 'magic' ? '#ec4899' : '#06b6d4';
+        const bgFill = type === 'magic' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(6, 182, 212, 0.15)';
+        const titleText = type === 'magic' ? `✨ Sakti #${boxNum}` : `📜 Lisensi #${boxNum}`;
+
+        const rect = new fabric.Rect({
+          width: baseWidth, height: baseHeight, rx: 6, ry: 6,
+          fill: bgFill, stroke: color, strokeWidth: 2, strokeDashArray: [5, 5],
+          originX: 'center', originY: 'center'
+        });
+
+        const label = new fabric.Text(titleText, {
+          fontSize: 11, fontWeight: 'bold', fill: color, originX: 'center', originY: 'center'
+        });
+
+        // Posisi default bertumpuk (Atas-Bawah)
+        const offsetY = i * (baseHeight + gap);
+
+        const subGroup = new fabric.Group([rect, label], {
+          left: startX,
+          top: startY + offsetY,
+          originX: 'center', originY: 'center',
+          lockUniScaling: isSquare
+        });
+
+        subGroup.isMagicBox = (type === 'magic');
+        subGroup.isLicenseBox = (type === 'license');
+        subGroup.boxId = groupId;
+        subGroup.boxNumber = boxNum;
+        subGroup.layoutDir = 'vertical';
+        subGroup.shapeForm = form;
+
+        attachMagicBoxEvents(subGroup);
+        objectsGroup.push(subGroup);
+      }
+
+      // Kelompokkan menjadi 1 objek perintah gabungan (Group)
+      const finalGroup = new fabric.Group(objectsGroup, {
+        left: mainCanvas.width / 2,
+        top: mainCanvas.height / 2,
+        originX: 'center', originY: 'center',
+        subTargetCheck: true
+      });
+
+      finalGroup.groupRef = groupId;
+      finalGroup.isBoxGroup = true;
+      finalGroup.layoutDir = 'vertical';
+      finalGroup.shapeForm = form;
+
+      mainCanvas.add(finalGroup);
+      mainCanvas.setActiveObject(finalGroup);
+      mainCanvas.renderAll();
+      saveProjectState();
+    }
+
+    function createMagicBoxGroup() { createBoxGroup('magic'); }
+    function createLicenseBoxGroup() { createBoxGroup('license'); }
+
+    // Merubah Tata Letak Kelompok (Berjajar vs Bertumpuk)
+    function changeSelectedGroupLayout(direction) {
+      const activeObj = mainCanvas.getActiveObject();
+      if (!activeObj || !activeObj.isBoxGroup) {
+        alert("Pilih Kelompok Kotak Sakti/Lisensi terlebih dahulu!");
+        return;
+      }
+
+      const items = activeObj.getObjects();
+      activeObj.layoutDir = direction;
+
+      let currentPos = 0;
+      items.forEach((item, idx) => {
+        const w = item.getScaledWidth();
+        const h = item.getScaledHeight();
+        if (direction === 'horizontal') {
+          // Berjajar (Kiri ke Kanan)
+          item.set({ left: currentPos, top: 0 });
+          currentPos += w + 8;
+        } else {
+          // Bertumpuk (Atas ke Bawah)
+          item.set({ left: 0, top: currentPos });
+          currentPos += h + 8;
+        }
+      });
+
+      activeObj.addWithUpdate();
+      mainCanvas.renderAll();
+      saveProjectState();
+    }
+
+    // ==========================================
+    // 3. GENERATOR LATAR & STEMPEL LISENSI
     // ==========================================
     function generateCustomBgShape() {
       const shapeType = document.getElementById('bgShapeType').value;
@@ -484,9 +685,6 @@
       saveProjectState();
     }
 
-    // ==========================================
-    // 3. STEMPEL PRICE & BARCODE
-    // ==========================================
     function generatePriceStamp() {
       const val = document.getElementById('stampPriceValue').value.trim();
       if (!val) {
@@ -632,6 +830,7 @@
     }
 
     function loadImageToStaging(dataUrl) {
+      // MEJA POTONG CUMA BOLEH 1 OBJEK AKTIF
       fabric.Image.fromURL(dataUrl, function(img) {
         img.scaleToWidth(130);
         img.set({ 
@@ -675,6 +874,7 @@
 
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
+      if (!btn) return;
       let timer = null;
 
       const start = (e) => {
@@ -773,27 +973,10 @@
       }
     }
 
-    bindContinuousControl('btnUp', () => {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj && activeObj.isSmartBoxGroup) { changeActiveGroupArrangement('vertical'); }
-      else { moveSelected(0, -2); }
-    });
-    bindContinuousControl('btnDown', () => {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj && activeObj.isSmartBoxGroup) { changeActiveGroupArrangement('vertical'); }
-      else { moveSelected(0, 2); }
-    });
-    bindContinuousControl('btnLeft', () => {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj && activeObj.isSmartBoxGroup) { changeActiveGroupArrangement('horizontal'); }
-      else { moveSelected(-2, 0); }
-    });
-    bindContinuousControl('btnRight', () => {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj && activeObj.isSmartBoxGroup) { changeActiveGroupArrangement('horizontal'); }
-      else { moveSelected(2, 0); }
-    });
-
+    bindContinuousControl('btnUp', () => moveSelected(0, -2));
+    bindContinuousControl('btnDown', () => moveSelected(0, 2));
+    bindContinuousControl('btnLeft', () => moveSelected(-2, 0));
+    bindContinuousControl('btnRight', () => moveSelected(2, 0));
     bindContinuousControl('btnScaleUp', () => scaleSelected(1.02));
     bindContinuousControl('btnScaleDown', () => scaleSelected(0.98));
     bindContinuousControl('btnRotateCCW', () => rotateSelected(-2));
@@ -824,9 +1007,6 @@
       }
     }
 
-    // ==========================================
-    // 6. FITUR BARU: GRUP KOTAK SAKTI & LISENSI INTERAKTIF
-    // ==========================================
     function attachMagicBoxEvents(box) {
       let lastClickTime = 0;
       box.on('mousedown', function() {
@@ -836,112 +1016,10 @@
       });
     }
 
-    function createSingleBoxElement(type, index, isSquare) {
-      const w = isSquare ? 80 : 110;
-      const h = isSquare ? 80 : 60;
-      const color = type === 'magic' ? '#ec4899' : '#06b6d4';
-      const bgColor = type === 'magic' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(6, 182, 212, 0.15)';
-      const labelPrefix = type === 'magic' ? '✨ Kotak ' : '📜 Lisensi ';
-
-      const rect = new fabric.Rect({
-        width: w, height: h, fill: bgColor, stroke: color, strokeWidth: 2,
-        strokeDashArray: [5, 5], rx: 4, ry: 4, originX: 'center', originY: 'center'
-      });
-
-      const numBadge = new fabric.Circle({
-        radius: 10, fill: color, originX: 'center', originY: 'center', top: -h/2 + 12, left: -w/2 + 12
-      });
-      const numText = new fabric.Text(String(index), {
-        fontSize: 10, fill: '#ffffff', originX: 'center', originY: 'center', top: -h/2 + 12, left: -w/2 + 12, fontWeight: 'bold'
-      });
-
-      const labelText = new fabric.Text(labelPrefix + index, {
-        fontSize: 12, fill: color, originX: 'center', originY: 'center', fontWeight: 'bold'
-      });
-
-      return new fabric.Group([rect, numBadge, numText, labelText], {
-        originX: 'center', originY: 'center', subBoxIndex: index
-      });
-    }
-
-    function buildSmartBoxGroup(type) {
-      const count = parseInt(document.getElementById('boxGroupCount').value) || 1;
-      const shape = document.getElementById('boxGroupShape').value;
-      const isSquare = shape === 'square';
-      
-      const elements = [];
-      let currentOffsetY = 0;
-
-      for (let i = 1; i <= count; i++) {
-        const subBox = createSingleBoxElement(type, i, isSquare);
-        subBox.set({ top: currentOffsetY, left: 0 });
-        elements.push(subBox);
-        currentOffsetY += subBox.height + 10;
-      }
-
-      const group = new fabric.Group(elements, {
-        left: mainCanvas.width / 2, top: mainCanvas.height / 2,
-        originX: 'center', originY: 'center',
-        cornerColor: type === 'magic' ? '#ec4899' : '#06b6d4',
-        cornerStyle: 'circle', transparentCorners: false,
-        lockUniScaling: isSquare, angle: 0
-      });
-
-      group.isSmartBoxGroup = true;
-      group.boxType = type;
-      group.groupArrangement = 'vertical'; // Default bertumpuk
-      if (type === 'magic') group.isMagicBox = true;
-      if (type === 'license') group.isLicenseBox = true;
-
-      attachMagicBoxEvents(group);
-      return group;
-    }
-
-    function addMagicBoxGroup() {
-      const group = buildSmartBoxGroup('magic');
-      mainCanvas.add(group);
-      mainCanvas.setActiveObject(group);
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
-
-    function addLicenseBoxGroup() {
-      const group = buildSmartBoxGroup('license');
-      mainCanvas.add(group);
-      mainCanvas.setActiveObject(group);
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
-
-    function changeActiveGroupArrangement(mode) {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || !activeObj.isSmartBoxGroup) {
-        return;
-      }
-
-      const items = activeObj.getObjects();
-      activeObj.groupArrangement = mode;
-
-      let offset = 0;
-      items.forEach((item) => {
-        if (mode === 'horizontal') {
-          item.set({ left: offset, top: 0 });
-          offset += item.width + 10;
-        } else {
-          item.set({ left: 0, top: offset });
-          offset += item.height + 10;
-        }
-      });
-
-      activeObj.addWithUpdate();
-      mainCanvas.renderAll();
-      saveProjectState();
-    }
-
     function autoPlaceLicense(position) {
-      let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox);
+      let targetBox = mainCanvas.getObjects().find(o => o.isLicenseBox || (o.isBoxGroup && o.getObjects().some(sub => sub.isLicenseBox)));
       if (!targetBox) {
-        addLicenseBoxGroup();
+        createLicenseBoxGroup();
         targetBox = mainCanvas.getActiveObject();
       }
 
@@ -976,65 +1054,91 @@
 
         if (activeObj.isMagicBox) clonedObj.isMagicBox = true;
         if (activeObj.isLicenseBox) clonedObj.isLicenseBox = true;
-        if (activeObj.isSmartBoxGroup) clonedObj.isSmartBoxGroup = true;
+        if (activeObj.isBoxGroup) clonedObj.isBoxGroup = true;
 
         attachMagicBoxEvents(clonedObj);
+
         mainCanvas.add(clonedObj);
         mainCanvas.setActiveObject(clonedObj);
         mainCanvas.renderAll();
+        saveProjectState();
       });
     }
 
     // ==========================================
-    // 7. AUTO-FILL KOTAK BERURUTAN (SEQUENTIAL FILL)
+    // 6. LOGIKA OTOMATIS MENGISI KOTAK (FITUR BARU 2)
     // ==========================================
     function sendToMain() {
       const activeStagingObj = stagingCanvas.getActiveObject();
       if (!activeStagingObj || activeStagingObj.isCropOverlay) {
-        alert("Pilih elemen di Meja Potong terlebih dahulu!");
+        alert("Pilih 1 elemen di Meja Potong terlebih dahulu!");
         return;
       }
 
-      let activeGroup = mainCanvas.getActiveObject();
-      if (!activeGroup || !activeGroup.isSmartBoxGroup) {
-        activeGroup = mainCanvas.getObjects().find(o => o.isSmartBoxGroup);
+      // Cari Kotak Sakti/Lisensi paling awal (Nomor 1 paling atas / paling kiri)
+      let targetSlot = null;
+      const allObjects = mainCanvas.getObjects();
+
+      // Cek apakah ada Box Group aktif
+      for (let obj of allObjects) {
+        if (obj.isBoxGroup) {
+          const subBoxes = obj.getObjects();
+          // Cari slot kosong terdepan berdasarkan urutan nomor 1, 2, 3...
+          for (let sub of subBoxes) {
+            if (!sub.hasFilledContent) {
+              targetSlot = { group: obj, subBox: sub };
+              break;
+            }
+          }
+        } else if ((obj.isMagicBox || obj.isLicenseBox) && !obj.hasFilledContent) {
+          targetSlot = { group: null, subBox: obj };
+        }
+        if (targetSlot) break;
       }
 
       activeStagingObj.clone(function(clonedObj) {
         clonedObj.set({ angle: 0 });
 
-        if (activeGroup && activeGroup.isSmartBoxGroup) {
-          const subBoxes = activeGroup.getObjects();
-          if (!activeGroup.nextFillIndex) activeGroup.nextFillIndex = 0;
+        if (targetSlot) {
+          const sub = targetSlot.subBox;
+          const group = targetSlot.group;
 
-          const targetSubBox = subBoxes[activeGroup.nextFillIndex % subBoxes.length];
-          activeGroup.nextFillIndex++;
+          let absLeft, absTop, targetW, targetH;
 
-          const groupMatrix = activeGroup.calcTransformMatrix();
-          const subBoxMatrix = targetSubBox.calcTransformMatrix();
-          const finalMatrix = fabric.util.multiplyTransformMatrices(groupMatrix, subBoxMatrix);
-          const options = fabric.util.qrDecompose(finalMatrix);
+          if (group) {
+            const matrix = sub.calcTransformMatrix();
+            const options = fabric.util.qrDecompose(matrix);
+            absLeft = options.translateX;
+            absTop = options.translateY;
+            targetW = sub.getScaledWidth() * group.scaleX;
+            targetH = sub.getScaledHeight() * group.scaleY;
+          } else {
+            absLeft = sub.left;
+            absTop = sub.top;
+            targetW = sub.getScaledWidth();
+            targetH = sub.getScaledHeight();
+          }
 
-          const targetWidth = targetSubBox.width * options.scaleX;
-          const targetHeight = targetSubBox.height * options.scaleY;
-
-          const scaleX = targetWidth / clonedObj.width;
-          const scaleY = targetHeight / clonedObj.height;
+          const scaleX = targetW / clonedObj.width;
+          const scaleY = targetH / clonedObj.height;
           const finalScale = Math.min(scaleX, scaleY);
 
           clonedObj.set({
-            left: options.translateX,
-            top: options.translateY,
+            left: absLeft,
+            top: absTop,
             scaleX: finalScale,
             scaleY: finalScale,
             originX: 'center',
             originY: 'center'
           });
+
+          sub.hasFilledContent = true; // Tandai slot ini sudah terisi
         } else {
+          // Jika tidak ada kotak aktif/kosong, tempatkan di tengah kanvas
           clonedObj.set({
-            left: mainCanvas.width / 2, 
+            left: mainCanvas.width / 2,
             top: mainCanvas.height / 2,
-            originX: 'center', 
+            originX: 'center',
             originY: 'center'
           });
         }
@@ -1047,7 +1151,7 @@
     }
 
     // ==========================================
-    // 8. PEMOTONGAN PRESISI 1:1 & KONTROL MEJA POTONG
+    // 7. PEMOTONGAN PRESISI 1:1 & KONTROL MEJA POTONG
     // ==========================================
     function deleteStagingObj() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1228,7 +1332,7 @@
     }
 
     // ==========================================
-    // 9. FONTS, CURVED TEXT, & FILTER FOTO
+    // 8. FONTS, CURVED TEXT, & FILTER FOTO
     // ==========================================
     function changeActiveTextFont() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1305,7 +1409,7 @@
     }
 
     // ==========================================
-    // 10. OLAH GAMBAR UTILS & PIPET WARNA
+    // 9. OLAH GAMBAR UTILS & PIPET WARNA
     // ==========================================
     async function autoRemoveBgAI() {
       const activeObj = stagingCanvas.getActiveObject();
@@ -1427,6 +1531,7 @@
       if (!activeObj || activeObj.type !== 'activeSelection') return;
       activeObj.toGroup();
       mainCanvas.renderAll();
+      saveProjectState();
     }
 
     function unmergeSelected() {
@@ -1434,6 +1539,7 @@
       if (!activeObj || activeObj.type !== 'group') return;
       activeObj.toActiveSelection();
       mainCanvas.renderAll();
+      saveProjectState();
     }
 
     function deleteMainObj() {
@@ -1442,11 +1548,12 @@
         mainCanvas.remove(activeObj);
         mainCanvas.discardActiveObject();
         mainCanvas.renderAll();
+        saveProjectState();
       }
     }
 
     // ==========================================
-    // 11. EKSPOR HIGH-RES ULTRA HD (300 DPI)
+    // 10. EKSPOR HIGH-RES ULTRA HD (300 DPI)
     // ==========================================
     function exportPNG() {
       const tempZoom = currentZoom;
