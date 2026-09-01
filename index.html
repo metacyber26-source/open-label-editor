@@ -1,4 +1,4 @@
-l<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -407,7 +407,7 @@ l<!DOCTYPE html>
 
         const dataURL = hiddenCanvas.toDataURL('image/png');
         fabric.Image.fromURL(dataURL, function(img) {
-          img.set({ left: 60, top: 60 });
+          img.set({ left: 60, top: 60, originX: 'center', originY: 'center' });
           stagingCanvas.add(img);
           stagingCanvas.setActiveObject(img);
           stagingCanvas.renderAll();
@@ -508,7 +508,12 @@ l<!DOCTYPE html>
     function loadImageToStaging(dataUrl) {
       fabric.Image.fromURL(dataUrl, function(img) {
         img.scaleToWidth(130);
-        img.set({ left: stagingCanvas.width/2, top: stagingCanvas.height/2, originX: 'center', originY: 'center' });
+        img.set({ 
+          left: stagingCanvas.width/2, 
+          top: stagingCanvas.height/2, 
+          originX: 'center', 
+          originY: 'center' 
+        });
         stagingCanvas.add(img);
         stagingCanvas.setActiveObject(img);
         stagingCanvas.renderAll();
@@ -759,7 +764,7 @@ l<!DOCTYPE html>
     }
 
     // ==========================================
-    // 7. PEMOTONGAN PRESISI BERBASIS CANVAS NATIVE
+    // 7. PEMOTONGAN PRESISI BERBASIS CANVAS RASTERIZATION (FIX MELENCENG)
     // ==========================================
     function showCropOverlay(shapeType) {
       const activeObj = stagingCanvas.getActiveObject();
@@ -768,11 +773,16 @@ l<!DOCTYPE html>
         return;
       }
 
+      // Pastikan titik pusat gambar (Center) sebagai acuan presisi
+      activeObj.set({ originX: 'center', originY: 'center' });
+      activeObj.setCoords();
+
       if (cropOverlayObj) stagingCanvas.remove(cropOverlayObj);
 
       const center = activeObj.getCenterPoint();
-      const bounds = activeObj.getBoundingRect();
-      const size = Math.min(bounds.width, bounds.height) * 0.7;
+      const scaledW = activeObj.getScaledWidth();
+      const scaledH = activeObj.getScaledHeight();
+      const size = Math.min(scaledW, scaledH) * 0.7;
 
       let frameShape;
       if (shapeType === 'circle') {
@@ -850,65 +860,70 @@ l<!DOCTYPE html>
       const imgObj = cropOverlayObj.targetImageObj;
       const overlay = cropOverlayObj;
 
-      // Sembunyikan garis panduan saat melakukan rasterization
+      // 1. Sembunyikan garis panduan agar tidak ikut terpotong
       overlay.set('visible', false);
       stagingCanvas.renderAll();
 
-      const imgBounds = imgObj.getBoundingRect(true);
-      const cropBounds = overlay.getBoundingRect(true);
+      // 2. Export tampilan gambar persis sesuai koordinat Meja Potong
+      const dataURL = stagingCanvas.toDataURL({
+        format: 'png',
+        left: overlay.left - overlay.getScaledWidth() / 2,
+        top: overlay.top - overlay.getScaledHeight() / 2,
+        width: overlay.getScaledWidth(),
+        height: overlay.getScaledHeight(),
+        multiplier: 2
+      });
 
-      // Hitung koordinat potong pada elemen image asli
-      const element = imgObj._element;
-      const scaleX = element.naturalWidth / imgBounds.width;
-      const scaleY = element.naturalHeight / imgBounds.height;
+      // 3. Masking dengan bentuk potongan (Circle, Rect, Rounded)
+      const w = overlay.getScaledWidth() * 2;
+      const h = overlay.getScaledHeight() * 2;
 
-      const cropX = (cropBounds.left - imgBounds.left) * scaleX;
-      const cropY = (cropBounds.top - imgBounds.top) * scaleY;
-      const cropW = cropBounds.width * scaleX;
-      const cropH = cropBounds.height * scaleY;
+      const maskCanvas = document.createElement('canvas');
+      const maskCtx = maskCanvas.getContext('2d');
+      maskCanvas.width = w;
+      maskCanvas.height = h;
 
-      // Kanvas sementara (Native HTML5 Canvas)
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = cropW;
-      tempCanvas.height = cropH;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        maskCtx.beginPath();
+        if (overlay.cropShapeType === 'circle') {
+          maskCtx.arc(w / 2, h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+        } else if (overlay.cropShapeType === 'rounded') {
+          const r = Math.min(w, h) * 0.15;
+          maskCtx.roundRect(0, 0, w, h, r);
+        } else {
+          maskCtx.rect(0, 0, w, h);
+        }
+        maskCtx.closePath();
+        maskCtx.clip();
 
-      tempCtx.beginPath();
-      if (overlay.cropShapeType === 'circle') {
-        tempCtx.arc(cropW / 2, cropH / 2, Math.min(cropW, cropH) / 2, 0, Math.PI * 2);
-      } else if (overlay.cropShapeType === 'rounded') {
-        const r = Math.min(cropW, cropH) * 0.15;
-        tempCtx.roundRect(0, 0, cropW, cropH, r);
-      } else {
-        tempCtx.rect(0, 0, cropW, cropH);
-      }
-      tempCtx.closePath();
-      tempCtx.clip();
+        maskCtx.drawImage(img, 0, 0, w, h);
 
-      // Gambar bagian aset yang dipotong
-      tempCtx.drawImage(element, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        const croppedDataUrl = maskCanvas.toDataURL('image/png');
 
-      const croppedDataUrl = tempCanvas.toDataURL('image/png');
+        // 4. Masukkan hasil potongan presisi ke Meja Potong
+        fabric.Image.fromURL(croppedDataUrl, function(newImg) {
+          newImg.set({
+            left: overlay.left,
+            top: overlay.top,
+            originX: 'center',
+            originY: 'center'
+          });
+          newImg.scaleToWidth(overlay.getScaledWidth());
 
-      // Ganti objek di Meja Potong dengan versi terpotong
-      fabric.Image.fromURL(croppedDataUrl, function(newImg) {
-        newImg.set({
-          left: overlay.left,
-          top: overlay.top,
-          originX: 'center',
-          originY: 'center'
-        });
+          stagingCanvas.remove(imgObj);
+          stagingCanvas.remove(overlay);
+          cropOverlayObj = null;
 
-        stagingCanvas.remove(imgObj);
-        stagingCanvas.remove(overlay);
-        cropOverlayObj = null;
-
-        stagingCanvas.add(newImg);
-        stagingCanvas.setActiveObject(newImg);
-        stagingCanvas.renderAll();
-        saveProjectState();
-        alert("Pemotongan berhasil! Siap dikirim ke Kanvas Utama.");
-      }, { crossOrigin: 'anonymous' });
+          stagingCanvas.add(newImg);
+          stagingCanvas.setActiveObject(newImg);
+          stagingCanvas.renderAll();
+          saveProjectState();
+          alert("Pemotongan presisi berhasil! Siap dikirim ke Kanvas Utama.");
+        }, { crossOrigin: 'anonymous' });
+      };
+      img.src = dataURL;
     }
 
     // ==========================================
