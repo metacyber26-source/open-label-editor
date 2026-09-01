@@ -16,6 +16,7 @@ body {
   grid-template-columns: 1fr 340px;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 /* Header & Toolbar */
@@ -26,33 +27,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .brand h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #38bdf8;
 }
 
 .brand .subtitle {
-  font-size: 11px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 
 .actions button {
-  padding: 10px 16px;
+  padding: 8px 12px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   transition: all 0.2s ease;
 }
 
@@ -83,13 +84,19 @@ body {
   background: #0369a1;
 }
 
+.btn-toggle {
+  background: #059669;
+  color: #ffffff;
+  display: none; /* Sembunyi secara default di komputer */
+}
+
 /* Workspace & Canvas */
 .workspace {
   background: #334155;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: 20px;
   overflow: auto;
 }
 
@@ -106,27 +113,27 @@ body {
   border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 600;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .dimension-bar input {
-  width: 60px;
-  padding: 4px 8px;
+  width: 55px;
+  padding: 4px 6px;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
   text-align: center;
 }
 
 .dimension-bar select {
-  padding: 4px 8px;
+  padding: 4px 6px;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
 }
 
-/* Responsive Physical Canvas */
+/* Dynamic Physical Canvas */
 .canvas-preview {
   background: #ffffff;
   border: 2px dashed #94a3b8;
@@ -157,13 +164,13 @@ body {
   border-radius: inherit;
 }
 
-/* Elemen Dynamic Canvas */
+/* Elemen Canvas */
 .license-group {
   position: absolute;
   bottom: 15px;
   left: 15px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: rgba(241, 245, 249, 0.95);
   padding: 6px;
   border: 1px solid #cbd5e1;
@@ -173,11 +180,11 @@ body {
 }
 
 .license-item {
-  height: 36px;
+  height: 32px;
   background: #e2e8f0;
   border: 1px solid #94a3b8;
-  padding: 2px 8px;
-  font-size: 10px;
+  padding: 2px 6px;
+  font-size: 9px;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -201,20 +208,36 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Sidebar Panel */
+/* Sidebar Panel & Responsive Floating Drawer */
 .ai-panel {
   background: #ffffff;
   border-left: 1px solid #e2e8f0;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   overflow-y: auto;
+  transition: all 0.3s ease-in-out;
 }
 
-.ai-panel h3 {
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h3 {
   font-size: 15px;
   color: #0f172a;
+}
+
+.btn-close-panel {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  display: none; /* Sembunyi di PC */
 }
 
 .divider {
@@ -226,11 +249,11 @@ body {
 .hint {
   font-size: 12px;
   color: #64748b;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .ai-card {
-  padding: 12px;
+  padding: 10px;
   border-radius: 6px;
   font-size: 12px;
   line-height: 1.4;
@@ -252,4 +275,34 @@ body {
   background: #f0f9ff;
   border-left: 4px solid #0284c7;
   color: #0369a1;
+}
+
+/* PENYESUAIAN KHUSUS LAYAR HP / TABLET (TAMPILAN MOBILE) */
+@media (max-width: 768px) {
+  .app-container {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-toggle {
+    display: inline-block; /* Tombol Panel Info Muncul di HP */
+  }
+
+  .btn-close-panel {
+    display: block; /* Tombol X Muncul di HP */
+  }
+
+  .ai-panel {
+    position: fixed;
+    top: 0;
+    right: -100%; /* Sembunyi di kanan luar layar */
+    width: 85%;
+    height: 100vh;
+    z-index: 999;
+    box-shadow: -5px 0 25px rgba(0,0,0,0.3);
+  }
+
+  /* Saat Panel Dibuka */
+  .ai-panel.active {
+    right: 0; /* Meluncur masuk ke dalam layar HP */
+  }
 }
