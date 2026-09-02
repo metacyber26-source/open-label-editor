@@ -11,24 +11,43 @@
   <!-- Fabric.js, JsBarcode, & Google Fonts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Pacifico&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;700&family=Pacifico&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
-    body { background: #0f172a; color: #f8fafc; padding: 10px; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; }
+    :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #0f172a;
+      --border-color: #334155;
+      --border-focus: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --accent-blue: #3b82f6;
+      --accent-sky: #0284c7;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-pink: #ec4899;
+      --accent-purple: #8b5cf6;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; touch-action: manipulation; }
+    body { background: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; }
     
     .dashboard-header {
-      width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 1px solid #38bdf8; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
-      display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+      width: 100%; max-width: 680px; background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #38bdf8; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
       position: relative;
     }
-    .dash-title { font-size: 0.9rem; font-weight: bold; color: #38bdf8; display: flex; flex-direction: column; gap: 4px; }
+    .dash-title { font-size: 1rem; font-weight: 700; color: #38bdf8; display: flex; flex-direction: column; gap: 2px; }
     .dash-stats { display: flex; gap: 8px; font-size: 0.75rem; align-items: center; }
-    .stat-badge { background: #334155; padding: 4px 8px; border-radius: 4px; border: 1px solid #475569; }
-    .stat-badge span { color: #10b981; font-weight: bold; }
+    .stat-badge { background: #334155; padding: 4px 10px; border-radius: 20px; border: 1px solid #475569; }
+    .stat-badge span { color: var(--accent-green); font-weight: 700; }
 
-    /* TOMBOL SCROLL MELAYANG PERMANEN DIPINDAHKAN KE POJOK KANAN ATAS */
+    /* FLOATING SCROLL CONTROLS */
     .floating-scroll-controls {
       position: fixed;
       top: 20px;
@@ -38,101 +57,108 @@
       flex-direction: column;
       gap: 8px;
       background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
       padding: 6px;
       border-radius: 30px;
-      border: 2px solid #ec4899;
-      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.5);
+      border: 2px solid var(--accent-pink);
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
     }
     .btn-scroll {
-      width: 42px; height: 42px; border-radius: 50%; border: none;
-      background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white;
-      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      user-select: none; transition: transform 0.1s, background 0.2s;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      width: 40px; height: 40px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); color: white;
+      font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      user-select: none; transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
-    .btn-scroll:active { transform: scale(0.9); background: #38bdf8; }
+    .btn-scroll:active { transform: scale(0.9); }
 
     .section-box {
-      width: 100%; max-width: 650px; background: #1e293b; border: 1px solid #334155;
-      border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center;
+      width: 100%; max-width: 680px; background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    h3 { font-size: 0.85rem; margin-bottom: 8px; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; width: 100%; text-align: left; }
+    h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; color: var(--border-focus); text-transform: uppercase; letter-spacing: 0.8px; width: 100%; text-align: left; }
 
-    .toolbar { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 100%; margin-bottom: 8px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: 100%; margin-bottom: 10px; }
     
     .btn { 
-      background: #3b82f6; color: white; border: none; padding: 6px 10px; 
-      border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
-      display: inline-flex; align-items: center; justify-content: center; user-select: none;
+      background: var(--accent-blue); color: white; border: none; padding: 7px 12px; 
+      border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px; user-select: none;
+      transition: all 0.15s ease-in-out; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
-    .btn-pink { background: #ec4899; }
-    .btn-green { background: #10b981; }
-    .btn-orange { background: #f59e0b; }
-    .btn-purple { background: #8b5cf6; }
-    .btn-red { background: #ef4444; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-pink { background: var(--accent-pink); }
+    .btn-green { background: var(--accent-green); }
+    .btn-orange { background: var(--accent-orange); }
+    .btn-purple { background: var(--accent-purple); }
+    .btn-red { background: var(--accent-red); }
     .btn-dark-red { background: #dc2626; }
-    .btn-cyan { background: #06b6d4; }
-    .btn-zoom { background: #0284c7; }
+    .btn-cyan { background: var(--accent-cyan); }
+    .btn-zoom { background: var(--accent-sky); }
     .btn-ai { background: linear-gradient(135deg, #a855f7, #ec4899); color: white; }
 
-    .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-    input[type="color"] { border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; background: transparent; }
-    .canvas-container { border: 1px dashed #475569; background: #ffffff; border-radius: 4px; overflow: hidden; position: relative; }
+    .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; }
+    input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: transparent; }
+    .canvas-wrapper { border: 1px dashed #475569; background: #ffffff; border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
     .control-panel {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px;
-      padding: 8px; margin-top: 8px; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 8px;
+      width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px;
+      padding: 10px; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 10px;
     }
     .dpad-group { display: flex; flex-direction: column; align-items: center; }
     .dpad-row { display: flex; gap: 4px; }
     .btn-dpad {
-      width: 34px; height: 34px; font-size: 0.9rem; border-radius: 6px;
+      width: 36px; height: 36px; font-size: 0.9rem; border-radius: 6px;
       background: #334155; color: #f8fafc; border: 1px solid #475569; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
     }
-    .btn-dpad:active { background: #0284c7; }
-    .action-group { display: flex; flex-direction: column; gap: 4px; }
+    .btn-dpad:active { background: var(--accent-sky); }
+    .action-group { display: flex; flex-direction: column; gap: 6px; }
     .action-row { display: flex; gap: 4px; align-items: center; }
-    .btn-action { height: 34px; padding: 0 8px; font-size: 0.72rem; background: #1e293b; border: 1px solid #475569; color: white; cursor: pointer; border-radius: 4px; }
-    .btn-action:active { background: #ec4899; }
+    .btn-action { height: 34px; padding: 0 10px; font-size: 0.72rem; background: var(--bg-card); border: 1px solid #475569; color: white; cursor: pointer; border-radius: 6px; }
+    .btn-action:active { background: var(--accent-pink); }
 
     .gallery-container {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 6px; margin-bottom: 8px;
+      width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; margin-bottom: 10px;
     }
-    .gallery-title { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .gallery-grid { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    .gallery-title { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; font-weight: 600; }
+    .gallery-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
     .gallery-item {
-      position: relative; flex: 0 0 55px; height: 55px; border: 1px solid #475569;
-      border-radius: 4px; overflow: hidden; background: #1e293b; cursor: pointer;
+      position: relative; flex: 0 0 60px; height: 60px; border: 1px solid #475569;
+      border-radius: 6px; overflow: hidden; background: var(--bg-card); cursor: pointer;
     }
     .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
     .gallery-item .btn-del-asset {
       position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.9);
-      color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 16px; text-align: center; cursor: pointer;
+      color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; line-height: 18px; text-align: center; cursor: pointer;
     }
     
     .inline-tool-box {
-      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     }
-    .inline-input { background: #1e293b; border: 1px solid #475569; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; flex: 1; min-width: 100px; }
-    .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #94a3b8; }
+    .inline-input { background: var(--bg-card); border: 1px solid #475569; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; flex: 1; min-width: 110px; outline: none; }
+    .inline-input:focus { border-color: var(--border-focus); }
+    .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-muted); }
     .slider-group input { width: 80px; }
 
     .group-layout-bar {
       display: none; width: 100%; background: #1e1b4b; border: 1px solid #6366f1;
-      padding: 6px 10px; border-radius: 6px; margin-top: 6px; justify-content: space-between; align-items: center;
+      padding: 8px 12px; border-radius: 8px; margin-top: 8px; justify-content: space-between; align-items: center;
     }
     .group-layout-bar.active { display: flex; }
     
     .pan-info {
-      font-size: 0.7rem; color: #38bdf8; text-align: center; margin-top: 4px;
+      font-size: 0.72rem; color: var(--border-focus); text-align: center; margin-top: 6px;
     }
   </style>
 </head>
 <body>
 
-  <!-- TOMBOL SCROLL MENGAMBANG DI POJOK KANAN ATAS LAYAR -->
+  <!-- SCROLLING FLOATING CONTROLS -->
   <div class="floating-scroll-controls">
     <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
     <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
@@ -141,7 +167,7 @@
   <div class="dashboard-header">
     <div class="dash-title">
       <span>🏷️ Studio Label Pro</span>
-      <span style="font-size: 0.75rem; color: #94a3b8;">(Ultimate HD)</span>
+      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Ultimate HD & AI Edition)</span>
     </div>
     <div class="dash-stats">
       <div class="stat-badge">Pengguna: <span id="userCount">21</span> Active</div>
@@ -175,33 +201,34 @@
 
     <!-- PANEL NAVIGASI SUSUNAN KOTAK GROUP -->
     <div class="group-layout-bar" id="groupLayoutBar">
-      <span style="font-size: 0.72rem; color: #a5b4fc; font-weight: bold;">🔀 Ubah Susunan Kelompok Kotak:</span>
+      <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">🔀 Ubah Susunan Kelompok Kotak:</span>
       <div style="display: flex; gap: 6px;">
         <button class="btn btn-purple" onclick="setGroupArrangement('horizontal')">⬅️ ➡️ Berjajar</button>
         <button class="btn btn-purple" onclick="setGroupArrangement('vertical')">⬆️ ⬇️ Bertumpuk</button>
       </div>
     </div>
 
-    <!-- FITUR LAYER STACK MANAGEMENT & UNDO -->
+    <!-- FITUR LAYER STACK MANAGEMENT, UNDO & REDO -->
     <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📚 Layering & Undo:</span>
+      <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">📚 Layering & History:</span>
       <button class="btn btn-action" onclick="bringToFrontMain()">🔝 Paling Depan</button>
       <button class="btn btn-action" onclick="bringForwardMain()">⬆️ Naik 1 Layer</button>
       <button class="btn btn-action" onclick="sendBackwardMain()">⬇️ Turun 1 Layer</button>
       <button class="btn btn-action" onclick="sendToBackMain()">🔝 Paling Belakang</button>
       <button class="btn btn-action btn-orange" onclick="undoMainCanvas()">↩️ Undo</button>
+      <button class="btn btn-action btn-orange" onclick="redoMainCanvas()">↪️ Redo</button>
     </div>
 
     <!-- FITUR AUTO POSISI & CUSTOM BG SHAPE -->
     <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📍 Auto Posisi Lisensi:</span>
+      <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">📍 Auto Posisi Lisensi:</span>
       <button class="btn btn-cyan" onclick="autoPlaceLicense('top-right')">Kanan Atas</button>
       <button class="btn btn-cyan" onclick="autoPlaceLicense('bottom-right')">Kanan Bawah</button>
       <button class="btn btn-cyan" onclick="autoPlaceLicense('bottom-left')">Kiri Bawah</button>
     </div>
 
     <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#94a3b8;">Buat BG Polosan:</span>
+      <span style="font-size:0.72rem; color:var(--text-muted); font-weight:500;">Buat BG Polosan:</span>
       <select id="bgShapeType" class="inline-input" style="flex: initial; width: 110px;">
         <option value="rect">Persegi</option>
         <option value="rounded">Rounded</option>
@@ -212,19 +239,19 @@
       <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
     </div>
 
-    <div style="margin-top: 8px; position: relative;">
+    <div class="canvas-wrapper" style="margin-top: 10px;">
       <canvas id="mainCanvas" width="500" height="250"></canvas>
     </div>
-    <div class="pan-info">💡 <b>Tips Geser Kanvas:</b> Tahan tombol <b>Alt + Klik Drag</b> di kanvas untuk menggeser posisi tampilan ke tepi/luar area.</div>
+    <div class="pan-info">💡 <b>Tips Geser Kanvas:</b> Tahan tombol <b>Alt + Klik Drag</b> di kanvas untuk menggeser area.</div>
 
     <!-- FITUR EKSPOR ULTRA HD -->
     <div class="inline-tool-box" style="justify-content: space-between;">
       <div style="display:flex; align-items:center; gap:6px;">
-        <span style="font-size:0.7rem; color:#10b981; font-weight:bold;">🖨️ Kualitas Unduh:</span>
+        <span style="font-size:0.72rem; color:var(--accent-green); font-weight:bold;">🖨️ Kualitas Unduh:</span>
         <select id="exportDpiMode" class="inline-input" style="flex: initial; width: 160px;">
           <option value="1">Standard (72 DPI Web)</option>
           <option value="2">HD (150 DPI Cetak)</option>
-          <option value="4" selected>Ultra HD 300 DPI (Cetak Stiker)</option>
+          <option value="4" selected>Ultra HD 300 DPI (Stiker)</option>
         </select>
       </div>
       <button class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;" onclick="exportPNG()">📥 Unduh PNG HD</button>
@@ -233,7 +260,7 @@
     <!-- CONTROLS & ASPECT RATIO -->
     <div class="control-panel">
       <div class="dpad-group">
-        <span style="font-size: 0.68rem; color: #94a3b8; margin-bottom: 2px;">Geser Presisi</span>
+        <span style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 4px;">Geser Presisi</span>
         <div class="dpad-row">
           <button class="btn btn-dpad" id="btnUp">⬆️</button>
         </div>
@@ -245,11 +272,11 @@
       </div>
 
       <div class="action-group">
-        <span style="font-size: 0.68rem; color: #94a3b8; text-align: center;">Ukuran & Rotasi</span>
+        <span style="font-size: 0.68rem; color: var(--text-muted); text-align: center;">Ukuran & Rotasi</span>
         
         <div class="action-row" style="margin-bottom: 2px;">
-          <span style="font-size:0.65rem; color:#38bdf8;">Rasio:</span>
-          <select id="boxAspectRatioMode" class="inline-input" style="padding: 2px 4px; font-size: 0.68rem;" onchange="updateSelectedBoxRatio()">
+          <span style="font-size:0.68rem; color:var(--border-focus);">Rasio:</span>
+          <select id="boxAspectRatioMode" class="inline-input" style="padding: 3px 6px; font-size: 0.7rem;" onchange="updateSelectedBoxRatio()">
             <option value="square">⬜ 1:1 Bujur Sangkar</option>
             <option value="free">⬛ Bebas (Persegi Panjang)</option>
           </select>
@@ -292,9 +319,9 @@
       </div>
       <button class="btn btn-red" onclick="removeBackgroundStaging()">🪄 Hapus BG Warna</button>
 
-      <button class="btn btn-green" onclick="showCropOverlay('circle')">🎯 Panduan Lingkaran 1:1</button>
-      <button class="btn btn-green" onclick="showCropOverlay('square')">🎯 Panduan Persegi 1:1</button>
-      <button class="btn btn-green" onclick="showCropOverlay('rounded')">🎯 Panduan Lengkung 1:1</button>
+      <button class="btn btn-green" onclick="showCropOverlay('circle')">🎯 Panduan Lingkaran</button>
+      <button class="btn btn-green" onclick="showCropOverlay('square')">🎯 Panduan Persegi</button>
+      <button class="btn btn-green" onclick="showCropOverlay('rounded')">🎯 Panduan Lengkung</button>
       
       <button class="btn btn-orange" id="btnLockCrop" onclick="toggleLockCropOverlay()">🔒 Kunci Panduan</button>
       <button class="btn btn-pink" onclick="applyNativeCrop()">✂️ Eksekusi Potong Presisi</button>
@@ -305,9 +332,9 @@
 
     <!-- FITUR EDIT FONTS & CURVED TEXT -->
     <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🔤 Teks Lanjutan:</span>
-      <select id="fontFamilySelector" class="inline-input" style="flex:initial; width:110px;" onchange="changeActiveTextFont()">
-        <option value="Segoe UI">Default</option>
+      <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">🔤 Teks Lanjutan:</span>
+      <select id="fontFamilySelector" class="inline-input" style="flex:initial; width:120px;" onchange="changeActiveTextFont()">
+        <option value="Inter">Default (Inter)</option>
         <option value="Poppins">Poppins</option>
         <option value="Montserrat">Montserrat</option>
         <option value="Pacifico">Pacifico (Latin)</option>
@@ -318,7 +345,7 @@
 
     <!-- FITUR SLIDER FILTER GAMBAR -->
     <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">🎨 Filter Foto:</span>
+      <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">🎨 Filter Foto:</span>
       <div class="slider-group">
         <span>Cerah</span>
         <input type="range" id="brightnessSlider" min="-1" max="1" step="0.05" value="0" oninput="applyImageFilters()">
@@ -344,11 +371,11 @@
       <button class="btn btn-zoom" onclick="generateSafeBarcode()">📊 + Barcode Aman Scan</button>
     </div>
 
-    <button class="btn btn-purple" style="width:100%; margin-top:8px; padding: 10px;" onclick="sendToMain()">
+    <button class="btn btn-purple" style="width:100%; margin-top:10px; padding: 10px; font-size: 0.8rem;" onclick="sendToMain()">
       ⬆️ Masukkan Elemen Terpilih ke Kotak Sakti / Lisensi / Kanvas
     </button>
 
-    <div style="margin-top: 8px;">
+    <div class="canvas-wrapper" style="margin-top: 10px;">
       <canvas id="stagingCanvas" width="500" height="200"></canvas>
     </div>
   </div>
@@ -356,6 +383,7 @@
   <canvas id="barcodeHiddenCanvas" style="display:none;"></canvas>
 
   <script>
+    // INITIALIZATION CANVAS
     const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
 
@@ -366,25 +394,50 @@
     let cropOverlayObj = null;
     let guidesVisible = true;
 
-    // HISTORY STACK UNTUK FITUR UNDO
+    // HISTORY STACK UNDO / REDO
     let mainHistory = [];
-    let activeControlTimer = null; // Menghindari tombol jalan terus
+    let redoStack = [];
+    let isHistoryLocked = false;
+    let activeControlTimer = null;
 
     function saveHistory() {
-      if (mainHistory.length > 20) mainHistory.shift();
-      mainHistory.push(JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem'])));
+      if (isHistoryLocked) return;
+      if (mainHistory.length > 25) mainHistory.shift();
+      const json = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
+      mainHistory.push(json);
+      redoStack = []; // Reset Redo stack setiap ada aksi baru
     }
 
     function undoMainCanvas() {
       if (mainHistory.length > 1) {
-        mainHistory.pop(); // Hapus state saat ini
+        isHistoryLocked = true;
+        redoStack.push(mainHistory.pop());
         const prevState = mainHistory[mainHistory.length - 1];
+        
         mainCanvas.loadFromJSON(prevState, function() {
           mainCanvas.getObjects().forEach(obj => {
             if (obj.isMagicBox || obj.isLicenseBox || obj.isBoxGroup) attachBoxEvents(obj);
           });
           mainCanvas.renderAll();
           saveProjectState();
+          isHistoryLocked = false;
+        });
+      }
+    }
+
+    function redoMainCanvas() {
+      if (redoStack.length > 0) {
+        isHistoryLocked = true;
+        const nextState = redoStack.pop();
+        mainHistory.push(nextState);
+        
+        mainCanvas.loadFromJSON(nextState, function() {
+          mainCanvas.getObjects().forEach(obj => {
+            if (obj.isMagicBox || obj.isLicenseBox || obj.isBoxGroup) attachBoxEvents(obj);
+          });
+          mainCanvas.renderAll();
+          saveProjectState();
+          isHistoryLocked = false;
         });
       }
     }
@@ -397,7 +450,7 @@
       }
     });
 
-    // SISTEM SCROLL LAYAR PRESISI DENGAN ANIMASI SMOOTH
+    // SMOOTH SCROLL BUTTONS
     function setupScrollButton(btnId, direction) {
       const btn = document.getElementById(btnId);
       let scrollTimer = null;
@@ -408,18 +461,13 @@
 
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
-        performScroll(40);
+        performScroll(30);
         if (scrollTimer) clearInterval(scrollTimer);
-        scrollTimer = setInterval(() => {
-          performScroll(80);
-        }, 80);
+        scrollTimer = setInterval(() => { performScroll(60); }, 60);
       };
 
       const stop = () => {
-        if (scrollTimer) {
-          clearInterval(scrollTimer);
-          scrollTimer = null;
-        }
+        if (scrollTimer) { clearInterval(scrollTimer); scrollTimer = null; }
       };
 
       btn.addEventListener('mousedown', start);
@@ -432,7 +480,7 @@
     setupScrollButton('btnScrollUp', -1);
     setupScrollButton('btnScrollDown', 1);
 
-    // FITUR GESER KANVAS UTAMA (PAN CANVAS VIA ALT+DRAG ATAU SCROLL WHEEL)
+    // GESER KANVAS UTAMA (PAN CANVAS)
     let isDraggingCanvas = false;
     let lastPosX = 0;
     let lastPosY = 0;
@@ -467,8 +515,8 @@
       }
     });
 
-    // SMART SNAP & ALIGNMENT GUIDES
-    const SNAP_THRESHOLD = 10;
+    // SNAP GUIDES
+    const SNAP_THRESHOLD = 8;
     mainCanvas.on('object:moving', function(e) {
       const obj = e.target;
       const canvasWidth = mainCanvas.width;
@@ -489,7 +537,7 @@
       localStorage.setItem('label_studio_user_count', count);
     }
 
-    // AUTO SAVE IMPLEMENTASI
+    // LOCAL STORAGE STATE MANAGEMENT
     function saveProjectState() {
       try {
         const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
@@ -498,7 +546,7 @@
         localStorage.setItem('label_studio_staging', stagingData);
         localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
       } catch (e) {
-        console.warn("Progres gagal disimpan otomatis:", e);
+        console.warn("Autosave gagal:", e);
       }
     }
 
@@ -520,7 +568,10 @@
           mainCanvas.renderAll();
           saveHistory();
         });
+      } else {
+        saveHistory();
       }
+
       if (savedStaging) {
         stagingCanvas.loadFromJSON(savedStaging, function() {
           stagingCanvas.renderAll();
@@ -529,9 +580,8 @@
       initUserCounter();
     }
 
-    // RESET TOTAL KEMBALI KE KEADAAN AWAL
     function clearProjectData() {
-      if (confirm("Yakin ingin mereset seluruh proyek dan kembali ke tampilan awal?")) {
+      if (confirm("Reset seluruh data & proyek ke keadaan awal?")) {
         localStorage.removeItem('label_studio_main');
         localStorage.removeItem('label_studio_staging');
         localStorage.removeItem('label_studio_assets');
@@ -544,6 +594,7 @@
         resetZoomMain();
         localAssets = [];
         mainHistory = [];
+        redoStack = [];
         renderGallery();
         saveProjectState();
         saveHistory();
@@ -577,7 +628,6 @@
     stagingCanvas.on('object:added', saveProjectState);
     stagingCanvas.on('object:removed', saveProjectState);
 
-    // TOGGLE SELEKTIF UNTUK GARIS PUTUS-PUTUS & PANDUAN KOTAK SAKTI / LISENSI
     function toggleBoxGuides() {
       guidesVisible = !guidesVisible;
       
@@ -599,7 +649,7 @@
       saveProjectState();
     }
 
-    // GENERATOR LATAR & STEMPEL LISENSI
+    // GENERATORS & LATAR
     function generateCustomBgShape() {
       const shapeType = document.getElementById('bgShapeType').value;
       const color = document.getElementById('bgColorPicker').value;
@@ -635,7 +685,7 @@
       const code = document.getElementById('licenseCodeInput').value.trim() || 'LIC-VERIFIED';
 
       const rect = new fabric.Rect({
-        width: 120, height: 34, rx: 6, ry: 6, fill: '#06b6d4', stroke: '#0284c7', strokeWidth: 1.5, originX: 'center', originY: 'center'
+        width: 125, height: 34, rx: 6, ry: 6, fill: '#06b6d4', stroke: '#0284c7', strokeWidth: 1.5, originX: 'center', originY: 'center'
       });
 
       const iconText = new fabric.Text("🛡️ " + code, {
@@ -643,7 +693,7 @@
       });
 
       const stampGroup = new fabric.Group([rect, iconText], {
-        left: 70, top: 50, originX: 'center', originY: 'center'
+        left: 80, top: 50, originX: 'center', originY: 'center'
       });
 
       stagingCanvas.add(stampGroup);
@@ -654,21 +704,18 @@
 
     function generatePriceStamp() {
       const val = document.getElementById('stampPriceValue').value.trim();
-      if (!val) {
-        alert("Masukkan nilai harga terlebih dahulu!");
-        return;
-      }
+      if (!val) { alert("Masukkan nilai harga terlebih dahulu!"); return; }
 
       const circle = new fabric.Circle({
-        radius: 40, fill: '#ffffff', stroke: '#ec4899', strokeWidth: 3, originX: 'center', originY: 'center'
+        radius: 38, fill: '#ffffff', stroke: '#ec4899', strokeWidth: 3, originX: 'center', originY: 'center'
       });
 
       const labelText = new fabric.Text("PRICE", {
-        fontSize: 11, fontWeight: 'bold', fill: '#ec4899', originX: 'center', originY: 'center', top: -16
+        fontSize: 10, fontWeight: 'bold', fill: '#ec4899', originX: 'center', originY: 'center', top: -14
       });
 
       const priceText = new fabric.Text(val, {
-        fontSize: 14, fontWeight: 'bold', fill: '#0f172a', originX: 'center', originY: 'center', top: 6
+        fontSize: 13, fontWeight: 'bold', fill: '#0f172a', originX: 'center', originY: 'center', top: 6
       });
 
       const stampGroup = new fabric.Group([circle, labelText, priceText], {
@@ -683,10 +730,7 @@
 
     function generateSafeBarcode() {
       const val = document.getElementById('barcodeValue').value.trim();
-      if (!val) {
-        alert("Masukkan kode angka untuk Barcode!");
-        return;
-      }
+      if (!val) { alert("Masukkan kode angka untuk Barcode!"); return; }
 
       const hiddenCanvas = document.getElementById('barcodeHiddenCanvas');
       
@@ -698,7 +742,7 @@
 
         const dataURL = hiddenCanvas.toDataURL('image/png');
         fabric.Image.fromURL(dataURL, function(img) {
-          img.set({ left: 60, top: 60, originX: 'center', originY: 'center' });
+          img.set({ left: 80, top: 80, originX: 'center', originY: 'center' });
           stagingCanvas.add(img);
           stagingCanvas.setActiveObject(img);
           stagingCanvas.renderAll();
@@ -711,11 +755,8 @@
 
     function autoFlattenBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
-      if (!bg) {
-        alert("Upload atau pilih gambar Background terlebih dahulu!");
-        return;
-      }
-      
+      if (!bg) { alert("Upload gambar Background terlebih dahulu!"); return; }
+
       const scaleX = mainCanvas.width / bg.width;
       const scaleY = mainCanvas.height / bg.height;
 
@@ -727,7 +768,6 @@
       mainCanvas.setBackgroundImage(bg, () => {
         mainCanvas.renderAll();
         saveProjectState();
-        alert("Label berhasil diratakan penuh!");
       });
     }
 
@@ -834,7 +874,7 @@
       if (obj) { obj.sendToBack(); mainCanvas.renderAll(); saveProjectState(); saveHistory(); }
     }
 
-    // MEMPERBAIKI MASALAH OBJEK JALAN TERUS SAAT KONTROL TEKAN TERUS
+    // CONTINUOUS CONTROLS & D-PAD PREVENT BUG STUCK
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
 
@@ -861,7 +901,6 @@
       btn.addEventListener('touchend', stop);
     }
 
-    // HENTIKAN GERAKAN JIKA MOUSE KELUAR WINDOW
     window.addEventListener('mouseup', () => {
       if (activeControlTimer) { clearInterval(activeControlTimer); activeControlTimer = null; }
     });
@@ -925,7 +964,6 @@
       mainCanvas.renderAll();
       saveProjectState();
       saveHistory();
-      alert(`Ukuran disamakan: ${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px`);
     }
 
     function alignStraightMain() {
@@ -934,19 +972,16 @@
         activeObj.set({ angle: 0 });
         activeObj.centerH();
         activeObj.setCoords();
-        mainCanvas.renderAll();
-        saveProjectState();
-        saveHistory();
       } else {
         mainCanvas.getObjects().forEach(o => {
           o.set({ angle: 0 });
           o.centerH();
           o.setCoords();
         });
-        mainCanvas.renderAll();
-        saveProjectState();
-        saveHistory();
       }
+      mainCanvas.renderAll();
+      saveProjectState();
+      saveHistory();
     }
 
     bindContinuousControl('btnUp', () => moveSelected(0, -2));
@@ -984,13 +1019,9 @@
       }
     }
 
-    // ==========================================
-    // KOTAK SAKTI & LISENSI PRESISI BERTUMPUK RAPI
-    // ==========================================
-    let clickTimerMagic = null;
-    let clickCountMagic = 0;
-    let clickTimerLicense = null;
-    let clickCountLicense = 0;
+    // KOTAK SAKTI & LISENSI
+    let clickTimerMagic = null, clickCountMagic = 0;
+    let clickTimerLicense = null, clickCountLicense = 0;
 
     document.getElementById('btnMagicBoxAdder').addEventListener('click', function() {
       clickCountMagic++;
@@ -1024,16 +1055,8 @@
       const gap = 8;
 
       for (let i = 0; i < count; i++) {
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (mode === 'vertical') {
-          offsetY = i * (height + gap);
-          offsetX = 0;
-        } else {
-          offsetX = i * (width + gap);
-          offsetY = 0;
-        }
+        let offsetX = mode === 'vertical' ? 0 : i * (width + gap);
+        let offsetY = mode === 'vertical' ? i * (height + gap) : 0;
 
         const rect = new fabric.Rect({
           width: width, height: height,
@@ -1043,12 +1066,12 @@
           left: offsetX, top: offsetY, opacity: guidesVisible ? 1 : 0
         });
 
-        const numText = new fabric.Text(`1`, {
-          fontSize: 13, fill: strokeColor, fontWeight: 'bold',
+        const numText = new fabric.Text(`${i + 1}`, {
+          fontSize: 12, fill: strokeColor, fontWeight: 'bold',
           originX: 'center', originY: 'center', left: offsetX - (width/2 - 12), top: offsetY - (height/2 - 12), opacity: guidesVisible ? 1 : 0
         });
 
-        const labelText = new fabric.Text(`${titlePrefix} #1`, {
+        const labelText = new fabric.Text(`${titlePrefix} #${i + 1}`, {
           fontSize: 11, fill: strokeColor, fontWeight: 'bold',
           originX: 'center', originY: 'center', left: offsetX, top: offsetY, opacity: guidesVisible ? 1 : 0
         });
@@ -1136,14 +1159,11 @@
 
     function duplicateMainObj() {
       const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj) {
-        alert("Pilih elemen terlebih dahulu!");
-        return;
-      }
+      if (!activeObj) { alert("Pilih elemen terlebih dahulu!"); return; }
 
       activeObj.clone(function(clonedObj) {
         clonedObj.set({
-          left: activeObj.left + 25, top: activeObj.top + 25,
+          left: activeObj.left + 20, top: activeObj.top + 20,
           evented: true, lockUniScaling: activeObj.lockUniScaling
         });
 
@@ -1224,9 +1244,7 @@
     function deleteStagingObj() {
       const activeObj = stagingCanvas.getActiveObject();
       if (activeObj) {
-        if (cropOverlayObj && activeObj === cropOverlayObj) {
-          cropOverlayObj = null;
-        }
+        if (cropOverlayObj && activeObj === cropOverlayObj) { cropOverlayObj = null; }
         stagingCanvas.remove(activeObj);
         stagingCanvas.discardActiveObject();
         stagingCanvas.renderAll();
@@ -1245,10 +1263,11 @@
       }
     }
 
+    // CROP OVERLAY WITH NATIVE CLIPPATH
     function showCropOverlay(shapeType) {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
-        alert("Aktifkan/Klik gambar di Meja Potong terlebih dahulu!");
+        alert("Klik/Pilih gambar di Meja Potong terlebih dahulu!");
         return;
       }
 
@@ -1304,10 +1323,7 @@
     }
 
     function toggleLockCropOverlay() {
-      if (!cropOverlayObj) {
-        alert("Aktifkan panduan potong terlebih dahulu!");
-        return;
-      }
+      if (!cropOverlayObj) { alert("Aktifkan panduan potong terlebih dahulu!"); return; }
 
       const isLocked = !cropOverlayObj.lockMovementX;
       cropOverlayObj.set({
@@ -1338,65 +1354,30 @@
       const imgObj = cropOverlayObj.targetImageObj;
       const overlay = cropOverlayObj;
 
-      overlay.set('visible', false);
+      let clipPath;
+      const w = overlay.getScaledWidth();
+      const h = overlay.getScaledHeight();
+
+      if (overlay.cropShapeType === 'circle') {
+        clipPath = new fabric.Circle({ radius: w / 2, originX: 'center', originY: 'center' });
+      } else if (overlay.cropShapeType === 'rounded') {
+        clipPath = new fabric.Rect({ width: w, height: h, rx: 15, ry: 15, originX: 'center', originY: 'center' });
+      } else {
+        clipPath = new fabric.Rect({ width: w, height: h, originX: 'center', originY: 'center' });
+      }
+
+      const diffX = (overlay.left - imgObj.left) / imgObj.scaleX;
+      const diffY = (overlay.top - imgObj.top) / imgObj.scaleY;
+
+      clipPath.left = diffX;
+      clipPath.top = diffY;
+
+      imgObj.set({ clipPath: clipPath });
+
+      stagingCanvas.remove(overlay);
+      cropOverlayObj = null;
       stagingCanvas.renderAll();
-
-      const dataURL = stagingCanvas.toDataURL({
-        format: 'png',
-        left: overlay.left - overlay.getScaledWidth() / 2,
-        top: overlay.top - overlay.getScaledHeight() / 2,
-        width: overlay.getScaledWidth(),
-        height: overlay.getScaledHeight(),
-        multiplier: 2
-      });
-
-      const w = overlay.getScaledWidth() * 2;
-      const h = overlay.getScaledHeight() * 2;
-
-      const maskCanvas = document.createElement('canvas');
-      const maskCtx = maskCanvas.getContext('2d');
-      maskCanvas.width = w;
-      maskCanvas.height = h;
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function() {
-        maskCtx.beginPath();
-        if (overlay.cropShapeType === 'circle') {
-          maskCtx.arc(w / 2, h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
-        } else if (overlay.cropShapeType === 'rounded') {
-          const r = Math.min(w, h) * 0.15;
-          maskCtx.roundRect(0, 0, w, h, r);
-        } else {
-          maskCtx.rect(0, 0, w, h);
-        }
-        maskCtx.closePath();
-        maskCtx.clip();
-
-        maskCtx.drawImage(img, 0, 0, w, h);
-
-        const croppedDataUrl = maskCanvas.toDataURL('image/png');
-
-        fabric.Image.fromURL(croppedDataUrl, function(newImg) {
-          newImg.set({
-            angle: 0,
-            left: overlay.left, top: overlay.top,
-            originX: 'center', originY: 'center'
-          });
-          newImg.scaleToWidth(overlay.getScaledWidth());
-
-          stagingCanvas.remove(imgObj);
-          stagingCanvas.remove(overlay);
-          cropOverlayObj = null;
-
-          stagingCanvas.add(newImg);
-          stagingCanvas.setActiveObject(newImg);
-          stagingCanvas.renderAll();
-          saveProjectState();
-          alert("Pemotongan presisi berhasil!");
-        }, { crossOrigin: 'anonymous' });
-      };
-      img.src = dataURL;
+      saveProjectState();
     }
 
     function changeActiveTextFont() {
@@ -1412,17 +1393,17 @@
     function toggleCurvedText() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
-        alert("Klik/Pilih elemen teks terlebih dahulu di Meja Potong!");
+        alert("Pilih elemen teks di Meja Potong terlebih dahulu!");
         return;
       }
       
       const text = activeObj.text;
-      const font = activeObj.fontFamily || 'Segoe UI';
-      const fill = activeObj.fill || '#ff0000';
+      const font = activeObj.fontFamily || 'Inter';
+      const fill = activeObj.fill || '#ef4444';
       
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
-      const size = 180;
+      const size = 200;
       tempCanvas.width = size;
       tempCanvas.height = size;
 
@@ -1430,13 +1411,13 @@
       tempCtx.fillStyle = fill;
       tempCtx.textAlign = 'center';
 
-      const radius = 60;
+      const radius = 65;
 
       tempCtx.save();
       tempCtx.translate(size/2, size/2);
       for (let i = 0; i < text.length; i++) {
         tempCtx.save();
-        const angle = -Math.PI / 2 + (i - text.length / 2 + 0.5) * 0.25;
+        const angle = -Math.PI / 2 + (i - text.length / 2 + 0.5) * 0.22;
         tempCtx.rotate(angle);
         tempCtx.fillText(text[i], 0, -radius);
         tempCtx.restore();
@@ -1577,10 +1558,10 @@
     function addStagingText() {
       const txt = prompt("Masukkan Teks Seni:", "Varian Rasa");
       if (!txt) return;
-      const fontName = document.getElementById('fontFamilySelector').value || 'Segoe UI';
+      const fontName = document.getElementById('fontFamilySelector').value || 'Inter';
       const textObj = new fabric.IText(txt, {
         angle: 0,
-        left: stagingCanvas.width/2, top: stagingCanvas.height/2, fontSize: 24, fill: '#ff0000',
+        left: stagingCanvas.width/2, top: stagingCanvas.height/2, fontSize: 24, fill: '#ef4444',
         fontFamily: fontName, fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
       });
       stagingCanvas.clear();
@@ -1625,7 +1606,6 @@
       
       const dpiMultiplier = parseFloat(document.getElementById('exportDpiMode').value) || 4;
 
-      // Sembunyikan garis panduan sebelum diekspor
       const currentGuideState = guidesVisible;
       if (guidesVisible) toggleBoxGuides();
 
