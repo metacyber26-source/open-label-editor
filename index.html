@@ -47,7 +47,7 @@
     .stat-badge { background: #334155; padding: 4px 10px; border-radius: 20px; border: 1px solid #475569; }
     .stat-badge span { color: var(--accent-green); font-weight: 700; }
 
-    /* FLOATING SCROLL CONTROLS - Adjusted for mobile visibility */
+    /* FLOATING SCROLL CONTROLS */
     .floating-scroll-controls {
       position: fixed;
       bottom: 20px;
@@ -104,7 +104,22 @@
 
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: transparent; }
-    .canvas-wrapper { border: 2px dashed #475569; background: #ffffff; border-radius: 8px; overflow: hidden; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3); width: 100%; display: flex; justify-content: center; align-items: center; }
+    
+    /* PERBAIKAN RESPONSIVE CANVAS CONTAINER */
+    .canvas-wrapper { 
+      border: 2px dashed #475569; 
+      background: #ffffff; 
+      border-radius: 8px; 
+      overflow: auto; /* Mengizinkan scroll jika gambar besar */
+      position: relative; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+      width: 100%; 
+      max-width: 100%;
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      touch-action: none; /* Mencegah bentrok gesture scroll default */
+    }
 
     .control-panel {
       width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px;
@@ -182,13 +197,16 @@
       <label class="btn btn-purple">
         + Upload BG <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
-      <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
+      
+      <!-- PERBAIKAN: AUTO FOCUS & FIT GAMBAR -->
+      <button class="btn btn-green" onclick="autoFocusAndFitBg()">🎯 Auto Focus & Fit Gambar</button>
+      
       <button class="btn btn-pink" id="btnMagicBoxAdder">✨ + Kotak Sakti</button>
       <button class="btn btn-cyan" id="btnLicenseBoxAdder">📜 + Kotak Lisensi</button>
       <button class="btn btn-purple" onclick="toggleBoxGuides()">👁️ Toggle Panduan</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
-      <!-- PAN HAND MODE FOR MOBILE (DAPAT MENGGESER KANVAS KIRI/KANAN/ATAS/BAWAH DENGAN MUDAH DI HP) -->
+      <!-- PAN HAND MODE FOR MOBILE -->
       <button class="btn btn-ai" id="btnPanToggle" onclick="togglePanMode()">✋ Mode Geser (Pan)</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
@@ -257,7 +275,7 @@
     </div>
 
     <div class="canvas-wrapper" style="margin-top: 10px;">
-      <canvas id="mainCanvas" width="500" height="250"></canvas>
+      <canvas id="mainCanvas" width="500" height="300"></canvas>
     </div>
     <div class="pan-info" id="panInfoBar">💡 <b>Touch HP:</b> Gunakan 2 jari untuk menggeser/zoom kanvas. Atau aktifkan <b>Mode Geser (✋)</b> lalu usap 1 jari.</div>
 
@@ -393,7 +411,7 @@
     </button>
 
     <div class="canvas-wrapper" style="margin-top: 10px;">
-      <canvas id="stagingCanvas" width="500" height="200"></canvas>
+      <canvas id="stagingCanvas" width="500" height="250"></canvas>
     </div>
   </div>
 
@@ -401,8 +419,16 @@
 
   <script>
     // INITIALIZATION CANVAS
-    const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true, allowTouchScrolling: false });
-    const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
+    const mainCanvas = new fabric.Canvas('mainCanvas', { 
+      backgroundColor: '#ffffff', 
+      preserveObjectStacking: true, 
+      allowTouchScrolling: false 
+    });
+    
+    const stagingCanvas = new fabric.Canvas('stagingCanvas', { 
+      backgroundColor: '#f8fafc', 
+      preserveObjectStacking: true 
+    });
 
     let currentZoom = 1;
     let pickColorMode = false;
@@ -591,6 +617,38 @@
       }
     });
 
+    // PERBAIKAN: FITUR AUTO FOCUS & FIT GAMBAR BACKGROUND
+    function autoFocusAndFitBg() {
+      const bg = mainCanvas.backgroundImage || currentMainBgImage;
+      if (!bg) { 
+        alert("Upload atau pilih gambar latar belakang terlebih dahulu!"); 
+        return; 
+      }
+
+      // Hitung skala rasio gambar agar pas masuk kanvas tanpa terpotong
+      const scale = Math.min(
+        mainCanvas.width / bg.width,
+        mainCanvas.height / bg.height
+      );
+
+      bg.set({
+        scaleX: scale,
+        scaleY: scale,
+        originX: 'center',
+        originY: 'center',
+        left: mainCanvas.width / 2,
+        top: mainCanvas.height / 2,
+        angle: 0
+      });
+
+      mainCanvas.setBackgroundImage(bg, () => {
+        resetZoomMain(); // Posisikan kanvas kembali ke titik tengah
+        mainCanvas.renderAll();
+        saveProjectState();
+        saveHistory();
+      });
+    }
+
     // FITUR AUTO STRAIGHTEN AI (AUTOMATIC DESKEW)
     function autoStraightenAI() {
       const activeObj = mainCanvas.getActiveObject();
@@ -604,7 +662,6 @@
       let currentAngle = targetObj.angle % 360;
       if (currentAngle < 0) currentAngle += 360;
 
-      // Smart Alignment logic: Snap ke 0, 90, 180, atau 270 yang terdekat
       let targetAngle = 0;
       if (currentAngle >= 45 && currentAngle < 135) targetAngle = 90;
       else if (currentAngle >= 135 && currentAngle < 225) targetAngle = 180;
@@ -880,31 +937,13 @@
       }
     }
 
-    function autoFlattenBg() {
-      const bg = mainCanvas.backgroundImage || currentMainBgImage;
-      if (!bg) { alert("Upload gambar Background terlebih dahulu!"); return; }
-
-      const scaleX = mainCanvas.width / bg.width;
-      const scaleY = mainCanvas.height / bg.height;
-
-      bg.set({
-        scaleX: scaleX, scaleY: scaleY,
-        left: 0, top: 0, originX: 'left', originY: 'top', angle: 0
-      });
-
-      mainCanvas.setBackgroundImage(bg, () => {
-        mainCanvas.renderAll();
-        saveProjectState();
-      });
-    }
-
     document.getElementById('loadMainBg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
       const reader = new FileReader();
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, function(img) {
           currentMainBgImage = img;
-          autoFlattenBg();
+          autoFocusAndFitBg(); // Secara otomatis fit dan autofokus saat diunggah
         }, { crossOrigin: 'anonymous' });
       };
       reader.readAsDataURL(e.target.files[0]);
