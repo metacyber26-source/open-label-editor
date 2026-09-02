@@ -15,7 +15,7 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
-    body { background: #0f172a; color: #f8fafc; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+    body { background: #0f172a; color: #f8fafc; padding: 10px; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; }
     
     .dashboard-header {
       width: 100%; max-width: 650px; background: linear-gradient(135deg, #1e293b, #0f172a);
@@ -28,17 +28,28 @@
     .stat-badge { background: #334155; padding: 4px 8px; border-radius: 4px; border: 1px solid #475569; }
     .stat-badge span { color: #10b981; font-weight: bold; }
 
-    /* TOMBOL SCROLL MENGAMBANG (DISESUAIKAN PRESISI) */
+    /* TOMBOL SCROLL MELAYANG PERMANEN (FIXED POSITION) */
     .floating-scroll-controls {
-      display: flex; gap: 6px; background: rgba(15, 23, 42, 0.9);
-      padding: 4px; border-radius: 30px; border: 2px solid #ec4899;
-      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4); margin-left: 10px;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 6px;
+      border-radius: 30px;
+      border: 2px solid #ec4899;
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.5);
     }
     .btn-scroll {
-      width: 36px; height: 36px; border-radius: 50%; border: none;
+      width: 42px; height: 42px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white;
-      font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
       user-select: none; transition: transform 0.1s, background 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
     .btn-scroll:active { transform: scale(0.9); background: #38bdf8; }
 
@@ -108,7 +119,6 @@
     .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #94a3b8; }
     .slider-group input { width: 80px; }
 
-    /* LAYOUT TOOLBAR KOTAK SAKTI/LISENSI PRO */
     .group-layout-bar {
       display: none; width: 100%; background: #1e1b4b; border: 1px solid #6366f1;
       padding: 6px 10px; border-radius: 6px; margin-top: 6px; justify-content: space-between; align-items: center;
@@ -118,6 +128,12 @@
 </head>
 <body>
 
+  <!-- TOMBOL SCROLL MENGAMBANG DI POJOK KANAN BAWAH LAYAR -->
+  <div class="floating-scroll-controls">
+    <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
+    <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
+  </div>
+
   <div class="dashboard-header">
     <div class="dash-title">
       <span>🏷️ Studio Label Pro</span>
@@ -125,11 +141,6 @@
     </div>
     <div class="dash-stats">
       <div class="stat-badge">Pengguna: <span id="userCount">21</span> Active</div>
-      <!-- TOMBOL GESER LAYAR PERMANEN -->
-      <div class="floating-scroll-controls">
-        <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
-        <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
-      </div>
     </div>
   </div>
 
@@ -143,6 +154,7 @@
       <button class="btn btn-green" onclick="autoFlattenBg()">Ratakan Label</button>
       <button class="btn btn-pink" id="btnMagicBoxAdder">✨ + Kotak Sakti</button>
       <button class="btn btn-cyan" id="btnLicenseBoxAdder">📜 + Kotak Lisensi</button>
+      <button class="btn btn-purple" onclick="toggleBoxGuides()">👁️ Toggle Panduan</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
@@ -157,12 +169,12 @@
       <button class="btn btn-dark-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
     </div>
 
-    <!-- PANEL NAVIGASI SUSUNAN KOTAK GROUP (BERTUMPUK / BERJAJAR) -->
+    <!-- PANEL NAVIGASI SUSUNAN KOTAK GROUP -->
     <div class="group-layout-bar" id="groupLayoutBar">
       <span style="font-size: 0.72rem; color: #a5b4fc; font-weight: bold;">🔀 Ubah Susunan Kelompok Kotak:</span>
       <div style="display: flex; gap: 6px;">
-        <button class="btn btn-purple" onclick="setGroupArrangement('horizontal')" title="Ubah Berjajar Samping">⬅️ ➡️ Berjajar</button>
-        <button class="btn btn-purple" onclick="setGroupArrangement('vertical')" title="Ubah Bertumpuk Atas/Bawah">⬆️ ⬇️ Bertumpuk</button>
+        <button class="btn btn-purple" onclick="setGroupArrangement('horizontal')">⬅️ ➡️ Berjajar</button>
+        <button class="btn btn-purple" onclick="setGroupArrangement('vertical')">⬆️ ⬇️ Bertumpuk</button>
       </div>
     </div>
 
@@ -200,7 +212,7 @@
       <canvas id="mainCanvas" width="500" height="250"></canvas>
     </div>
 
-    <!-- FITUR EKSPOR ULTRA HD / PRINT READY -->
+    <!-- FITUR EKSPOR ULTRA HD -->
     <div class="inline-tool-box" style="justify-content: space-between;">
       <div style="display:flex; align-items:center; gap:6px;">
         <span style="font-size:0.7rem; color:#10b981; font-weight:bold;">🖨️ Kualitas Unduh:</span>
@@ -347,18 +359,19 @@
     let currentMainBgImage = null;
     let localAssets = [];
     let cropOverlayObj = null;
+    let guidesVisible = true;
 
     // HISTORY STACK UNTUK FITUR UNDO
     let mainHistory = [];
 
     function saveHistory() {
       if (mainHistory.length > 20) mainHistory.shift();
-      mainHistory.push(JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling'])));
+      mainHistory.push(JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem'])));
     }
 
     function undoMainCanvas() {
       if (mainHistory.length > 1) {
-        mainHistory.pop(); // Hapus state saat ini
+        mainHistory.pop();
         const prevState = mainHistory[mainHistory.length - 1];
         mainCanvas.loadFromJSON(prevState, function() {
           mainCanvas.getObjects().forEach(obj => {
@@ -378,7 +391,7 @@
       }
     });
 
-    // SISTEM SCROLL LAYAR PRESISI
+    // SISTEM SCROLL LAYAR PRESISI DENGAN ANIMASI SMOOTH
     function setupScrollButton(btnId, direction) {
       const btn = document.getElementById(btnId);
       let scrollTimer = null;
@@ -389,7 +402,7 @@
 
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
-        performScroll(30);
+        performScroll(40);
         scrollTimer = setInterval(() => {
           performScroll(80);
         }, 80);
@@ -433,7 +446,7 @@
 
     function saveProjectState() {
       try {
-        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling']));
+        const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
         const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
@@ -471,7 +484,7 @@
     }
 
     function clearProjectData() {
-      if (confirm("Yakin ingin menghapus seluruh progres dan mulai dari awal?")) {
+      if (confirm("Yakin ingin mereset seluruh progres dan kembali ke keadaan awal?")) {
         localStorage.removeItem('label_studio_main');
         localStorage.removeItem('label_studio_staging');
         localStorage.removeItem('label_studio_assets');
@@ -503,6 +516,28 @@
     stagingCanvas.on('object:modified', saveProjectState);
     stagingCanvas.on('object:added', saveProjectState);
     stagingCanvas.on('object:removed', saveProjectState);
+
+    // TOGGLE SELEKTIF UNTUK GARIS PUTUS-PUTUS & PANDUAN KOTAK SAKTI / LISENSI
+    function toggleBoxGuides() {
+      guidesVisible = !guidesVisible;
+      
+      mainCanvas.getObjects().forEach(obj => {
+        if (obj.isBoxGroup || obj.isMagicBox || obj.isLicenseBox) {
+          if (obj._objects) {
+            obj._objects.forEach(subObj => {
+              if (subObj.type === 'rect' || subObj.type === 'text') {
+                subObj.set('opacity', guidesVisible ? 1 : 0);
+              }
+            });
+          } else {
+            obj.set('opacity', guidesVisible ? 1 : 0);
+          }
+        }
+      });
+      
+      mainCanvas.renderAll();
+      saveProjectState();
+    }
 
     // GENERATOR LATAR & STEMPEL LISENSI
     function generateCustomBgShape() {
@@ -874,7 +909,7 @@
     }
 
     // ==========================================
-    // SISTEM KOTAK SAKTI & LISENSI BERTUMPUK RAPI (GAMBAR KANAN)
+    // KOTAK SAKTI & LISENSI PRESISI BERTUMPUK RAPI
     // ==========================================
     let clickTimerMagic = null;
     let clickCountMagic = 0;
@@ -910,7 +945,7 @@
       const titlePrefix = isMagic ? '✨ Sakti' : '📜 Lisensi';
 
       const boxElements = [];
-      const gap = 8; // Jarak presisi antar kotak
+      const gap = 8;
 
       for (let i = 0; i < count; i++) {
         let offsetX = 0;
@@ -918,7 +953,7 @@
 
         if (mode === 'vertical') {
           offsetY = i * (height + gap);
-          offsetX = 0; // Sejajar vertikal tanpa serong/diagonal
+          offsetX = 0;
         } else {
           offsetX = i * (width + gap);
           offsetY = 0;
@@ -929,18 +964,17 @@
           fill: fillColor, stroke: strokeColor, strokeWidth: 2,
           strokeDashArray: [5, 5], originX: 'center', originY: 'center',
           rx: isMagic ? 4 : 6, ry: isMagic ? 4 : 6,
-          left: offsetX, top: offsetY
+          left: offsetX, top: offsetY, opacity: guidesVisible ? 1 : 0
         });
 
-        // Selalu pakai label #1 seperti contoh acuan kanan
         const numText = new fabric.Text(`1`, {
           fontSize: 13, fill: strokeColor, fontWeight: 'bold',
-          originX: 'center', originY: 'center', left: offsetX - (width/2 - 12), top: offsetY - (height/2 - 12)
+          originX: 'center', originY: 'center', left: offsetX - (width/2 - 12), top: offsetY - (height/2 - 12), opacity: guidesVisible ? 1 : 0
         });
 
         const labelText = new fabric.Text(`${titlePrefix} #1`, {
           fontSize: 11, fill: strokeColor, fontWeight: 'bold',
-          originX: 'center', originY: 'center', left: offsetX, top: offsetY
+          originX: 'center', originY: 'center', left: offsetX, top: offsetY, opacity: guidesVisible ? 1 : 0
         });
 
         boxElements.push(rect, labelText, numText);
@@ -1277,7 +1311,7 @@
           stagingCanvas.setActiveObject(newImg);
           stagingCanvas.renderAll();
           saveProjectState();
-          alert("Pemotongan presisi berhasil! Siap dikirim ke Kanvas Utama.");
+          alert("Pemotongan presisi berhasil!");
         }, { crossOrigin: 'anonymous' });
       };
       img.src = dataURL;
@@ -1506,12 +1540,17 @@
       
       const dpiMultiplier = parseFloat(document.getElementById('exportDpiMode').value) || 4;
 
+      // Sembunyikan garis panduan sebelum diekspor
+      const currentGuideState = guidesVisible;
+      if (guidesVisible) toggleBoxGuides();
+
       const dataURL = mainCanvas.toDataURL({
         format: 'png',
         quality: 1.0,
         multiplier: dpiMultiplier
       });
 
+      if (currentGuideState !== guidesVisible) toggleBoxGuides();
       if (tempZoom !== 1) zoomMain(tempZoom);
       
       const link = document.createElement('a');
