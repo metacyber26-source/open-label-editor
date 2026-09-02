@@ -28,10 +28,10 @@
     .stat-badge { background: #334155; padding: 4px 8px; border-radius: 4px; border: 1px solid #475569; }
     .stat-badge span { color: #10b981; font-weight: bold; }
 
-    /* TOMBOL SCROLL MELAYANG PERMANEN (FIXED POSITION) */
+    /* TOMBOL SCROLL MELAYANG PERMANEN DIPINDAHKAN KE POJOK KANAN ATAS */
     .floating-scroll-controls {
       position: fixed;
-      bottom: 20px;
+      top: 20px;
       right: 20px;
       z-index: 9999;
       display: flex;
@@ -124,11 +124,15 @@
       padding: 6px 10px; border-radius: 6px; margin-top: 6px; justify-content: space-between; align-items: center;
     }
     .group-layout-bar.active { display: flex; }
+    
+    .pan-info {
+      font-size: 0.7rem; color: #38bdf8; text-align: center; margin-top: 4px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- TOMBOL SCROLL MENGAMBANG DI POJOK KANAN BAWAH LAYAR -->
+  <!-- TOMBOL SCROLL MENGAMBANG DI POJOK KANAN ATAS LAYAR -->
   <div class="floating-scroll-controls">
     <button class="btn-scroll" id="btnScrollUp" title="Geser Layar ke Atas">⬆️</button>
     <button class="btn-scroll" id="btnScrollDown" title="Geser Layar ke Bawah">⬇️</button>
@@ -159,14 +163,14 @@
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
       <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
-      <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset</button>
+      <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
 
       <button class="btn btn-orange" onclick="equalizeSelectedSizes()">⚖️ Samakan Ukuran</button>
       <button class="btn btn-orange" onclick="alignStraightMain()">📐 Tegakkan Objek</button>
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
-      <button class="btn btn-dark-red" onclick="clearProjectData()" title="Mulai Baru">Reset</button>
+      <button class="btn btn-dark-red" onclick="clearProjectData()" title="Mulai Baru">Reset All</button>
     </div>
 
     <!-- PANEL NAVIGASI SUSUNAN KOTAK GROUP -->
@@ -178,9 +182,9 @@
       </div>
     </div>
 
-    <!-- FITUR LAYER STACK MANAGEMENT -->
+    <!-- FITUR LAYER STACK MANAGEMENT & UNDO -->
     <div class="inline-tool-box">
-      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📚 Layering (Tumpukan):</span>
+      <span style="font-size:0.7rem; color:#38bdf8; font-weight:bold;">📚 Layering & Undo:</span>
       <button class="btn btn-action" onclick="bringToFrontMain()">🔝 Paling Depan</button>
       <button class="btn btn-action" onclick="bringForwardMain()">⬆️ Naik 1 Layer</button>
       <button class="btn btn-action" onclick="sendBackwardMain()">⬇️ Turun 1 Layer</button>
@@ -208,9 +212,10 @@
       <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
     </div>
 
-    <div style="margin-top: 8px;">
+    <div style="margin-top: 8px; position: relative;">
       <canvas id="mainCanvas" width="500" height="250"></canvas>
     </div>
+    <div class="pan-info">💡 <b>Tips Geser Kanvas:</b> Tahan tombol <b>Alt + Klik Drag</b> di kanvas untuk menggeser posisi tampilan ke tepi/luar area.</div>
 
     <!-- FITUR EKSPOR ULTRA HD -->
     <div class="inline-tool-box" style="justify-content: space-between;">
@@ -363,6 +368,7 @@
 
     // HISTORY STACK UNTUK FITUR UNDO
     let mainHistory = [];
+    let activeControlTimer = null; // Menghindari tombol jalan terus
 
     function saveHistory() {
       if (mainHistory.length > 20) mainHistory.shift();
@@ -371,7 +377,7 @@
 
     function undoMainCanvas() {
       if (mainHistory.length > 1) {
-        mainHistory.pop();
+        mainHistory.pop(); // Hapus state saat ini
         const prevState = mainHistory[mainHistory.length - 1];
         mainCanvas.loadFromJSON(prevState, function() {
           mainCanvas.getObjects().forEach(obj => {
@@ -403,14 +409,17 @@
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
         performScroll(40);
+        if (scrollTimer) clearInterval(scrollTimer);
         scrollTimer = setInterval(() => {
           performScroll(80);
         }, 80);
       };
 
       const stop = () => {
-        if (scrollTimer) clearInterval(scrollTimer);
-        scrollTimer = null;
+        if (scrollTimer) {
+          clearInterval(scrollTimer);
+          scrollTimer = null;
+        }
       };
 
       btn.addEventListener('mousedown', start);
@@ -422,6 +431,41 @@
 
     setupScrollButton('btnScrollUp', -1);
     setupScrollButton('btnScrollDown', 1);
+
+    // FITUR GESER KANVAS UTAMA (PAN CANVAS VIA ALT+DRAG ATAU SCROLL WHEEL)
+    let isDraggingCanvas = false;
+    let lastPosX = 0;
+    let lastPosY = 0;
+
+    mainCanvas.on('mouse:down', function(opt) {
+      const evt = opt.e;
+      if (evt.altKey || evt.metaKey) {
+        isDraggingCanvas = true;
+        mainCanvas.selection = false;
+        lastPosX = evt.clientX;
+        lastPosY = evt.clientY;
+      }
+    });
+
+    mainCanvas.on('mouse:move', function(opt) {
+      if (isDraggingCanvas) {
+        const e = opt.e;
+        const vpt = mainCanvas.viewportTransform;
+        vpt[4] += e.clientX - lastPosX;
+        vpt[5] += e.clientY - lastPosY;
+        mainCanvas.requestRenderAll();
+        lastPosX = e.clientX;
+        lastPosY = e.clientY;
+      }
+    });
+
+    mainCanvas.on('mouse:up', function() {
+      if (isDraggingCanvas) {
+        mainCanvas.setViewportTransform(mainCanvas.viewportTransform);
+        isDraggingCanvas = false;
+        mainCanvas.selection = true;
+      }
+    });
 
     // SMART SNAP & ALIGNMENT GUIDES
     const SNAP_THRESHOLD = 10;
@@ -436,6 +480,7 @@
       if (Math.abs(obj.top - canvasHeight / 2) < SNAP_THRESHOLD) {
         obj.set({ top: canvasHeight / 2 });
       }
+      saveProjectState();
     });
 
     function initUserCounter() {
@@ -444,6 +489,7 @@
       localStorage.setItem('label_studio_user_count', count);
     }
 
+    // AUTO SAVE IMPLEMENTASI
     function saveProjectState() {
       try {
         const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
@@ -483,16 +529,30 @@
       initUserCounter();
     }
 
+    // RESET TOTAL KEMBALI KE KEADAAN AWAL
     function clearProjectData() {
-      if (confirm("Yakin ingin mereset seluruh progres dan kembali ke keadaan awal?")) {
+      if (confirm("Yakin ingin mereset seluruh proyek dan kembali ke tampilan awal?")) {
         localStorage.removeItem('label_studio_main');
         localStorage.removeItem('label_studio_staging');
         localStorage.removeItem('label_studio_assets');
-        location.reload();
+        
+        mainCanvas.clear();
+        stagingCanvas.clear();
+        mainCanvas.setBackgroundColor('#ffffff', mainCanvas.renderAll.bind(mainCanvas));
+        stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
+        
+        resetZoomMain();
+        localAssets = [];
+        mainHistory = [];
+        renderGallery();
+        saveProjectState();
+        saveHistory();
       }
     }
 
     mainCanvas.on('object:modified', () => { saveProjectState(); saveHistory(); });
+    mainCanvas.on('object:scaling', () => { saveProjectState(); });
+    mainCanvas.on('object:rotating', () => { saveProjectState(); });
     mainCanvas.on('object:added', () => { saveProjectState(); });
     mainCanvas.on('object:removed', () => { saveProjectState(); saveHistory(); });
     
@@ -759,35 +819,39 @@
 
     function bringToFrontMain() {
       const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.bringToFront(); mainCanvas.renderAll(); saveProjectState(); }
+      if (obj) { obj.bringToFront(); mainCanvas.renderAll(); saveProjectState(); saveHistory(); }
     }
     function bringForwardMain() {
       const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.bringForward(); mainCanvas.renderAll(); saveProjectState(); }
+      if (obj) { obj.bringForward(); mainCanvas.renderAll(); saveProjectState(); saveHistory(); }
     }
     function sendBackwardMain() {
       const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.sendBackward(); mainCanvas.renderAll(); saveProjectState(); }
+      if (obj) { obj.sendBackward(); mainCanvas.renderAll(); saveProjectState(); saveHistory(); }
     }
     function sendToBackMain() {
       const obj = mainCanvas.getActiveObject();
-      if (obj) { obj.sendToBack(); mainCanvas.renderAll(); saveProjectState(); }
+      if (obj) { obj.sendToBack(); mainCanvas.renderAll(); saveProjectState(); saveHistory(); }
     }
 
+    // MEMPERBAIKI MASALAH OBJEK JALAN TERUS SAAT KONTROL TEKAN TERUS
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
-      let timer = null;
 
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
         actionFunction();
-        timer = setInterval(actionFunction, 50);
+        if (activeControlTimer) clearInterval(activeControlTimer);
+        activeControlTimer = setInterval(actionFunction, 60);
       };
 
       const stop = () => {
-        if (timer) clearInterval(timer);
-        timer = null;
-        saveProjectState();
+        if (activeControlTimer) {
+          clearInterval(activeControlTimer);
+          activeControlTimer = null;
+          saveProjectState();
+          saveHistory();
+        }
       };
 
       btn.addEventListener('mousedown', start);
@@ -796,6 +860,14 @@
       btn.addEventListener('touchstart', start, { passive: false });
       btn.addEventListener('touchend', stop);
     }
+
+    // HENTIKAN GERAKAN JIKA MOUSE KELUAR WINDOW
+    window.addEventListener('mouseup', () => {
+      if (activeControlTimer) { clearInterval(activeControlTimer); activeControlTimer = null; }
+    });
+    window.addEventListener('touchend', () => {
+      if (activeControlTimer) { clearInterval(activeControlTimer); activeControlTimer = null; }
+    });
 
     function moveSelected(dx, dy) {
       const obj = mainCanvas.getActiveObject();
@@ -852,6 +924,7 @@
 
       mainCanvas.renderAll();
       saveProjectState();
+      saveHistory();
       alert(`Ukuran disamakan: ${Math.round(baseWidth)}px x ${Math.round(baseHeight)}px`);
     }
 
@@ -863,6 +936,7 @@
         activeObj.setCoords();
         mainCanvas.renderAll();
         saveProjectState();
+        saveHistory();
       } else {
         mainCanvas.getObjects().forEach(o => {
           o.set({ angle: 0 });
@@ -871,6 +945,7 @@
         });
         mainCanvas.renderAll();
         saveProjectState();
+        saveHistory();
       }
     }
 
@@ -897,6 +972,7 @@
         activeObj.setCoords();
         mainCanvas.renderAll();
         saveProjectState();
+        saveHistory();
       }
     }
 
@@ -1002,6 +1078,7 @@
       mainCanvas.setActiveObject(boxGroup);
       mainCanvas.renderAll();
       saveProjectState();
+      saveHistory();
     }
 
     function setGroupArrangement(mode) {
@@ -1020,6 +1097,7 @@
         newGroup.setCoords();
         mainCanvas.renderAll();
         saveProjectState();
+        saveHistory();
       }
     }
 
@@ -1053,6 +1131,7 @@
       targetBox.setCoords();
       mainCanvas.renderAll();
       saveProjectState();
+      saveHistory();
     }
 
     function duplicateMainObj() {
@@ -1080,6 +1159,8 @@
         mainCanvas.add(clonedObj);
         mainCanvas.setActiveObject(clonedObj);
         mainCanvas.renderAll();
+        saveProjectState();
+        saveHistory();
       });
     }
 
@@ -1136,6 +1217,7 @@
         mainCanvas.setActiveObject(clonedObj);
         mainCanvas.renderAll();
         saveProjectState();
+        saveHistory();
       });
     }
 
@@ -1514,6 +1596,7 @@
       activeObj.toGroup();
       mainCanvas.renderAll();
       saveProjectState();
+      saveHistory();
     }
 
     function unmergeSelected() {
@@ -1522,6 +1605,7 @@
       activeObj.toActiveSelection();
       mainCanvas.renderAll();
       saveProjectState();
+      saveHistory();
     }
 
     function deleteMainObj() {
@@ -1531,6 +1615,7 @@
         mainCanvas.discardActiveObject();
         mainCanvas.renderAll();
         saveProjectState();
+        saveHistory();
       }
     }
 
