@@ -105,12 +105,12 @@
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: transparent; }
     
-    /* PERBAIKAN RESPONSIVE CANVAS CONTAINER */
+    /* RESPONSIVE CANVAS CONTAINER */
     .canvas-wrapper { 
       border: 2px dashed #475569; 
       background: #ffffff; 
       border-radius: 8px; 
-      overflow: auto; /* Mengizinkan scroll jika gambar besar */
+      overflow: auto; 
       position: relative; 
       box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
       width: 100%; 
@@ -118,7 +118,7 @@
       display: flex; 
       justify-content: center; 
       align-items: center; 
-      touch-action: none; /* Mencegah bentrok gesture scroll default */
+      touch-action: none;
     }
 
     .control-panel {
@@ -198,7 +198,7 @@
         + Upload BG <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
       
-      <!-- PERBAIKAN: AUTO FOCUS & FIT GAMBAR -->
+      <!-- FITUR AUTO FOCUS & FIT GAMBAR -->
       <button class="btn btn-green" onclick="autoFocusAndFitBg()">🎯 Auto Focus & Fit Gambar</button>
       
       <button class="btn btn-pink" id="btnMagicBoxAdder">✨ + Kotak Sakti</button>
@@ -617,7 +617,7 @@
       }
     });
 
-    // PERBAIKAN: FITUR AUTO FOCUS & FIT GAMBAR BACKGROUND
+    // POSISI GAMBAR PRESISI DITENGAH KANVAS
     function autoFocusAndFitBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
       if (!bg) { 
@@ -634,15 +634,14 @@
       bg.set({
         scaleX: scale,
         scaleY: scale,
-        originX: 'center',
-        originY: 'center',
-        left: mainCanvas.width / 2,
-        top: mainCanvas.height / 2,
         angle: 0
       });
 
+      // Posisikan tepat di tengah-tengah kanvas
       mainCanvas.setBackgroundImage(bg, () => {
-        resetZoomMain(); // Posisikan kanvas kembali ke titik tengah
+        bg.centerH();
+        bg.centerV();
+        resetZoomMain(); // Posisikan viewport kembali ke tengah
         mainCanvas.renderAll();
         saveProjectState();
         saveHistory();
@@ -943,7 +942,7 @@
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, function(img) {
           currentMainBgImage = img;
-          autoFocusAndFitBg(); // Secara otomatis fit dan autofokus saat diunggah
+          autoFocusAndFitBg(); // Otomatis pas dan berada di tengah saat diunggah
         }, { crossOrigin: 'anonymous' });
       };
       reader.readAsDataURL(e.target.files[0]);
