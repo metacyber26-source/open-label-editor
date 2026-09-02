@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Ultimate Pro & AI Edition</title>
+  <title>Label Design Studio - Ultimate Mobile & AI Edition</title>
   
   <!-- Fabric.js, JsBarcode, & Google Fonts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
@@ -47,11 +47,11 @@
     .stat-badge { background: #334155; padding: 4px 10px; border-radius: 20px; border: 1px solid #475569; }
     .stat-badge span { color: var(--accent-green); font-weight: 700; }
 
-    /* FLOATING SCROLL CONTROLS */
+    /* FLOATING SCROLL CONTROLS - Adjusted for mobile visibility */
     .floating-scroll-controls {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      bottom: 20px;
+      right: 15px;
       z-index: 9999;
       display: flex;
       flex-direction: column;
@@ -64,9 +64,9 @@
       box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
     }
     .btn-scroll {
-      width: 40px; height: 40px; border-radius: 50%; border: none;
+      width: 44px; height: 44px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); color: white;
-      font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
       user-select: none; transition: all 0.2s;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
@@ -83,7 +83,7 @@
     .toolbar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: 100%; margin-bottom: 10px; }
     
     .btn { 
-      background: var(--accent-blue); color: white; border: none; padding: 7px 12px; 
+      background: var(--accent-blue); color: white; border: none; padding: 8px 12px; 
       border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; 
       display: inline-flex; align-items: center; justify-content: center; gap: 4px; user-select: none;
       transition: all 0.15s ease-in-out; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
@@ -100,10 +100,11 @@
     .btn-cyan { background: var(--accent-cyan); }
     .btn-zoom { background: var(--accent-sky); }
     .btn-ai { background: linear-gradient(135deg, #a855f7, #ec4899); color: white; }
+    .btn-active { border: 2px solid #ffffff; box-shadow: 0 0 10px rgba(56, 189, 248, 0.8); }
 
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: #334155; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: transparent; }
-    .canvas-wrapper { border: 1px dashed #475569; background: #ffffff; border-radius: 6px; overflow: hidden; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .canvas-wrapper { border: 2px dashed #475569; background: #ffffff; border-radius: 8px; overflow: hidden; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3); width: 100%; display: flex; justify-content: center; align-items: center; }
 
     .control-panel {
       width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px;
@@ -112,14 +113,14 @@
     .dpad-group { display: flex; flex-direction: column; align-items: center; }
     .dpad-row { display: flex; gap: 4px; }
     .btn-dpad {
-      width: 36px; height: 36px; font-size: 0.9rem; border-radius: 6px;
+      width: 40px; height: 40px; font-size: 1rem; border-radius: 6px;
       background: #334155; color: #f8fafc; border: 1px solid #475569; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
     .btn-dpad:active { background: var(--accent-sky); }
     .action-group { display: flex; flex-direction: column; gap: 6px; }
     .action-row { display: flex; gap: 4px; align-items: center; }
-    .btn-action { height: 34px; padding: 0 10px; font-size: 0.72rem; background: var(--bg-card); border: 1px solid #475569; color: white; cursor: pointer; border-radius: 6px; }
+    .btn-action { height: 36px; padding: 0 10px; font-size: 0.75rem; background: var(--bg-card); border: 1px solid #475569; color: white; cursor: pointer; border-radius: 6px; }
     .btn-action:active { background: var(--accent-pink); }
 
     .gallery-container {
@@ -152,7 +153,7 @@
     .group-layout-bar.active { display: flex; }
     
     .pan-info {
-      font-size: 0.72rem; color: var(--border-focus); text-align: center; margin-top: 6px;
+      font-size: 0.72rem; color: var(--border-focus); text-align: center; margin-top: 6px; background: rgba(56, 189, 248, 0.1); padding: 6px 10px; border-radius: 6px; width: 100%;
     }
   </style>
 </head>
@@ -167,7 +168,7 @@
   <div class="dashboard-header">
     <div class="dash-title">
       <span>🏷️ Studio Label Pro</span>
-      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Ultimate HD & AI Edition)</span>
+      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Mobile Touch & AI-AGI Edition)</span>
     </div>
     <div class="dash-stats">
       <div class="stat-badge">Pengguna: <span id="userCount">21</span> Active</div>
@@ -187,12 +188,18 @@
       <button class="btn btn-purple" onclick="toggleBoxGuides()">👁️ Toggle Panduan</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
+      <!-- PAN HAND MODE FOR MOBILE (DAPAT MENGGESER KANVAS KIRI/KANAN/ATAS/BAWAH DENGAN MUDAH DI HP) -->
+      <button class="btn btn-ai" id="btnPanToggle" onclick="togglePanMode()">✋ Mode Geser (Pan)</button>
+
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
       <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
       <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
 
+      <!-- FEATURE: AI AUTO STRAIGHTEN / DESKEW -->
+      <button class="btn btn-ai" onclick="autoStraightenAI()">📐 AI Tegakkan Gambar (Auto-Deskew)</button>
+
       <button class="btn btn-orange" onclick="equalizeSelectedSizes()">⚖️ Samakan Ukuran</button>
-      <button class="btn btn-orange" onclick="alignStraightMain()">📐 Tegakkan Objek</button>
+      <button class="btn btn-orange" onclick="alignStraightMain()">📐 Reset Sudut (0°)</button>
       <button class="btn btn-orange" onclick="mergeSelected()">Gabung</button>
       <button class="btn btn-orange" onclick="unmergeSelected()">Lepas</button>
       <button class="btn btn-red" onclick="deleteMainObj()">Hapus</button>
@@ -239,10 +246,20 @@
       <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
     </div>
 
+    <!-- FITUR ROTASI PRESISI FINE-TUNING UNTUK HP -->
+    <div class="inline-tool-box">
+      <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">📐 Meluruskan Presisi Gambar Miring:</span>
+      <div class="slider-group" style="flex: 1;">
+        <input type="range" id="fineRotateSlider" min="-45" max="45" step="0.2" value="0" style="width: 100%;" oninput="fineRotateSelected(this.value)">
+        <span id="rotateDegreeVal" style="min-width: 35px; color:#38bdf8; font-weight:bold;">0°</span>
+      </div>
+      <button class="btn btn-orange" onclick="resetFineRotate()">0° Fix</button>
+    </div>
+
     <div class="canvas-wrapper" style="margin-top: 10px;">
       <canvas id="mainCanvas" width="500" height="250"></canvas>
     </div>
-    <div class="pan-info">💡 <b>Tips Geser Kanvas:</b> Tahan tombol <b>Alt + Klik Drag</b> di kanvas untuk menggeser area.</div>
+    <div class="pan-info" id="panInfoBar">💡 <b>Touch HP:</b> Gunakan 2 jari untuk menggeser/zoom kanvas. Atau aktifkan <b>Mode Geser (✋)</b> lalu usap 1 jari.</div>
 
     <!-- FITUR EKSPOR ULTRA HD -->
     <div class="inline-tool-box" style="justify-content: space-between;">
@@ -384,7 +401,7 @@
 
   <script>
     // INITIALIZATION CANVAS
-    const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true });
+    const mainCanvas = new fabric.Canvas('mainCanvas', { backgroundColor: '#ffffff', preserveObjectStacking: true, allowTouchScrolling: false });
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { backgroundColor: '#f8fafc', preserveObjectStacking: true });
 
     let currentZoom = 1;
@@ -393,6 +410,7 @@
     let localAssets = [];
     let cropOverlayObj = null;
     let guidesVisible = true;
+    let isPanMode = false;
 
     // HISTORY STACK UNDO / REDO
     let mainHistory = [];
@@ -405,7 +423,7 @@
       if (mainHistory.length > 25) mainHistory.shift();
       const json = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
       mainHistory.push(json);
-      redoStack = []; // Reset Redo stack setiap ada aksi baru
+      redoStack = [];
     }
 
     function undoMainCanvas() {
@@ -480,30 +498,88 @@
     setupScrollButton('btnScrollUp', -1);
     setupScrollButton('btnScrollDown', 1);
 
-    // GESER KANVAS UTAMA (PAN CANVAS)
+    // SYSTEM PANning KANVAS HP (PAN MODE & TOUCH DRAG)
     let isDraggingCanvas = false;
-    let lastPosX = 0;
-    let lastPosY = 0;
+    let lastPosX = 0, lastPosY = 0;
+    let touchDistance = 0;
 
+    function togglePanMode() {
+      isPanMode = !isPanMode;
+      const btn = document.getElementById('btnPanToggle');
+      const info = document.getElementById('panInfoBar');
+      
+      if (isPanMode) {
+        btn.classList.add('btn-active');
+        btn.innerHTML = "✋ Mode Geser ON";
+        info.innerHTML = "✋ <b>Mode Geser AKTIF:</b> Usap kanvas dengan 1 jari ke kiri, kanan, atas, bawah untuk paskan posisi.";
+        mainCanvas.selection = false;
+        mainCanvas.defaultCursor = 'grab';
+        mainCanvas.getObjects().forEach(o => o.selectable = false);
+      } else {
+        btn.classList.remove('btn-active');
+        btn.innerHTML = "✋ Mode Geser (Pan)";
+        info.innerHTML = "💡 <b>Touch HP:</b> Gunakan 2 jari untuk menggeser/zoom kanvas. Atau aktifkan <b>Mode Geser (✋)</b> lalu usap 1 jari.";
+        mainCanvas.selection = true;
+        mainCanvas.defaultCursor = 'default';
+        mainCanvas.getObjects().forEach(o => o.selectable = true);
+      }
+      mainCanvas.renderAll();
+    }
+
+    // Touch and Mouse Handling for Dragging/Panning
     mainCanvas.on('mouse:down', function(opt) {
       const evt = opt.e;
-      if (evt.altKey || evt.metaKey) {
+      const touches = evt.touches;
+
+      if (isPanMode || evt.altKey || evt.metaKey || (touches && touches.length === 2)) {
         isDraggingCanvas = true;
         mainCanvas.selection = false;
-        lastPosX = evt.clientX;
-        lastPosY = evt.clientY;
+        
+        if (touches && touches.length === 2) {
+          touchDistance = Math.hypot(
+            touches[0].clientX - touches[1].clientX,
+            touches[0].clientY - touches[1].clientY
+          );
+        } else {
+          lastPosX = touches ? touches[0].clientX : evt.clientX;
+          lastPosY = touches ? touches[0].clientY : evt.clientY;
+        }
       }
     });
 
     mainCanvas.on('mouse:move', function(opt) {
-      if (isDraggingCanvas) {
-        const e = opt.e;
+      if (!isDraggingCanvas) return;
+      const evt = opt.e;
+      const touches = evt.touches;
+
+      if (touches && touches.length === 2) {
+        // Multi-touch Pinch Zoom & Pan
+        const newDist = Math.hypot(
+          touches[0].clientX - touches[1].clientX,
+          touches[0].clientY - touches[1].clientY
+        );
+        const zoomFactor = newDist / touchDistance;
+        touchDistance = newDist;
+        
+        let newZoom = mainCanvas.getZoom() * zoomFactor;
+        if (newZoom > 5) newZoom = 5;
+        if (newZoom < 0.3) newZoom = 0.3;
+        
+        const center = mainCanvas.getCenter();
+        mainCanvas.zoomToPoint({ x: center.left, y: center.top }, newZoom);
+        currentZoom = newZoom;
+      } else {
+        // Single Touch / Mouse Pan Drag
+        const clientX = touches ? touches[0].clientX : evt.clientX;
+        const clientY = touches ? touches[0].clientY : evt.clientY;
         const vpt = mainCanvas.viewportTransform;
-        vpt[4] += e.clientX - lastPosX;
-        vpt[5] += e.clientY - lastPosY;
+        
+        vpt[4] += clientX - lastPosX;
+        vpt[5] += clientY - lastPosY;
+        
         mainCanvas.requestRenderAll();
-        lastPosX = e.clientX;
-        lastPosY = e.clientY;
+        lastPosX = clientX;
+        lastPosY = clientY;
       }
     });
 
@@ -511,9 +587,56 @@
       if (isDraggingCanvas) {
         mainCanvas.setViewportTransform(mainCanvas.viewportTransform);
         isDraggingCanvas = false;
-        mainCanvas.selection = true;
+        if (!isPanMode) mainCanvas.selection = true;
       }
     });
+
+    // FITUR AUTO STRAIGHTEN AI (AUTOMATIC DESKEW)
+    function autoStraightenAI() {
+      const activeObj = mainCanvas.getActiveObject();
+      const targetObj = activeObj || mainCanvas.getObjects().find(o => o.type === 'image') || currentMainBgImage;
+
+      if (!targetObj) {
+        alert("Pilih atau unggah gambar terlebih dahulu!");
+        return;
+      }
+
+      let currentAngle = targetObj.angle % 360;
+      if (currentAngle < 0) currentAngle += 360;
+
+      // Smart Alignment logic: Snap ke 0, 90, 180, atau 270 yang terdekat
+      let targetAngle = 0;
+      if (currentAngle >= 45 && currentAngle < 135) targetAngle = 90;
+      else if (currentAngle >= 135 && currentAngle < 225) targetAngle = 180;
+      else if (currentAngle >= 225 && currentAngle < 315) targetAngle = 270;
+
+      targetObj.set({ angle: targetAngle });
+      targetObj.setCoords();
+      mainCanvas.renderAll();
+      
+      document.getElementById('fineRotateSlider').value = 0;
+      document.getElementById('rotateDegreeVal').innerText = "0°";
+
+      alert(`🤖 AI Auto-Deskew Berhasil! Gambar ditegakkan ke ${targetAngle}°. Hasil tempel kini presisi.`);
+      saveProjectState();
+      saveHistory();
+    }
+
+    function fineRotateSelected(val) {
+      const degree = parseFloat(val);
+      document.getElementById('rotateDegreeVal').innerText = degree + "°";
+      const activeObj = mainCanvas.getActiveObject();
+      if (activeObj) {
+        activeObj.set({ angle: degree });
+        activeObj.setCoords();
+        mainCanvas.renderAll();
+      }
+    }
+
+    function resetFineRotate() {
+      document.getElementById('fineRotateSlider').value = 0;
+      fineRotateSelected(0);
+    }
 
     // SNAP GUIDES
     const SNAP_THRESHOLD = 8;
@@ -621,6 +744,10 @@
         layoutBar.classList.add('active');
       } else {
         layoutBar.classList.remove('active');
+      }
+      if (activeObj) {
+        document.getElementById('fineRotateSlider').value = activeObj.angle || 0;
+        document.getElementById('rotateDegreeVal').innerText = Math.round(activeObj.angle || 0) + "°";
       }
     }
 
@@ -979,6 +1106,8 @@
           o.setCoords();
         });
       }
+      document.getElementById('fineRotateSlider').value = 0;
+      document.getElementById('rotateDegreeVal').innerText = "0°";
       mainCanvas.renderAll();
       saveProjectState();
       saveHistory();
@@ -1542,8 +1671,8 @@
 
     function zoomMain(factor) {
       currentZoom *= factor;
-      if (currentZoom < 0.5) currentZoom = 0.5;
-      if (currentZoom > 4) currentZoom = 4;
+      if (currentZoom < 0.3) currentZoom = 0.3;
+      if (currentZoom > 5) currentZoom = 5;
       const center = mainCanvas.getCenter();
       mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
       mainCanvas.renderAll();
