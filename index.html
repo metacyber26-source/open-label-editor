@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - Ultimate Mobile & AI Edition</title>
+  <title>Label Design Studio - License Badge Generator</title>
   
   <!-- Fabric.js, JsBarcode, QRCode.js & Google Fonts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
@@ -36,7 +36,6 @@
       --canvas-workspace-bg: #1e293b;
     }
 
-    /* THEME GELAP - TERANG SYSTEM */
     body.light-theme {
       --bg-main: #f1f5f9;
       --bg-card: #ffffff;
@@ -51,7 +50,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; touch-action: manipulation; }
     body { background: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; transition: background 0.3s, color 0.3s; }
     
-    /* Header Profile & Avatar */
     .header-profile {
       width: 100%;
       max-width: 680px;
@@ -102,7 +100,6 @@
     .stat-badge { background: var(--border-color); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border-color); }
     .stat-badge span { color: var(--accent-green); font-weight: 700; }
 
-    /* FLOATING SCROLL CONTROLS */
     .floating-scroll-controls {
       position: fixed; bottom: 20px; right: 15px; z-index: 9999;
       display: flex; flex-direction: column; gap: 8px;
@@ -231,7 +228,6 @@
       font-size: 0.72rem; color: var(--border-focus); text-align: center; margin-top: 6px; background: rgba(56, 189, 248, 0.1); padding: 6px 10px; border-radius: 6px; width: 100%;
     }
     
-    /* BADGE BUILDER GENERATOR PANEL & SWITCH */
     .badge-builder-panel {
       width: 100%; background: var(--bg-main); border: 1px solid var(--accent-cyan); border-radius: 8px; padding: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px;
     }
@@ -281,12 +277,9 @@
         + Upload BG <input type="file" id="loadMainBg" accept="image/*" hidden>
       </label>
       
-      <!-- FITUR AUTO FOCUS & FIT GAMBAR -->
       <button class="btn btn-green" onclick="autoFocusAndFitBg()">🎯 Auto Focus & Fit Gambar</button>
-      
       <button class="btn btn-pink" id="btnSquareBoxAdder">✨ + Bujur Sangkar</button>
 
-      <!-- MODUL GENERATE LISENSI RESET REG-00001 DENGAN SAKELAR ON/OFF -->
       <div style="display:inline-flex; align-items:center; gap:4px; background:var(--bg-main); padding:2px 6px; border-radius:6px; border:1px solid var(--border-color);">
         <button class="btn btn-cyan" id="btnLicenseBoxAdder">📜 + Kotak Lisensi</button>
         <button class="btn-switch" id="btnLicenseToggle" onclick="toggleLicenseAdderLock()">OFF 🔴</button>
@@ -295,14 +288,12 @@
       <button class="btn btn-purple" onclick="toggleBoxGuides()">👁️ Toggle Panduan</button>
       <button class="btn btn-purple" onclick="duplicateMainObj()">📋 Duplikat</button>
 
-      <!-- PAN HAND MODE FOR MOBILE -->
       <button class="btn btn-ai" id="btnPanToggle" onclick="togglePanMode()">✋ Mode Geser (Pan)</button>
 
       <button class="btn btn-zoom" onclick="zoomMain(1.2)">🔍 Zoom +</button>
       <button class="btn btn-zoom" onclick="zoomMain(0.8)">🔍 Zoom -</button>
       <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
 
-      <!-- FEATURE: AI AUTO STRAIGHTEN / DESKEW -->
       <button class="btn btn-ai" onclick="autoStraightenAI()">📐 AI Tegakkan Gambar (Auto-Deskew)</button>
 
       <button class="btn btn-orange" onclick="equalizeSelectedSizes()">⚖️ Samakan Ukuran</button>
@@ -313,7 +304,6 @@
       <button class="btn btn-dark-red" onclick="clearProjectData()" title="Mulai Baru">Reset All</button>
     </div>
 
-    <!-- PANEL NAVIGASI SUSUNAN KOTAK GROUP -->
     <div class="group-layout-bar" id="groupLayoutBar">
       <span style="font-size: 0.75rem; color: var(--border-focus); font-weight: 600;">🔀 Ubah Susunan Kelompok Kotak:</span>
       <div style="display: flex; gap: 6px;">
@@ -322,7 +312,6 @@
       </div>
     </div>
 
-    <!-- FITUR LAYER STACK MANAGEMENT, UNDO & REDO -->
     <div class="inline-tool-box">
       <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">📚 Layering & History:</span>
       <button class="btn btn-action" onclick="bringToFrontMain()">🔝 Paling Depan</button>
@@ -333,7 +322,6 @@
       <button class="btn btn-action btn-orange" onclick="redoMainCanvas()">↪️ Redo</button>
     </div>
 
-    <!-- FITUR AUTO POSISI & CUSTOM BG SHAPE -->
     <div class="inline-tool-box">
       <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">📍 Auto Posisi Lisensi:</span>
       <button class="btn btn-cyan" onclick="autoPlaceLicense('top-right')">Kanan Atas</button>
@@ -353,7 +341,6 @@
       <button class="btn btn-green" onclick="generateCustomBgShape()">Buat Latar</button>
     </div>
 
-    <!-- FITUR ROTASI PRESISI FINE-TUNING UNTUK HP -->
     <div class="inline-tool-box">
       <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">📐 Meluruskan Presisi Gambar Miring:</span>
       <div class="slider-group" style="flex: 1;">
@@ -368,7 +355,6 @@
     </div>
     <div class="pan-info" id="panInfoBar">💡 <b>Touch HP:</b> Gunakan 2 jari untuk menggeser/zoom kanvas. Atau aktifkan <b>Mode Geser (✋)</b> lalu usap 1 jari.</div>
 
-    <!-- FITUR EKSPOR ULTRA HD / SUPER HIGH QUALITY -->
     <div class="inline-tool-box" style="justify-content: space-between;">
       <div style="display:flex; align-items:center; gap:6px;">
         <span style="font-size:0.72rem; color:var(--accent-green); font-weight:bold;">🖨️ Kualitas Unduh:</span>
@@ -382,7 +368,6 @@
       <button class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;" onclick="exportPNG()">📥 Unduh Super High Quality PNG</button>
     </div>
 
-    <!-- CONTROLS & ASPECT RATIO & SHIFT STEP ACCURACY -->
     <div class="control-panel">
       <div class="dpad-group">
         <div style="display:flex; justify-content:space-between; width:100%; align-items:center; margin-bottom:4px;">
@@ -436,8 +421,12 @@
 
     <div class="toolbar">
       <label class="btn btn-purple">
-        + Multi Gambar <input type="file" id="loadStagingMultiImg" accept="image/*" multiple hidden>
+        + Upload Logo Utama <input type="file" id="loadStagingMainLogo" accept="image/*" hidden>
       </label>
+      <label class="btn btn-cyan">
+        + Upload Gambar ke-2 <input type="file" id="loadStagingSecondImg" accept="image/*" hidden>
+      </label>
+
       <button class="btn" onclick="addStagingText()">+ Teks Seni</button>
       <button class="btn btn-ai" onclick="autoRemoveBgAI()">🤖 AI Hapus BG</button>
       <button class="btn btn-orange" onclick="enableColorPicker()">🧪 Pipet Warna</button>
@@ -491,15 +480,14 @@
 
       <div class="badge-row">
         <label>4. Spesifik:</label>
-        <input type="text" id="manualSpesifik" class="inline-input" placeholder="Isi manual, misal: SAMBAL MARKISA" value="SAMBAL MARKISA">
+        <input type="text" id="manualSpesifik" class="inline-input" placeholder="Isi manual, misal: SIRUP MARKISA" value="SIRUP MARKISA">
       </div>
 
       <button class="btn btn-cyan" style="width:100%; padding: 8px; font-weight: bold; margin-top: 4px;" onclick="generateIdentityBadgeLogo()">
-        ✨ Buat Logo + Identity Badge (Background Transparan)
+        ✨ Buat Logo + Identity Badge (Kotak Kiri Kosong)
       </button>
     </div>
 
-    <!-- FITUR EDIT FONTS & CURVED TEXT -->
     <div class="inline-tool-box">
       <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">🔤 Teks Lanjutan:</span>
       <select id="fontFamilySelector" class="inline-input" style="flex:initial; width:120px;" onchange="changeActiveTextFont()">
@@ -512,7 +500,6 @@
       <button class="btn btn-purple" onclick="toggleCurvedText()">🔄 Teks Melengkung (Arc)</button>
     </div>
 
-    <!-- FITUR SLIDER FILTER GAMBAR -->
     <div class="inline-tool-box">
       <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">🎨 Filter Foto:</span>
       <div class="slider-group">
@@ -540,7 +527,6 @@
       <button class="btn btn-zoom" onclick="generateSafeBarcode()">📊 + Barcode Aman Scan</button>
     </div>
 
-    <!-- FITUR QR CODE DINAMIS -->
     <div class="inline-tool-box">
       <input type="text" id="qrCodeValue" class="inline-input" placeholder="Isi Teks / URL Web untuk QR Code Dinamis">
       <button class="btn btn-green" onclick="generateDynamicQRCode()">📱 + QR Code Dinamis</button>
@@ -551,7 +537,7 @@
     </button>
 
     <div class="canvas-wrapper" id="stagingCanvasWrapper" style="margin-top: 10px;">
-      <canvas id="stagingCanvas" width="500" height="250"></canvas>
+      <canvas id="stagingCanvas" width="500" height="350"></canvas>
     </div>
   </div>
 
@@ -559,7 +545,6 @@
   <div id="qrcodeHidden" style="display:none;"></div>
 
   <script>
-    // INITIALIZATION CANVAS
     const mainCanvas = new fabric.Canvas('mainCanvas', { 
       backgroundColor: null, 
       preserveObjectStacking: true, 
@@ -579,17 +564,17 @@
     let guidesVisible = true;
     let isPanMode = false;
     
-    // LICENSE SAFETY LOCK & SHIFT SPEED STEP
     let isLicenseAdderActive = false;
-    let shiftStepMultiplier = 1; // 1 = Normal, 0.1 = Micro
+    let shiftStepMultiplier = 1;
 
-    // HISTORY STACK UNDO / REDO
     let mainHistory = [];
     let redoStack = [];
     let isHistoryLocked = false;
     let activeControlTimer = null;
 
-    // KATEGORI DROPDOWN DYNAMIC
+    // Menyimpan metadata tempat penyimpanan kotak identitas aktif di meja potong
+    let currentBadgeData = null;
+
     const categoryData = {
       "KULINER": {
         "OLAHAN-BUAH": ["SAMBAL", "SIRUP", "KERIPIK", "SELAI", "MANISAN"],
@@ -649,10 +634,8 @@
       });
     }
 
-    // INITIALIZATION DROPDOWNS
     updateBagianOptions();
 
-    // MODE TERANG-GELAP SYSTEM
     function toggleGlobalTheme() {
       document.body.classList.toggle('light-theme');
       const isLight = document.body.classList.contains('light-theme');
@@ -668,7 +651,6 @@
       btn.classList.toggle('active', isLight);
     }
 
-    // SAKELAR AMAN LISENSI (ON-OFF SINKRONISASI)
     function toggleLicenseAdderLock() {
       isLicenseAdderActive = !isLicenseAdderActive;
       const btn1 = document.getElementById('btnLicenseToggle');
@@ -683,26 +665,22 @@
       }
     }
 
-    // RESET LISENSI KE REG-00001 DAN LOGIKA PEMERIKSAAN OTOMATIS (100 HARI & PER TANGGAL 1 JAM 00:00)
     function getNextRegNumber() {
       const now = new Date();
       let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
 
-      // 1. Force Reset Sekali Ini ke Reg-00001
       if (!regData.hasBeenResetOnce) {
         regData.counter = 1;
         regData.hasBeenResetOnce = true;
         regData.createdAt = now.getTime();
         regData.lastUpdatedMonth = now.getMonth();
       } else {
-        // Check Expired 100 Hari
         const hundredDaysMs = 100 * 24 * 60 * 60 * 1000;
         if (regData.createdAt && (now.getTime() - regData.createdAt > hundredDaysMs)) {
           regData.counter = 1;
           regData.createdAt = now.getTime();
           regData.lastUpdatedMonth = now.getMonth();
         } 
-        // Check Setiap Tanggal 1 Jam 00:00 (Perubahan Bulan Baru)
         else if (now.getDate() === 1 && regData.lastUpdatedMonth !== now.getMonth()) {
           regData.counter = 1;
           regData.lastUpdatedMonth = now.getMonth();
@@ -713,7 +691,6 @@
 
       localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
       const formattedCounter = String(regData.counter).padStart(5, '0');
-      
       const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
       
       return {
@@ -722,7 +699,7 @@
       };
     }
 
-    // GENERATE HIGH-PIXEL BADGE LOGO WITH TRANSPARENT BG (LOGIKA GARIS BERSINGGUNGAN EKSAK)
+    // GENERATE BADGE DENGAN KOTAK KIRI KOSONG
     function generateIdentityBadgeLogo() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -746,7 +723,6 @@
       const logoDiameter = logoRadius * 2;
       const boxHeight = 220;
       
-      // PERSINGGUNGAN TANGENT: top kotak tepat di titik terluar bawah lingkaran logo
       const boxLeft = (canvasWidth - logoDiameter) / 2;
       const boxTop = logoDiameter; 
       const totalHeight = logoDiameter + boxHeight;
@@ -757,6 +733,8 @@
       const ctx = renderCanvas.getContext('2d');
 
       const imgElem = activeObj._element;
+      
+      // Draw Circular Main Logo
       ctx.save();
       ctx.beginPath();
       ctx.arc(canvasWidth / 2, logoRadius, logoRadius, 0, Math.PI * 2, true);
@@ -765,7 +743,7 @@
       ctx.drawImage(imgElem, (canvasWidth - logoDiameter) / 2, 0, logoDiameter, logoDiameter);
       ctx.restore();
 
-      // Garis Lingkar Logo
+      // Outer Stroke Logo
       ctx.save();
       ctx.beginPath();
       ctx.arc(canvasWidth / 2, logoRadius, logoRadius - 3, 0, Math.PI * 2);
@@ -774,7 +752,7 @@
       ctx.stroke();
       ctx.restore();
 
-      // Kotak Identitas Lisensi
+      // Outer Identity Box
       ctx.save();
       ctx.fillStyle = "#86efac";
       ctx.strokeStyle = "#059669";
@@ -795,55 +773,142 @@
       ctx.fill();
       ctx.stroke();
 
-      const qrContainer = document.getElementById('qrcodeHidden');
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
-        text: codeLicense, width: 160, height: 160,
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      // KOTAK KOSONG SEBELAH KIRI
+      const emptyBoxX = boxLeft + 20;
+      const emptyBoxY = boxTop + 20;
+      const emptyBoxW = 180;
+      const emptyBoxH = boxHeight - 40;
 
-      setTimeout(() => {
-        const qrImg = qrContainer.querySelector('img');
-        if (qrImg) {
-          ctx.drawImage(qrImg, boxLeft + 30, boxTop + 30, 160, 160);
-        }
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.strokeStyle = "#047857";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH, 12);
+      ctx.fill();
+      ctx.stroke();
 
-        ctx.beginPath();
-        ctx.moveTo(boxLeft + 210, boxTop + 25);
-        ctx.lineTo(boxLeft + 210, boxTop + boxHeight - 25);
-        ctx.strokeStyle = "#047857";
-        ctx.lineWidth = 4;
-        ctx.stroke();
+      // Garis Pembatas Vertikal
+      ctx.beginPath();
+      ctx.moveTo(boxLeft + 220, boxTop + 25);
+      ctx.lineTo(boxLeft + 220, boxTop + boxHeight - 25);
+      ctx.strokeStyle = "#047857";
+      ctx.lineWidth = 4;
+      ctx.stroke();
 
-        ctx.fillStyle = "#064e3b";
-        ctx.font = "bold 32px Inter, sans-serif";
-        ctx.fillText(codeLicense, boxLeft + 235, boxTop + 65);
+      // Teks Identitas
+      ctx.fillStyle = "#064e3b";
+      ctx.font = "bold 32px Inter, sans-serif";
+      ctx.fillText(codeLicense, boxLeft + 245, boxTop + 65);
 
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 26px Inter, sans-serif";
-        ctx.fillText(lineCategory, boxLeft + 235, boxTop + 120);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 26px Inter, sans-serif";
+      ctx.fillText(lineCategory, boxLeft + 245, boxTop + 120);
 
-        ctx.fillStyle = "#0284c7";
-        ctx.font = "bold 28px Inter, sans-serif";
-        ctx.fillText(lineSpecific, boxLeft + 235, boxTop + 165);
+      ctx.fillStyle = "#0284c7";
+      ctx.font = "bold 28px Inter, sans-serif";
+      ctx.fillText(lineSpecific, boxLeft + 245, boxTop + 165);
 
-        const finalDataUrl = renderCanvas.toDataURL('image/png');
-        fabric.Image.fromURL(finalDataUrl, function(badgeImg) {
-          badgeImg.scaleToWidth(260);
-          badgeImg.set({
-            left: stagingCanvas.width / 2,
-            top: stagingCanvas.height / 2,
-            originX: 'center', originY: 'center'
-          });
-
-          stagingCanvas.clear();
-          stagingCanvas.add(badgeImg);
-          stagingCanvas.setActiveObject(badgeImg);
-          stagingCanvas.renderAll();
-          saveProjectState();
+      const finalDataUrl = renderCanvas.toDataURL('image/png');
+      fabric.Image.fromURL(finalDataUrl, function(badgeImg) {
+        badgeImg.scaleToWidth(260);
+        badgeImg.set({
+          left: stagingCanvas.width / 2,
+          top: stagingCanvas.height / 2,
+          originX: 'center', originY: 'center'
         });
-      }, 100);
+
+        badgeImg.isIdentityBadge = true;
+
+        currentBadgeData = {
+          canvasWidth: canvasWidth,
+          canvasHeight: totalHeight,
+          emptyBoxX: emptyBoxX,
+          emptyBoxY: emptyBoxY,
+          emptyBoxW: emptyBoxW,
+          emptyBoxH: emptyBoxH,
+          baseDataUrl: finalDataUrl
+        };
+
+        stagingCanvas.clear();
+        stagingCanvas.add(badgeImg);
+        stagingCanvas.setActiveObject(badgeImg);
+        stagingCanvas.renderAll();
+        saveProjectState();
+      });
     }
+
+    // UPLOAD GAMBAR KE-2 & PENYESUAIAN OTOMATIS KE KOTAK KOSONG
+    document.getElementById('loadStagingSecondImg').addEventListener('change', function(e) {
+      if (!e.target.files[0]) return;
+
+      if (!currentBadgeData) {
+        alert("Buat Badge Logo Identitas terlebih dahulu!");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const secondImgElem = new Image();
+        secondImgElem.crossOrigin = "anonymous";
+        secondImgElem.src = event.target.result;
+
+        secondImgElem.onload = function() {
+          const renderCanvas = document.createElement('canvas');
+          renderCanvas.width = currentBadgeData.canvasWidth;
+          renderCanvas.height = currentBadgeData.canvasHeight;
+          const ctx = renderCanvas.getContext('2d');
+
+          const baseImg = new Image();
+          baseImg.crossOrigin = "anonymous";
+          baseImg.src = currentBadgeData.baseDataUrl;
+
+          baseImg.onload = function() {
+            ctx.drawImage(baseImg, 0, 0);
+
+            const bx = currentBadgeData.emptyBoxX;
+            const by = currentBadgeData.emptyBoxY;
+            const bw = currentBadgeData.emptyBoxW;
+            const bh = currentBadgeData.emptyBoxH;
+
+            // Fit secara otomatis ke kotak kosong dengan aspek rasio terjaga
+            const scale = Math.min(bw / secondImgElem.width, bh / secondImgElem.height);
+            const sw = secondImgElem.width * scale;
+            const sh = secondImgElem.height * scale;
+            const sx = bx + (bw - sw) / 2;
+            const sy = by + (bh - sh) / 2;
+
+            ctx.drawImage(secondImgElem, sx, sy, sw, sh);
+
+            const updatedDataUrl = renderCanvas.toDataURL('image/png');
+            fabric.Image.fromURL(updatedDataUrl, function(finalBadgeImg) {
+              finalBadgeImg.scaleToWidth(260);
+              finalBadgeImg.set({
+                left: stagingCanvas.width / 2,
+                top: stagingCanvas.height / 2,
+                originX: 'center', originY: 'center'
+              });
+              finalBadgeImg.isIdentityBadge = true;
+
+              stagingCanvas.clear();
+              stagingCanvas.add(finalBadgeImg);
+              stagingCanvas.setActiveObject(finalBadgeImg);
+              stagingCanvas.renderAll();
+              saveProjectState();
+            });
+          };
+        };
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
+
+    document.getElementById('loadStagingMainLogo').addEventListener('change', function(e) {
+      if (!e.target.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        loadImageToStaging(event.target.result);
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
 
     function saveHistory() {
       if (isHistoryLocked) return;
@@ -895,7 +960,6 @@
       }
     });
 
-    // SMOOTH SCROLL BUTTONS
     function setupScrollButton(btnId, direction) {
       const btn = document.getElementById(btnId);
       let scrollTimer = null;
@@ -925,7 +989,6 @@
     setupScrollButton('btnScrollUp', -1);
     setupScrollButton('btnScrollDown', 1);
 
-    // SYSTEM PANNING KANVAS HP
     let isDraggingCanvas = false;
     let lastPosX = 0, lastPosY = 0;
     let touchDistance = 0;
@@ -1067,7 +1130,7 @@
       document.getElementById('fineRotateSlider').value = 0;
       document.getElementById('rotateDegreeVal').innerText = "0°";
 
-      alert(`🤖 AI Auto-Deskew Berhasil! Gambar ditegakkan ke ${targetAngle}°. Hasil tempel kini presisi.`);
+      alert(`🤖 AI Auto-Deskew Berhasil! Gambar ditegakkan ke ${targetAngle}°.`);
       saveProjectState();
       saveHistory();
     }
@@ -1103,11 +1166,10 @@
       saveProjectState();
     });
 
-    // TERKUNCI PERSIS SQUARED RATIO (1:1) SAAT SCALING
     mainCanvas.on('object:scaling', function(e) {
       const obj = e.target;
       if (obj.isMagicBox || obj.lockUniScaling) {
-        obj.scaleY = obj.scaleX; // Menjaga rasio 1:1 sempurna
+        obj.scaleY = obj.scaleX;
       }
     });
 
@@ -1120,7 +1182,7 @@
     function saveProjectState() {
       try {
         const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
-        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText']));
+        const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText', 'isIdentityBadge']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
         localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
@@ -1159,7 +1221,6 @@
       initUserCounter();
     }
 
-    // RESET HASIL KERJA TANPA MENGHAPUS NOMOR REGISTRASI LISENSI
     function clearProjectData() {
       if (confirm("Reset seluruh hasil kerja di kanvas? (Nomor registrasi lisensi tetap tersimpan aman)")) {
         localStorage.removeItem('label_studio_main');
@@ -1173,6 +1234,7 @@
         localAssets = [];
         mainHistory = [];
         redoStack = [];
+        currentBadgeData = null;
         renderGallery();
         saveProjectState();
         saveHistory();
@@ -1332,7 +1394,6 @@
       }
     }
 
-    // FITUR QR CODE DINAMIS DENGAN KETAHANAN BACA SANGAT TINGGI (UKURAN KECIL)
     function generateDynamicQRCode() {
       const val = document.getElementById('qrCodeValue').value.trim();
       if (!val) { alert("Isikan teks atau link URL untuk QR Code!"); return; }
@@ -1378,28 +1439,6 @@
         }, { crossOrigin: 'anonymous' });
       };
       reader.readAsDataURL(e.target.files[0]);
-    });
-
-    document.getElementById('loadStagingMultiImg').addEventListener('change', function(e) {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
-
-      let loadedCount = 0;
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const dataUrl = event.target.result;
-          localAssets.push(dataUrl);
-          
-          if (loadedCount === 0) loadImageToStaging(dataUrl);
-          loadedCount++;
-          if (loadedCount === files.length) {
-            renderGallery();
-            saveProjectState();
-          }
-        };
-        reader.readAsDataURL(file);
-      });
     });
 
     function renderGallery() {
@@ -1837,6 +1876,7 @@
       if (confirm("Kosongkan seluruh Meja Potong?")) {
         stagingCanvas.clear();
         cropOverlayObj = null;
+        currentBadgeData = null;
         saveProjectState();
       }
     }
@@ -2200,7 +2240,6 @@
       link.click();
     }
 
-    // LOAD INITIAL APP STATE
     window.onload = function() {
       loadProjectState();
     };
