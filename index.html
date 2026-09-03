@@ -36,7 +36,7 @@
       --canvas-workspace-bg: #1e293b;
     }
 
-    /* THEMA GELAP - TERANG SYSTEM */
+    /* THEME GELAP - TERANG SYSTEM */
     body.light-theme {
       --bg-main: #f1f5f9;
       --bg-card: #ffffff;
@@ -45,7 +45,7 @@
       --border-focus: #0284c7;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --canvas-workspace-bg: #e2e8f0;
+      --canvas-workspace-bg: #cbd5e1;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; touch-action: manipulation; }
@@ -120,7 +120,6 @@
     .color-picker-wrapper { display: flex; align-items: center; gap: 4px; background: var(--border-color); padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; }
     input[type="color"] { border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; background: transparent; }
     
-    /* RESPONSIVE CANVAS CONTAINER */
     .canvas-wrapper { 
       border: 2px dashed var(--border-color); 
       background: var(--canvas-workspace-bg); 
@@ -624,19 +623,37 @@
       }
     }
 
-    // RESET LISENSI KE REG-00001
+    // RESET LISENSI KE REG-00001 DAN LOGIKA PEMERIKSAAN OTOMATIS (100 HARI & PER TANGGAL 1 JAM 00:00)
     function getNextRegNumber() {
+      const now = new Date();
       let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
-      if (!regData.counter) {
+
+      // 1. Force Reset Sekali Ini ke Reg-00001
+      if (!regData.hasBeenResetOnce) {
         regData.counter = 1;
+        regData.hasBeenResetOnce = true;
+        regData.createdAt = now.getTime();
+        regData.lastUpdatedMonth = now.getMonth();
       } else {
-        regData.counter += 1;
+        // Check Expired 100 Hari
+        const hundredDaysMs = 100 * 24 * 60 * 60 * 1000;
+        if (regData.createdAt && (now.getTime() - regData.createdAt > hundredDaysMs)) {
+          regData.counter = 1;
+          regData.createdAt = now.getTime();
+          regData.lastUpdatedMonth = now.getMonth();
+        } 
+        // Check Setiap Tanggal 1 Jam 00:00 (Perubahan Bulan Baru)
+        else if (now.getDate() === 1 && regData.lastUpdatedMonth !== now.getMonth()) {
+          regData.counter = 1;
+          regData.lastUpdatedMonth = now.getMonth();
+        } else {
+          regData.counter = (regData.counter || 0) + 1;
+        }
       }
 
       localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
       const formattedCounter = String(regData.counter).padStart(5, '0');
       
-      const now = new Date();
       const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
       
       return {
@@ -645,7 +662,7 @@
       };
     }
 
-    // GENERATE HIGH-PIXEL BADGE LOGO WITH TRANSPARENT BG
+    // GENERATE HIGH-PIXEL BADGE LOGO WITH TRANSPARENT BG (LOGIKA GARIS BERSINGGUNGAN EKSAK)
     function generateIdentityBadgeLogo() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -668,8 +685,11 @@
       const logoRadius = 380;
       const logoDiameter = logoRadius * 2;
       const boxHeight = 220;
-      const gap = 30;
-      const totalHeight = logoDiameter + gap + boxHeight;
+      
+      // PERSINGGUNGAN TANGENT: top kotak tepat di titik terluar bawah lingkaran logo
+      const boxLeft = (canvasWidth - logoDiameter) / 2;
+      const boxTop = logoDiameter; 
+      const totalHeight = logoDiameter + boxHeight;
 
       const renderCanvas = document.createElement('canvas');
       renderCanvas.width = canvasWidth;
@@ -685,9 +705,16 @@
       ctx.drawImage(imgElem, (canvasWidth - logoDiameter) / 2, 0, logoDiameter, logoDiameter);
       ctx.restore();
 
-      const boxLeft = (canvasWidth - logoDiameter) / 2;
-      const boxTop = logoDiameter + gap;
+      // Garis Lingkar Logo
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(canvasWidth / 2, logoRadius, logoRadius - 3, 0, Math.PI * 2);
+      ctx.strokeStyle = "#059669";
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.restore();
 
+      // Kotak Identitas Lisensi
       ctx.save();
       ctx.fillStyle = "#86efac";
       ctx.strokeStyle = "#059669";
@@ -801,7 +828,7 @@
     }
 
     stagingCanvas.on('selection:created', function(e) {
-      if (e.selected.length > 1) {
+      if (e.selected && e.selected.length > 1) {
         stagingCanvas.discardActiveObject();
         stagingCanvas.setActiveObject(e.selected[0]);
         stagingCanvas.renderAll();
@@ -1072,12 +1099,12 @@
       initUserCounter();
     }
 
+    // RESET HASIL KERJA TANPA MENGHAPUS NOMOR REGISTRASI LISENSI
     function clearProjectData() {
-      if (confirm("Reset seluruh data & proyek ke keadaan awal?")) {
+      if (confirm("Reset seluruh hasil kerja di kanvas? (Nomor registrasi lisensi tetap tersimpan aman)")) {
         localStorage.removeItem('label_studio_main');
         localStorage.removeItem('label_studio_staging');
         localStorage.removeItem('label_studio_assets');
-        localStorage.removeItem('icp2e_reg_counter'); // Reset lisensi ke 0
         
         mainCanvas.clear();
         stagingCanvas.clear();
@@ -1245,7 +1272,7 @@
       }
     }
 
-    // FITUR QR CODE DINAMIS
+    // FITUR QR CODE DINAMIS DENGAN KETAHANAN BACA SANGAT TINGGI (UKURAN KECIL)
     function generateDynamicQRCode() {
       const val = document.getElementById('qrCodeValue').value.trim();
       if (!val) { alert("Isikan teks atau link URL untuk QR Code!"); return; }
@@ -1255,8 +1282,8 @@
 
       new QRCode(qrContainer, {
         text: val,
-        width: 200,
-        height: 200,
+        width: 300,
+        height: 300,
         correctLevel: QRCode.CorrectLevel.H
       });
 
@@ -1269,7 +1296,8 @@
               left: stagingCanvas.width / 2,
               top: stagingCanvas.height / 2,
               originX: 'center',
-              originY: 'center'
+              originY: 'center',
+              imageSmoothing: false
             });
             stagingCanvas.add(img);
             stagingCanvas.setActiveObject(img);
@@ -1442,7 +1470,6 @@
       const obj = mainCanvas.getActiveObject();
       if (!obj) return;
 
-      // BUJUR SANGKAR KUNCI MUTLAK RASIO 1:1
       obj.scale(obj.scaleX * factor);
       obj.setCoords();
       mainCanvas.renderAll();
@@ -1537,7 +1564,6 @@
     function createBoxGroup(type, count, mode = 'vertical') {
       const isMagic = type === 'magic';
       
-      // DIKUNCI PRESISI MODEL BUJUR SANGKAR (1:1)
       const size = isMagic ? 100 : 70;
       const strokeColor = isMagic ? '#ec4899' : '#06b6d4';
       const fillColor = isMagic ? 'rgba(236, 72, 153, 0.08)' : 'rgba(6, 182, 212, 0.08)';
@@ -2029,9 +2055,6 @@
       }
 
       const targetColor = document.getElementById('removeColor').value;
-      const rTarget = parseInt(targetColor.substr(1, 2), 16);
-      const gTarget = parseInt(targetColor.substr(3, 2), 16);
-      const bTarget = parseInt(targetColor.substr(5, 2), 16);
 
       const filter = new fabric.Image.filters.RemoveColor({
         color: targetColor,
@@ -2100,7 +2123,6 @@
     function exportPNG() {
       const multiplier = parseInt(document.getElementById('exportDpiMode').value, 10);
       
-      // Matikan panduan visual sementara saat ekspor
       const originalGuideState = guidesVisible;
       if (guidesVisible) toggleBoxGuides();
 
