@@ -8,9 +8,10 @@
   <meta http-equiv="Expires" content="0" />
   <title>Label Design Studio - Ultimate Mobile & AI Edition</title>
   
-  <!-- Fabric.js, JsBarcode, & Google Fonts -->
+  <!-- Fabric.js, JsBarcode, QRCode.js & Google Fonts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;700&family=Pacifico&family=Poppins:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -108,7 +109,7 @@
     /* RESPONSIVE CANVAS CONTAINER */
     .canvas-wrapper { 
       border: 2px dashed #475569; 
-      background: #ffffff; 
+      background: transparent; 
       border-radius: 8px; 
       overflow: auto; 
       position: relative; 
@@ -170,6 +171,12 @@
     .pan-info {
       font-size: 0.72rem; color: var(--border-focus); text-align: center; margin-top: 6px; background: rgba(56, 189, 248, 0.1); padding: 6px 10px; border-radius: 6px; width: 100%;
     }
+    
+    .badge-builder-panel {
+      width: 100%; background: #111827; border: 1px solid #06b6d4; border-radius: 8px; padding: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .badge-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .badge-row label { font-size: 0.7rem; color: #38bdf8; min-width: 70px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -279,17 +286,18 @@
     </div>
     <div class="pan-info" id="panInfoBar">💡 <b>Touch HP:</b> Gunakan 2 jari untuk menggeser/zoom kanvas. Atau aktifkan <b>Mode Geser (✋)</b> lalu usap 1 jari.</div>
 
-    <!-- FITUR EKSPOR ULTRA HD -->
+    <!-- FITUR EKSPOR ULTRA HD / SUPER HIGH QUALITY -->
     <div class="inline-tool-box" style="justify-content: space-between;">
       <div style="display:flex; align-items:center; gap:6px;">
         <span style="font-size:0.72rem; color:var(--accent-green); font-weight:bold;">🖨️ Kualitas Unduh:</span>
-        <select id="exportDpiMode" class="inline-input" style="flex: initial; width: 160px;">
+        <select id="exportDpiMode" class="inline-input" style="flex: initial; width: 180px;">
           <option value="1">Standard (72 DPI Web)</option>
           <option value="2">HD (150 DPI Cetak)</option>
-          <option value="4" selected>Ultra HD 300 DPI (Stiker)</option>
+          <option value="4">Ultra HD 300 DPI (Stiker)</option>
+          <option value="8" selected>💎 Super High Quality (600 DPI Pixel Ultra)</option>
         </select>
       </div>
-      <button class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;" onclick="exportPNG()">📥 Unduh PNG HD</button>
+      <button class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;" onclick="exportPNG()">📥 Unduh Super High Quality PNG</button>
     </div>
 
     <!-- CONTROLS & ASPECT RATIO -->
@@ -365,6 +373,41 @@
       <button class="btn btn-dark-red" onclick="clearStagingCanvas()">🧹 Clear All Staging</button>
     </div>
 
+    <!-- PEMBUAT BADGE LOGO LISENSI LENGKAP -->
+    <div class="badge-builder-panel">
+      <span style="font-size:0.8rem; color:#38bdf8; font-weight:bold;">🛡️ Generator Badge Logo Identitas Lisensi Presisi</span>
+      
+      <div class="badge-row">
+        <label>1. Pokok:</label>
+        <select id="dropPokok" class="inline-input" onchange="updateBagianOptions()">
+          <option value="KULINER">KULINER</option>
+          <option value="KERAJINAN">KERAJINAN</option>
+          <option value="FASHION">FASHION</option>
+          <option value="JASA">JASA</option>
+          <option value="DIGITAL">DIGITAL</option>
+        </select>
+      </div>
+
+      <div class="badge-row">
+        <label>2. Bagian:</label>
+        <select id="dropBagian" class="inline-input" onchange="updateSubBagianOptions()"></select>
+      </div>
+
+      <div class="badge-row">
+        <label>3. Sub Bagian:</label>
+        <select id="dropSubBagian" class="inline-input"></select>
+      </div>
+
+      <div class="badge-row">
+        <label>4. Spesifik:</label>
+        <input type="text" id="manualSpesifik" class="inline-input" placeholder="Isi manual, misal: SAMBAL MARKISA" value="SAMBAL MARKISA">
+      </div>
+
+      <button class="btn btn-cyan" style="width:100%; padding: 8px; font-weight: bold; margin-top: 4px;" onclick="generateIdentityBadgeLogo()">
+        ✨ Buat Logo + Identity Badge (Background Transparan)
+      </button>
+    </div>
+
     <!-- FITUR EDIT FONTS & CURVED TEXT -->
     <div class="inline-tool-box">
       <span style="font-size:0.72rem; color:var(--border-focus); font-weight:bold;">🔤 Teks Lanjutan:</span>
@@ -416,17 +459,18 @@
   </div>
 
   <canvas id="barcodeHiddenCanvas" style="display:none;"></canvas>
+  <div id="qrcodeHidden" style="display:none;"></div>
 
   <script>
     // INITIALIZATION CANVAS
     const mainCanvas = new fabric.Canvas('mainCanvas', { 
-      backgroundColor: '#ffffff', 
+      backgroundColor: null, 
       preserveObjectStacking: true, 
       allowTouchScrolling: false 
     });
     
     const stagingCanvas = new fabric.Canvas('stagingCanvas', { 
-      backgroundColor: '#f8fafc', 
+      backgroundColor: null, 
       preserveObjectStacking: true 
     });
 
@@ -443,6 +487,215 @@
     let redoStack = [];
     let isHistoryLocked = false;
     let activeControlTimer = null;
+
+    // KATEGORI DROPDOWN DYNAMIC
+    const categoryData = {
+      "KULINER": {
+        "OLAHAN-BUAH": ["SAMBAL", "SIRUP", "KERIPIK", "SELAI", "MANISAN"],
+        "OLAHAN-DAGING": ["ABON", "DENDENG", "BAKSO", "NUGGET"],
+        "MINUMAN": ["KOPI", "TEH", "HERBAL", "JUS"],
+        "BUMBU-RESEP": ["INSTAN", "TABUR", "BASAH"],
+        "CAMILAN": ["KUE-KERING", "KERUPUK", "KENTANG"]
+      },
+      "KERAJINAN": {
+        "BATIK-TEKSTIL": ["BATIK-TULIS", "BATIK-CAP", "TENUN", "ECOPRINT"],
+        "ANYAMAN": ["BAMBU", "ROTAN", "PANDAN"],
+        "UKIRAN-KAYU": ["PATUNG", "PAJANGAN", "PERABOT"],
+        "SOUVENIR": ["GANTUNGAN-KUNCI", "PLAKAT", "CENDERAMATA"]
+      },
+      "FASHION": {
+        "PAKAIAN-JADI": ["KAOS", "KEMEJA", "GAUN", "JAKET"],
+        "AKSESORIS": ["TOPI", "TAS", "DOMPET", "SYAL"],
+        "SEPATU-SANDAL": ["CASUAL", "FORMAL", "ETNIK"]
+      },
+      "JASA": {
+        "KREATIF": ["DESAIN", "FOTOGRAFI", "VIDEO"],
+        "TEKNIS": ["REPARASI", "INSTALASI"]
+      },
+      "DIGITAL": {
+        "ASET-3D": ["CHARACTER", "ENVIRONMENT", "PROP"],
+        "MEDIA": ["MUSIC", "EBOOK", "TEMPLATE"]
+      }
+    };
+
+    function updateBagianOptions() {
+      const pokok = document.getElementById('dropPokok').value;
+      const bagianSelect = document.getElementById('dropBagian');
+      bagianSelect.innerHTML = '';
+      
+      const bagians = Object.keys(categoryData[pokok] || {});
+      bagians.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.textContent = b;
+        bagianSelect.appendChild(opt);
+      });
+      updateSubBagianOptions();
+    }
+
+    function updateSubBagianOptions() {
+      const pokok = document.getElementById('dropPokok').value;
+      const bagian = document.getElementById('dropBagian').value;
+      const subSelect = document.getElementById('dropSubBagian');
+      subSelect.innerHTML = '';
+
+      const subs = (categoryData[pokok] && categoryData[pokok][bagian]) ? categoryData[pokok][bagian] : ["UMUM"];
+      subs.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        subSelect.appendChild(opt);
+      });
+    }
+
+    // INITIALIZATION DROPDOWNS
+    updateBagianOptions();
+
+    // AUTO GENERATE BATCH CODE REG-XXXXX BASED ON DATE RESET
+    function getNextRegNumber() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const date = String(now.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${date}`;
+
+      let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
+      if (regData.lastDate !== dateKey) {
+        regData.lastDate = dateKey;
+        regData.counter = 1;
+      } else {
+        regData.counter = (regData.counter || 0) + 1;
+      }
+
+      localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
+      const formattedCounter = String(regData.counter).padStart(5, '0');
+      return {
+        formattedDate: `${year}/${month}/${date}`,
+        regCode: `Reg-${formattedCounter}`
+      };
+    }
+
+    // GENERATE HIGH-PIXEL BADGE LOGO WITH TRANSPARENT BG
+    function generateIdentityBadgeLogo() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Pilih/Klik Gambar Logo Utama di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const regInfo = getNextRegNumber();
+      const codeLicense = `ICP2E / ${regInfo.formattedDate} / ${regInfo.regCode}`;
+
+      const pokok = document.getElementById('dropPokok').value;
+      const bagian = document.getElementById('dropBagian').value;
+      const sub = document.getElementById('dropSubBagian').value;
+      const spesifik = document.getElementById('manualSpesifik').value.trim();
+
+      const lineCategory = `CODE ${pokok} > ${bagian}`;
+      const lineSpecific = `> ${sub}${spesifik ? ' ' + spesifik : ''}`;
+
+      // ULTRA HIGH RESOLUTION CANVAS (1024 PX BASE)
+      const canvasWidth = 1024;
+      const logoRadius = 380;
+      const logoDiameter = logoRadius * 2;
+      const boxHeight = 220;
+      const gap = 30;
+      const totalHeight = logoDiameter + gap + boxHeight;
+
+      const renderCanvas = document.createElement('canvas');
+      renderCanvas.width = canvasWidth;
+      renderCanvas.height = totalHeight;
+      const ctx = renderCanvas.getContext('2d');
+
+      // 1. Gambar Logo Utama Lingkaran Presisi Ultra HD
+      const imgElem = activeObj._element;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(canvasWidth / 2, logoRadius, logoRadius, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(imgElem, (canvasWidth - logoDiameter) / 2, 0, logoDiameter, logoDiameter);
+      ctx.restore();
+
+      // 2. Kotak Identitas Presisi: Panjang Kotak = Diameter Lingkaran Logo (logoDiameter)
+      const boxLeft = (canvasWidth - logoDiameter) / 2;
+      const boxTop = logoDiameter + gap;
+
+      ctx.save();
+      ctx.fillStyle = "#86efac"; // Soft Light Green Background
+      ctx.strokeStyle = "#059669";
+      ctx.lineWidth = 6;
+
+      // Rounded Box Identitas
+      const radius = 24;
+      ctx.beginPath();
+      ctx.moveTo(boxLeft + radius, boxTop);
+      ctx.lineTo(boxLeft + logoDiameter - radius, boxTop);
+      ctx.quadraticCurveTo(boxLeft + logoDiameter, boxTop, boxLeft + logoDiameter, boxTop + radius);
+      ctx.lineTo(boxLeft + logoDiameter, boxTop + boxHeight - radius);
+      ctx.quadraticCurveTo(boxLeft + logoDiameter, boxTop + boxHeight, boxLeft + logoDiameter - radius, boxTop + boxHeight);
+      ctx.lineTo(boxLeft + radius, boxTop + boxHeight);
+      ctx.quadraticCurveTo(boxLeft, boxTop + boxHeight, boxLeft, boxTop + boxHeight - radius);
+      ctx.lineTo(boxLeft, boxTop + radius);
+      ctx.quadraticCurveTo(boxLeft, boxTop, boxLeft + radius, boxTop);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 3. QR Code Generator
+      const qrContainer = document.getElementById('qrcodeHidden');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: codeLicense, width: 160, height: 160,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        const qrImg = qrContainer.querySelector('img');
+        if (qrImg) {
+          ctx.drawImage(qrImg, boxLeft + 30, boxTop + 30, 160, 160);
+        }
+
+        // 4. Pembatas Garis Vertikal
+        ctx.beginPath();
+        ctx.moveTo(boxLeft + 210, boxTop + 25);
+        ctx.lineTo(boxLeft + 210, boxTop + boxHeight - 25);
+        ctx.strokeStyle = "#047857";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // 5. Teks Baku Identitas
+        ctx.fillStyle = "#064e3b";
+        ctx.font = "bold 32px Inter, sans-serif";
+        ctx.fillText(codeLicense, boxLeft + 235, boxTop + 65);
+
+        // 6. Teks Kategori Combo Drop-down & Spesifik
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 26px Inter, sans-serif";
+        ctx.fillText(lineCategory, boxLeft + 235, boxTop + 120);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 28px Inter, sans-serif";
+        ctx.fillText(lineSpecific, boxLeft + 235, boxTop + 165);
+
+        // Export & Display di Staging Area
+        const finalDataUrl = renderCanvas.toDataURL('image/png');
+        fabric.Image.fromURL(finalDataUrl, function(badgeImg) {
+          badgeImg.scaleToWidth(260);
+          badgeImg.set({
+            left: stagingCanvas.width / 2,
+            top: stagingCanvas.height / 2,
+            originX: 'center', originY: 'center'
+          });
+
+          stagingCanvas.clear();
+          stagingCanvas.add(badgeImg);
+          stagingCanvas.setActiveObject(badgeImg);
+          stagingCanvas.renderAll();
+          saveProjectState();
+        });
+      }, 100);
+    }
 
     function saveHistory() {
       if (isHistoryLocked) return;
@@ -552,7 +805,6 @@
       mainCanvas.renderAll();
     }
 
-    // Touch and Mouse Handling for Dragging/Panning
     mainCanvas.on('mouse:down', function(opt) {
       const evt = opt.e;
       const touches = evt.touches;
@@ -579,7 +831,6 @@
       const touches = evt.touches;
 
       if (touches && touches.length === 2) {
-        // Multi-touch Pinch Zoom & Pan
         const newDist = Math.hypot(
           touches[0].clientX - touches[1].clientX,
           touches[0].clientY - touches[1].clientY
@@ -595,7 +846,6 @@
         mainCanvas.zoomToPoint({ x: center.left, y: center.top }, newZoom);
         currentZoom = newZoom;
       } else {
-        // Single Touch / Mouse Pan Drag
         const clientX = touches ? touches[0].clientX : evt.clientX;
         const clientY = touches ? touches[0].clientY : evt.clientY;
         const vpt = mainCanvas.viewportTransform;
@@ -617,7 +867,6 @@
       }
     });
 
-    // POSISI GAMBAR PRESISI DITENGAH KANVAS
     function autoFocusAndFitBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
       if (!bg) { 
@@ -625,7 +874,6 @@
         return; 
       }
 
-      // Hitung skala rasio gambar agar pas masuk kanvas tanpa terpotong
       const scale = Math.min(
         mainCanvas.width / bg.width,
         mainCanvas.height / bg.height
@@ -637,18 +885,16 @@
         angle: 0
       });
 
-      // Posisikan tepat di tengah-tengah kanvas
       mainCanvas.setBackgroundImage(bg, () => {
         bg.centerH();
         bg.centerV();
-        resetZoomMain(); // Posisikan viewport kembali ke tengah
+        resetZoomMain();
         mainCanvas.renderAll();
         saveProjectState();
         saveHistory();
       });
     }
 
-    // FITUR AUTO STRAIGHTEN AI (AUTOMATIC DESKEW)
     function autoStraightenAI() {
       const activeObj = mainCanvas.getActiveObject();
       const targetObj = activeObj || mainCanvas.getObjects().find(o => o.type === 'image') || currentMainBgImage;
@@ -694,7 +940,6 @@
       fineRotateSelected(0);
     }
 
-    // SNAP GUIDES
     const SNAP_THRESHOLD = 8;
     mainCanvas.on('object:moving', function(e) {
       const obj = e.target;
@@ -716,7 +961,6 @@
       localStorage.setItem('label_studio_user_count', count);
     }
 
-    // LOCAL STORAGE STATE MANAGEMENT
     function saveProjectState() {
       try {
         const mainData = JSON.stringify(mainCanvas.toJSON(['isMagicBox', 'isLicenseBox', 'isBoxGroup', 'boxType', 'boxCount', 'arrangementMode', 'isGeneratedBg', 'lockUniScaling', 'isGuideElem']));
@@ -767,8 +1011,6 @@
         
         mainCanvas.clear();
         stagingCanvas.clear();
-        mainCanvas.setBackgroundColor('#ffffff', mainCanvas.renderAll.bind(mainCanvas));
-        stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
         
         resetZoomMain();
         localAssets = [];
@@ -832,7 +1074,6 @@
       saveProjectState();
     }
 
-    // GENERATORS & LATAR
     function generateCustomBgShape() {
       const shapeType = document.getElementById('bgShapeType').value;
       const color = document.getElementById('bgColorPicker').value;
@@ -942,7 +1183,7 @@
       reader.onload = function(event) {
         fabric.Image.fromURL(event.target.result, function(img) {
           currentMainBgImage = img;
-          autoFocusAndFitBg(); // Otomatis pas dan berada di tengah saat diunggah
+          autoFocusAndFitBg();
         }, { crossOrigin: 'anonymous' });
       };
       reader.readAsDataURL(e.target.files[0]);
@@ -1009,7 +1250,6 @@
           originY: 'center' 
         });
         stagingCanvas.clear();
-        stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
         stagingCanvas.add(img);
         stagingCanvas.setActiveObject(img);
         stagingCanvas.renderAll();
@@ -1039,7 +1279,6 @@
       if (obj) { obj.sendToBack(); mainCanvas.renderAll(); saveProjectState(); saveHistory(); }
     }
 
-    // CONTINUOUS CONTROLS & D-PAD PREVENT BUG STUCK
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
 
@@ -1186,7 +1425,6 @@
       }
     }
 
-    // KOTAK SAKTI & LISENSI
     let clickTimerMagic = null, clickCountMagic = 0;
     let clickTimerLicense = null, clickCountLicense = 0;
 
@@ -1424,13 +1662,11 @@
     function clearStagingCanvas() {
       if (confirm("Kosongkan seluruh Meja Potong?")) {
         stagingCanvas.clear();
-        stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
         cropOverlayObj = null;
         saveProjectState();
       }
     }
 
-    // CROP OVERLAY WITH NATIVE CLIPPATH
     function showCropOverlay(shapeType) {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -1732,7 +1968,6 @@
         fontFamily: fontName, fontWeight: 'bold', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center'
       });
       stagingCanvas.clear();
-      stagingCanvas.setBackgroundColor('#f8fafc', stagingCanvas.renderAll.bind(stagingCanvas));
       stagingCanvas.add(textObj);
       stagingCanvas.setActiveObject(textObj);
       stagingCanvas.renderAll();
@@ -1771,7 +2006,7 @@
       const tempZoom = currentZoom;
       resetZoomMain();
       
-      const dpiMultiplier = parseFloat(document.getElementById('exportDpiMode').value) || 4;
+      const dpiMultiplier = parseFloat(document.getElementById('exportDpiMode').value) || 8;
 
       const currentGuideState = guidesVisible;
       if (guidesVisible) toggleBoxGuides();
@@ -1786,7 +2021,7 @@
       if (tempZoom !== 1) zoomMain(tempZoom);
       
       const link = document.createElement('a');
-      link.download = `label-desain-final-${dpiMultiplier * 72}DPI.png`;
+      link.download = `label-desain-super-hq-${dpiMultiplier * 72}DPI.png`;
       link.href = dataURL;
       link.click();
     }
