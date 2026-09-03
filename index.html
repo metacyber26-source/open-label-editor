@@ -669,28 +669,16 @@
       const now = new Date();
       let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
 
-      if (!regData.hasBeenResetOnce) {
-        regData.counter = 1;
-        regData.hasBeenResetOnce = true;
-        regData.createdAt = now.getTime();
-        regData.lastUpdatedMonth = now.getMonth();
-      } else {
-        const hundredDaysMs = 100 * 24 * 60 * 60 * 1000;
-        if (regData.createdAt && (now.getTime() - regData.createdAt > hundredDaysMs)) {
-          regData.counter = 1;
-          regData.createdAt = now.getTime();
-          regData.lastUpdatedMonth = now.getMonth();
-        } 
-        else if (now.getDate() === 1 && regData.lastUpdatedMonth !== now.getMonth()) {
-          regData.counter = 1;
-          regData.lastUpdatedMonth = now.getMonth();
-        } else {
-          regData.counter = (regData.counter || 0) + 1;
-        }
-      }
+      // PAKSA RESET COUNTER KEMBALI KE 1 (Reg-0001)
+      regData.counter = 1;
+      regData.hasBeenResetOnce = true;
+      regData.createdAt = now.getTime();
+      regData.lastUpdatedMonth = now.getMonth();
 
       localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
-      const formattedCounter = String(regData.counter).padStart(5, '0');
+      
+      // Format 4 digit agar ringkas & tidak menumpuk
+      const formattedCounter = String(regData.counter).padStart(4, '0');
       const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
       
       return {
