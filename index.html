@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Label Design Studio - License Badge Generator</title>
+  <title>Label Design Studio - License Badge Generator (AI-AGI Edition)</title>
   
   <!-- Fabric.js, JsBarcode, QRCode.js & Google Fonts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
@@ -234,8 +234,21 @@
     .badge-header {
       display: flex; justify-content: space-between; align-items: center; width: 100%;
     }
-    .badge-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-    .badge-row label { font-size: 0.7rem; color: var(--border-focus); min-width: 70px; font-weight: bold; }
+    .badge-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; }
+    .badge-row label { font-size: 0.7rem; color: var(--border-focus); min-width: 90px; font-weight: bold; }
+    
+    /* MODAL HISTORI & ADD SAVE */
+    .history-drawer {
+      display: none; width: 100%; background: var(--bg-card); border: 1px solid var(--accent-purple); border-radius: 8px; padding: 10px; margin-top: 10px;
+    }
+    .history-drawer.active { display: block; }
+    .history-list { max-height: 180px; overflow-y: auto; font-size: 0.7rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; }
+    .history-item { background: var(--bg-main); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--accent-cyan); }
+
+    .btn-add-save {
+      background: var(--accent-green); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: bold; cursor: pointer; white-space: nowrap;
+    }
+    .btn-add-save:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
@@ -257,7 +270,7 @@
   <div class="dashboard-header">
     <div class="dash-title">
       <span>🏷️ Studio Label Pro</span>
-      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Mobile Touch & AI-AGI Edition)</span>
+      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Mobile Touch & AI-AGI Dynamic Edition)</span>
     </div>
     <div class="dash-stats">
       <button class="btn btn-purple" id="btnGlobalThemeToggle" onclick="toggleGlobalTheme()" style="font-size:0.7rem; padding:4px 8px;">🌙 Mode Gelap</button>
@@ -295,6 +308,7 @@
       <button class="btn btn-zoom" onclick="resetZoomMain()">↺ Reset Zoom</button>
 
       <button class="btn btn-ai" onclick="autoStraightenAI()">📐 AI Tegakkan Gambar (Auto-Deskew)</button>
+      <button class="btn btn-ai" onclick="autoLayoutAGI()">🧠 AI-AGI Smart Layout Engine</button>
 
       <button class="btn btn-orange" onclick="equalizeSelectedSizes()">⚖️ Samakan Ukuran</button>
       <button class="btn btn-orange" onclick="alignStraightMain()">📐 Reset Sudut (0°)</button>
@@ -320,6 +334,18 @@
       <button class="btn btn-action" onclick="sendToBackMain()">🔝 Paling Belakang</button>
       <button class="btn btn-action btn-orange" onclick="undoMainCanvas()">↩️ Undo</button>
       <button class="btn btn-action btn-orange" onclick="redoMainCanvas()">↪️ Redo</button>
+      <button class="btn btn-action btn-purple" onclick="toggleHistoryDrawer()">📜 Lihat Histori</button>
+    </div>
+
+    <!-- PANEL HISTORI -->
+    <div class="history-drawer" id="historyDrawer">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:0.75rem; font-weight:bold; color:var(--border-focus);">📜 Histori Aktivitas System & AI</span>
+        <button class="btn btn-red" style="padding:2px 6px; font-size:0.65rem;" onclick="clearHistoryLog()">Bersihkan Log</button>
+      </div>
+      <div class="history-list" id="historyLogList">
+        <div class="history-item">Sistem Siap. Menunggu aksi pengguna...</div>
+      </div>
     </div>
 
     <div class="inline-tool-box">
@@ -450,7 +476,7 @@
     <!-- PEMBUAT BADGE LOGO LISENSI LENGKAP -->
     <div class="badge-builder-panel">
       <div class="badge-header">
-        <span style="font-size:0.8rem; color:var(--border-focus); font-weight:bold;">🛡️ Generator Badge Logo Identitas Lisensi Presisi</span>
+        <span style="font-size:0.8rem; color:var(--border-focus); font-weight:bold;">🛡️ Generator Badge Logo Identitas Lisensi Presisi (AI-AGI)</span>
         <div style="display:inline-flex; align-items:center; gap:4px; background:var(--bg-card); padding:2px 8px; border-radius:12px; border:1px solid var(--border-color);">
           <span style="font-size:0.65rem; color:var(--text-muted); font-weight:bold;">Sakelar:</span>
           <button class="btn-switch" id="btnBadgeLicenseToggle" onclick="toggleLicenseAdderLock()">OFF 🔴</button>
@@ -458,28 +484,25 @@
       </div>
       
       <div class="badge-row">
-        <label>1. Pokok:</label>
-        <select id="dropPokok" class="inline-input badge-input" data-next="dropBagian" onchange="updateBagianOptions()">
-          <option value="KULINER">KULINER</option>
-          <option value="KERAJINAN">KERAJINAN</option>
-          <option value="FASHION">FASHION</option>
-          <option value="JASA">JASA</option>
-          <option value="DIGITAL">DIGITAL</option>
-        </select>
+        <label>1. Sektor:</label>
+        <select id="dropPokok" class="inline-input badge-input" data-next="dropBagian" onchange="updateBagianOptions()"></select>
+        <button class="btn-add-save" onclick="addOptionToDropdown('Sektor')">➕ ADD-SAVE</button>
       </div>
 
       <div class="badge-row">
-        <label>2. Bagian:</label>
+        <label>2. Kategori:</label>
         <select id="dropBagian" class="inline-input badge-input" data-next="dropSubBagian" onchange="updateSubBagianOptions()"></select>
+        <button class="btn-add-save" onclick="addOptionToDropdown('Kategori')">➕ ADD-SAVE</button>
       </div>
 
       <div class="badge-row">
-        <label>3. Sub Bagian:</label>
+        <label>3. Sub Kategori:</label>
         <select id="dropSubBagian" class="inline-input badge-input" data-next="manualSpesifik"></select>
+        <button class="btn-add-save" onclick="addOptionToDropdown('SubKategori')">➕ ADD-SAVE</button>
       </div>
 
       <div class="badge-row">
-        <label>4. Spesifik:</label>
+        <label>4. Spesifikasi:</label>
         <input type="text" id="manualSpesifik" class="inline-input badge-input" placeholder="Isi manual, misal: SIRUP MARKISA" value="SIRUP MARKISA">
       </div>
 
@@ -574,7 +597,8 @@
 
     let currentBadgeData = null;
 
-    const categoryData = {
+    // Default Dynamic Category Data Model
+    let categoryData = {
       "KULINER": {
         "OLAHAN-BUAH": ["SAMBAL", "SIRUP", "KERIPIK", "SELAI", "MANISAN"],
         "OLAHAN-DAGING": ["ABON", "DENDENG", "BAKSO", "NUGGET"],
@@ -602,6 +626,101 @@
         "MEDIA": ["MUSIC", "EBOOK", "TEMPLATE"]
       }
     };
+
+    // SYSTEM LOGGING & HISTORI
+    function addHistoryLog(msg) {
+      const logList = document.getElementById('historyLogList');
+      const timeStr = new Date().toLocaleTimeString('id-ID');
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `<b>[${timeStr}]</b> ${msg}`;
+      logList.prepend(item);
+    }
+
+    function toggleHistoryDrawer() {
+      const drawer = document.getElementById('historyDrawer');
+      drawer.classList.toggle('active');
+    }
+
+    function clearHistoryLog() {
+      document.getElementById('historyLogList').innerHTML = '<div class="history-item">Log dibersihkan.</div>';
+    }
+
+    // LOAD & SAVE CATEGORY DATA DARI LOCALSTORAGE
+    function loadSavedCategoryData() {
+      const saved = localStorage.getItem('label_studio_category_data');
+      if (saved) {
+        try {
+          categoryData = JSON.parse(saved);
+        } catch(e) { console.error("Gagal muat kategori tersimpan", e); }
+      }
+      populatePokokOptions();
+    }
+
+    function saveCategoryData() {
+      localStorage.setItem('label_studio_category_data', JSON.stringify(categoryData));
+    }
+
+    function populatePokokOptions() {
+      const pokokSelect = document.getElementById('dropPokok');
+      const currVal = pokokSelect.value;
+      pokokSelect.innerHTML = '';
+      
+      Object.keys(categoryData).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        pokokSelect.appendChild(opt);
+      });
+
+      if (currVal && categoryData[currVal]) {
+        pokokSelect.value = currVal;
+      }
+      updateBagianOptions();
+    }
+
+    // FITUR ADD-SAVE UNTUK DROPDOWN
+    function addOptionToDropdown(level) {
+      const newValue = prompt(`Masukkan nama baru untuk ${level}:`);
+      if (!newValue || !newValue.trim()) return;
+
+      const formattedValue = newValue.trim().toUpperCase().replace(/\s+/g, '-');
+
+      if (level === 'Sektor') {
+        if (!categoryData[formattedValue]) {
+          categoryData[formattedValue] = { "UMUM": ["DEFAULT"] };
+          saveCategoryData();
+          populatePokokOptions();
+          document.getElementById('dropPokok').value = formattedValue;
+          updateBagianOptions();
+          addHistoryLog(`Sektor Baru Ditambahkan: <b>${formattedValue}</b>`);
+        }
+      } else if (level === 'Kategori') {
+        const pokok = document.getElementById('dropPokok').value;
+        if (pokok && categoryData[pokok]) {
+          if (!categoryData[pokok][formattedValue]) {
+            categoryData[pokok][formattedValue] = ["DEFAULT"];
+            saveCategoryData();
+            updateBagianOptions();
+            document.getElementById('dropBagian').value = formattedValue;
+            updateSubBagianOptions();
+            addHistoryLog(`Kategori Baru Ditambahkan di ${pokok}: <b>${formattedValue}</b>`);
+          }
+        }
+      } else if (level === 'SubKategori') {
+        const pokok = document.getElementById('dropPokok').value;
+        const bagian = document.getElementById('dropBagian').value;
+        if (pokok && bagian && categoryData[pokok][bagian]) {
+          if (!categoryData[pokok][bagian].includes(formattedValue)) {
+            categoryData[pokok][bagian].push(formattedValue);
+            saveCategoryData();
+            updateSubBagianOptions();
+            document.getElementById('dropSubBagian').value = formattedValue;
+            addHistoryLog(`Sub Kategori Baru Ditambahkan di ${bagian}: <b>${formattedValue}</b>`);
+          }
+        }
+      }
+    }
 
     function setupInputNavigationAndFormatting() {
       const badgeInputs = document.querySelectorAll('.badge-input');
@@ -660,8 +779,6 @@
         subSelect.appendChild(opt);
       });
     }
-
-    updateBagianOptions();
 
     function toggleGlobalTheme() {
       document.body.classList.toggle('light-theme');
@@ -840,6 +957,7 @@
         stagingCanvas.setActiveObject(badgeImg);
         stagingCanvas.renderAll();
         saveProjectState();
+        addHistoryLog(`Logo Badge Identitas berhasil dibuat: <b>${lineSpecific}</b>`);
       });
     }
 
@@ -898,6 +1016,7 @@
               stagingCanvas.setActiveObject(finalBadgeImg);
               stagingCanvas.renderAll();
               saveProjectState();
+              addHistoryLog("Gambar Ke-2 berhasil digabungkan ke Kotak Kosong Badge.");
             });
           };
         };
@@ -910,6 +1029,7 @@
       const reader = new FileReader();
       reader.onload = function(event) {
         loadImageToStaging(event.target.result);
+        addHistoryLog("Logo Utama diunggah ke Meja Potong.");
       };
       reader.readAsDataURL(e.target.files[0]);
     });
@@ -935,6 +1055,7 @@
           mainCanvas.renderAll();
           saveProjectState();
           isHistoryLocked = false;
+          addHistoryLog("Melakukan <b>Undo</b> kanvas.");
         });
       }
     }
@@ -952,6 +1073,7 @@
           mainCanvas.renderAll();
           saveProjectState();
           isHistoryLocked = false;
+          addHistoryLog("Melakukan <b>Redo</b> kanvas.");
         });
       }
     }
@@ -1107,6 +1229,7 @@
         mainCanvas.renderAll();
         saveProjectState();
         saveHistory();
+        addHistoryLog("Latar belakang disesuaikan secara presisi (Fit BG).");
       });
     }
 
@@ -1137,6 +1260,37 @@
       alert(`🤖 AI Auto-Deskew Berhasil! Gambar ditegakkan ke ${targetAngle}°.`);
       saveProjectState();
       saveHistory();
+      addHistoryLog(`<b>AI Auto-Deskew</b> menegakkan gambar ke ${targetAngle}°.`);
+    }
+
+    // FITUR BARU: AI-AGI SMART LAYOUT ENGINE
+    function autoLayoutAGI() {
+      const objects = mainCanvas.getObjects();
+      if (objects.length === 0) {
+        alert("Tidak ada elemen di kanvas untuk ditata!");
+        return;
+      }
+
+      const cW = mainCanvas.width;
+      const cH = mainCanvas.height;
+
+      objects.forEach((obj, idx) => {
+        if (obj.isGeneratedBg) return;
+        
+        if (obj.isLicenseBox || (obj.isBoxGroup && obj.boxType === 'license')) {
+          obj.set({ left: cW - 80, top: 50 });
+        } else if (obj.isMagicBox || (obj.isBoxGroup && obj.boxType === 'magic')) {
+          obj.set({ left: 80, top: 50 });
+        } else {
+          obj.set({ left: cW / 2, top: cH / 2 + (idx * 10) });
+        }
+        obj.setCoords();
+      });
+
+      mainCanvas.renderAll();
+      saveProjectState();
+      saveHistory();
+      addHistoryLog("🧠 <b>AI-AGI Smart Layout Engine</b> berhasil merapikan posisi tata letak kanvas.");
     }
 
     function fineRotateSelected(val) {
@@ -1196,6 +1350,8 @@
     }
 
     function loadProjectState() {
+      loadSavedCategoryData();
+
       const savedMain = localStorage.getItem('label_studio_main');
       const savedStaging = localStorage.getItem('label_studio_staging');
       const savedAssets = localStorage.getItem('label_studio_assets');
@@ -1227,7 +1383,7 @@
     }
 
     function clearProjectData() {
-      if (confirm("Reset seluruh hasil kerja di kanvas? (Nomor registrasi lisensi tetap tersimpan aman)")) {
+      if (confirm("Reset seluruh hasil kerja di kanvas? (Nomor registrasi lisensi & opsi kategori tersimpan aman)")) {
         localStorage.removeItem('label_studio_main');
         localStorage.removeItem('label_studio_staging');
         localStorage.removeItem('label_studio_assets');
@@ -1243,6 +1399,7 @@
         renderGallery();
         saveProjectState();
         saveHistory();
+        addHistoryLog("Proyek direset ke kondisi awal.");
       }
     }
 
@@ -1325,6 +1482,7 @@
       mainCanvas.sendToBack(bgObj);
       mainCanvas.renderAll();
       saveProjectState();
+      addHistoryLog(`Latar Polosan dibuat: <b>${shapeType}</b>`);
     }
 
     function generateLicenseStamp() {
@@ -1346,6 +1504,7 @@
       stagingCanvas.setActiveObject(stampGroup);
       stagingCanvas.renderAll();
       saveProjectState();
+      addHistoryLog(`Stempel Lisensi dibuat: <b>${code}</b>`);
     }
 
     function generatePriceStamp() {
@@ -1375,6 +1534,7 @@
       stagingCanvas.setActiveObject(stampGroup);
       stagingCanvas.renderAll();
       saveProjectState();
+      addHistoryLog(`Stempel Harga dibuat: <b>${val}</b>`);
     }
 
     function generateSafeBarcode() {
@@ -1396,6 +1556,7 @@
           stagingCanvas.setActiveObject(img);
           stagingCanvas.renderAll();
           saveProjectState();
+          addHistoryLog(`Barcode dibuat: <b>${val}</b>`);
         }, { crossOrigin: 'anonymous' });
       } catch (e) {
         alert("Format karakter Barcode tidak valid.");
@@ -1432,6 +1593,7 @@
             stagingCanvas.setActiveObject(img);
             stagingCanvas.renderAll();
             saveProjectState();
+            addHistoryLog(`QR Code Dinamis dibuat: <b>${val}</b>`);
           });
         }
       }, 100);
@@ -1727,6 +1889,7 @@
       mainCanvas.renderAll();
       saveProjectState();
       saveHistory();
+      addHistoryLog(`Kotak <b>${titlePrefix}</b> x${count} ditambahkan.`);
     }
 
     function setGroupArrangement(mode) {
@@ -1781,6 +1944,7 @@
       mainCanvas.renderAll();
       saveProjectState();
       saveHistory();
+      addHistoryLog(`Lisensi otomatis diposisikan ke: <b>${position}</b>`);
     }
 
     function duplicateMainObj() {
@@ -1864,6 +2028,7 @@
         mainCanvas.renderAll();
         saveProjectState();
         saveHistory();
+        addHistoryLog("Elemen dari Meja Potong dikirim ke Kanvas Utama.");
       });
     }
 
@@ -2003,6 +2168,7 @@
       cropOverlayObj = null;
       stagingCanvas.renderAll();
       saveProjectState();
+      addHistoryLog("Pemotongan gambar presisi berhasil dilaksanakan.");
     }
 
     function changeActiveTextFont() {
@@ -2149,6 +2315,7 @@
           stagingCanvas.setActiveObject(newImg);
           stagingCanvas.renderAll();
           saveProjectState();
+          addHistoryLog("<b>AI Auto Remove BG</b> berhasil membersihkan latar belakang gambar.");
         });
       } catch (e) {
         alert("Proses AI Hapus BG gagal.");
@@ -2246,6 +2413,7 @@
       link.download = `label-design-${Date.now()}.png`;
       link.href = dataURL;
       link.click();
+      addHistoryLog("Desain berhasil diunduh sebagai Super High Quality PNG.");
     }
 
     window.onload = function() {
