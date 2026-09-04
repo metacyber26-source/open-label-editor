@@ -484,26 +484,26 @@
       </div>
       
       <div class="badge-row">
-        <label>1. Sektor:</label>
+        <label>1. Spesifikasi:</label>
+        <input type="text" id="manualSpesifik" class="inline-input badge-input" data-next="stampPriceValue" placeholder="Isi Spesifikasi (Otomatis Deteksi Kategori)" value="SIRUP MARKISA" oninput="autoDetectCategoryFromSpec(this.value)">
+      </div>
+
+      <div class="badge-row">
+        <label>2. Sektor:</label>
         <select id="dropPokok" class="inline-input badge-input" data-next="dropBagian" onchange="updateBagianOptions()"></select>
         <button class="btn-add-save" onclick="addOptionToDropdown('Sektor')">➕ ADD-SAVE</button>
       </div>
 
       <div class="badge-row">
-        <label>2. Kategori:</label>
+        <label>3. Kategori:</label>
         <select id="dropBagian" class="inline-input badge-input" data-next="dropSubBagian" onchange="updateSubBagianOptions()"></select>
         <button class="btn-add-save" onclick="addOptionToDropdown('Kategori')">➕ ADD-SAVE</button>
       </div>
 
       <div class="badge-row">
-        <label>3. Sub Kategori:</label>
-        <select id="dropSubBagian" class="inline-input badge-input" data-next="manualSpesifik"></select>
+        <label>4. Sub Kategori:</label>
+        <select id="dropSubBagian" class="inline-input badge-input" data-next="stampPriceValue"></select>
         <button class="btn-add-save" onclick="addOptionToDropdown('SubKategori')">➕ ADD-SAVE</button>
-      </div>
-
-      <div class="badge-row">
-        <label>4. Spesifikasi:</label>
-        <input type="text" id="manualSpesifik" class="inline-input badge-input" placeholder="Isi manual, misal: SIRUP MARKISA" value="SIRUP MARKISA">
       </div>
 
       <button class="btn btn-cyan" style="width:100%; padding: 8px; font-weight: bold; margin-top: 4px;" onclick="generateIdentityBadgeLogo()">
@@ -541,17 +541,17 @@
     </div>
 
     <div class="inline-tool-box">
-      <input type="text" id="stampPriceValue" class="inline-input decimal-format-input" placeholder="Price (Contoh: 15.0 / 50.0)">
+      <input type="text" id="stampPriceValue" class="inline-input decimal-format-input badge-input" data-next="barcodeValue" placeholder="Price (Contoh: 15.0 / 50.0)">
       <button class="btn btn-pink" onclick="generatePriceStamp()">🏷️ Stempel Price</button>
     </div>
 
     <div class="inline-tool-box">
-      <input type="text" id="barcodeValue" class="inline-input" placeholder="Isi Angka Barcode/PIRT/BPOM">
+      <input type="text" id="barcodeValue" class="inline-input badge-input" data-next="qrCodeValue" placeholder="Isi Angka Barcode/PIRT/BPOM">
       <button class="btn btn-zoom" onclick="generateSafeBarcode()">📊 + Barcode Aman Scan</button>
     </div>
 
     <div class="inline-tool-box">
-      <input type="text" id="qrCodeValue" class="inline-input" placeholder="Isi Teks / URL Web untuk QR Code Dinamis">
+      <input type="text" id="qrCodeValue" class="inline-input badge-input" data-next="" placeholder="Isi Teks / URL Web untuk QR Code Dinamis">
       <button class="btn btn-green" onclick="generateDynamicQRCode()">📱 + QR Code Dinamis</button>
     </div>
 
@@ -597,7 +597,7 @@
 
     let currentBadgeData = null;
 
-    // Default Dynamic Category Data Model
+    // Dynamic Category Data Model
     let categoryData = {
       "KULINER": {
         "OLAHAN-BUAH": ["SAMBAL", "SIRUP", "KERIPIK", "SELAI", "MANISAN"],
@@ -630,6 +630,7 @@
     // SYSTEM LOGGING & HISTORI
     function addHistoryLog(msg) {
       const logList = document.getElementById('historyLogList');
+      if (!logList) return;
       const timeStr = new Date().toLocaleTimeString('id-ID');
       const item = document.createElement('div');
       item.className = 'history-item';
@@ -639,11 +640,12 @@
 
     function toggleHistoryDrawer() {
       const drawer = document.getElementById('historyDrawer');
-      drawer.classList.toggle('active');
+      if (drawer) drawer.classList.toggle('active');
     }
 
     function clearHistoryLog() {
-      document.getElementById('historyLogList').innerHTML = '<div class="history-item">Log dibersihkan.</div>';
+      const logList = document.getElementById('historyLogList');
+      if (logList) logList.innerHTML = '<div class="history-item">Log dibersihkan.</div>';
     }
 
     // LOAD & SAVE CATEGORY DATA DARI LOCALSTORAGE
@@ -663,6 +665,7 @@
 
     function populatePokokOptions() {
       const pokokSelect = document.getElementById('dropPokok');
+      if (!pokokSelect) return;
       const currVal = pokokSelect.value;
       pokokSelect.innerHTML = '';
       
@@ -677,6 +680,27 @@
         pokokSelect.value = currVal;
       }
       updateBagianOptions();
+    }
+
+    // FITUR DETEKSI OTOMATIS SEKTOR & KATEGORI DARI SPESIFIKASI
+    function autoDetectCategoryFromSpec(specText) {
+      if (!specText || !specText.trim()) return;
+      const cleanSpec = specText.trim().toUpperCase();
+
+      for (const [sektor, bagians] of Object.entries(categoryData)) {
+        for (const [kategori, subs] of Object.entries(bagians)) {
+          for (const sub of subs) {
+            if (cleanSpec.includes(sub) || cleanSpec.includes(kategori.replace(/-/g, ' ')) || sub.includes(cleanSpec)) {
+              document.getElementById('dropPokok').value = sektor;
+              updateBagianOptions();
+              document.getElementById('dropBagian').value = kategori;
+              updateSubBagianOptions();
+              document.getElementById('dropSubBagian').value = sub;
+              return;
+            }
+          }
+        }
+      }
     }
 
     // FITUR ADD-SAVE UNTUK DROPDOWN
@@ -722,6 +746,7 @@
       }
     }
 
+    // KONFIGURASI URUTAN INPUT NAVIGASI (ENTER) & FORMAT DESIMAL 1
     function setupInputNavigationAndFormatting() {
       const badgeInputs = document.querySelectorAll('.badge-input');
       badgeInputs.forEach((input) => {
@@ -731,7 +756,10 @@
             const nextId = this.getAttribute('data-next');
             if (nextId) {
               const nextElem = document.getElementById(nextId);
-              if (nextElem) nextElem.focus();
+              if (nextElem) {
+                nextElem.focus();
+                if (nextElem.select) nextElem.select();
+              }
             } else {
               generateIdentityBadgeLogo();
             }
@@ -743,7 +771,7 @@
       decimalInputs.forEach((input) => {
         input.addEventListener('blur', function() {
           let val = this.value.trim();
-          if (val && !isNaN(parseFloat(val))) {
+          if (val !== '' && !isNaN(parseFloat(val))) {
             this.value = parseFloat(val).toFixed(1);
           }
         });
@@ -753,6 +781,7 @@
     function updateBagianOptions() {
       const pokok = document.getElementById('dropPokok').value;
       const bagianSelect = document.getElementById('dropBagian');
+      if (!bagianSelect) return;
       bagianSelect.innerHTML = '';
       
       const bagians = Object.keys(categoryData[pokok] || {});
@@ -769,6 +798,7 @@
       const pokok = document.getElementById('dropPokok').value;
       const bagian = document.getElementById('dropBagian').value;
       const subSelect = document.getElementById('dropSubBagian');
+      if (!subSelect) return;
       subSelect.innerHTML = '';
 
       const subs = (categoryData[pokok] && categoryData[pokok][bagian]) ? categoryData[pokok][bagian] : ["UMUM"];
@@ -809,15 +839,18 @@
       }
     }
 
+    // PERBAIKAN: OTOMATIS INCREMENT NOMOR REGISTRASI (Reg-0001 -> Reg-0002)
     function getNextRegNumber() {
       const now = new Date();
       let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
 
-      regData.counter = 1;
-      regData.hasBeenResetOnce = true;
-      regData.createdAt = now.getTime();
-      regData.lastUpdatedMonth = now.getMonth();
+      if (!regData.counter) {
+        regData.counter = 1;
+      } else {
+        regData.counter += 1;
+      }
 
+      regData.lastUpdatedMonth = now.getMonth();
       localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
       
       const formattedCounter = String(regData.counter).padStart(4, '0');
@@ -957,7 +990,7 @@
         stagingCanvas.setActiveObject(badgeImg);
         stagingCanvas.renderAll();
         saveProjectState();
-        addHistoryLog(`Logo Badge Identitas berhasil dibuat: <b>${lineSpecific}</b>`);
+        addHistoryLog(`Logo Badge Identitas dibuat: <b>${regInfo.regCode}</b> - ${lineSpecific}`);
       });
     }
 
@@ -1088,6 +1121,7 @@
 
     function setupScrollButton(btnId, direction) {
       const btn = document.getElementById(btnId);
+      if (!btn) return;
       let scrollTimer = null;
 
       const performScroll = (speed) => {
@@ -1263,7 +1297,6 @@
       addHistoryLog(`<b>AI Auto-Deskew</b> menegakkan gambar ke ${targetAngle}°.`);
     }
 
-    // FITUR BARU: AI-AGI SMART LAYOUT ENGINE
     function autoLayoutAGI() {
       const objects = mainCanvas.getObjects();
       if (objects.length === 0) {
@@ -1333,7 +1366,8 @@
 
     function initUserCounter() {
       let count = localStorage.getItem('label_studio_user_count') || 21;
-      document.getElementById('userCount').innerText = count;
+      const userEl = document.getElementById('userCount');
+      if (userEl) userEl.innerText = count;
       localStorage.setItem('label_studio_user_count', count);
     }
 
@@ -1380,6 +1414,9 @@
       }
       initUserCounter();
       setupInputNavigationAndFormatting();
+      
+      const initialSpec = document.getElementById('manualSpesifik').value;
+      if (initialSpec) autoDetectCategoryFromSpec(initialSpec);
     }
 
     function clearProjectData() {
@@ -1411,16 +1448,17 @@
     mainCanvas.on('selection:created', onMainSelectionChanged);
     mainCanvas.on('selection:updated', onMainSelectionChanged);
     mainCanvas.on('selection:cleared', function() {
-      document.getElementById('groupLayoutBar').classList.remove('active');
+      const layoutBar = document.getElementById('groupLayoutBar');
+      if (layoutBar) layoutBar.classList.remove('active');
     });
 
     function onMainSelectionChanged() {
       const activeObj = mainCanvas.getActiveObject();
       const layoutBar = document.getElementById('groupLayoutBar');
       if (activeObj && activeObj.isBoxGroup) {
-        layoutBar.classList.add('active');
+        if (layoutBar) layoutBar.classList.add('active');
       } else {
-        layoutBar.classList.remove('active');
+        if (layoutBar) layoutBar.classList.remove('active');
       }
       if (activeObj) {
         document.getElementById('fineRotateSlider').value = activeObj.angle || 0;
@@ -1614,6 +1652,8 @@
     function renderGallery() {
       const galleryEl = document.getElementById('assetGallery');
       const countEl = document.getElementById('assetCount');
+      if (!galleryEl || !countEl) return;
+      
       galleryEl.innerHTML = '';
       countEl.innerText = `${localAssets.length} Aset`;
 
@@ -1693,6 +1733,7 @@
 
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
+      if (!btn) return;
 
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
@@ -2107,9 +2148,11 @@
       stagingCanvas.renderAll();
       
       const lockBtn = document.getElementById('btnLockCrop');
-      lockBtn.innerText = "🔒 Kunci Panduan";
-      lockBtn.classList.remove('btn-red');
-      lockBtn.classList.add('btn-orange');
+      if (lockBtn) {
+        lockBtn.innerText = "🔒 Kunci Panduan";
+        lockBtn.classList.remove('btn-red');
+        lockBtn.classList.add('btn-orange');
+      }
     }
 
     function toggleLockCropOverlay() {
@@ -2122,14 +2165,16 @@
       });
 
       const lockBtn = document.getElementById('btnLockCrop');
-      if (isLocked) {
-        lockBtn.innerText = "🔓 Buka Kunci";
-        lockBtn.classList.remove('btn-orange');
-        lockBtn.classList.add('btn-red');
-      } else {
-        lockBtn.innerText = "🔒 Kunci Panduan";
-        lockBtn.classList.remove('btn-red');
-        lockBtn.classList.add('btn-orange');
+      if (lockBtn) {
+        if (isLocked) {
+          lockBtn.innerText = "🔓 Buka Kunci";
+          lockBtn.classList.remove('btn-orange');
+          lockBtn.classList.add('btn-red');
+        } else {
+          lockBtn.innerText = "🔒 Kunci Panduan";
+          lockBtn.classList.remove('btn-red');
+          lockBtn.classList.add('btn-orange');
+        }
       }
 
       stagingCanvas.renderAll();
@@ -2396,26 +2441,29 @@
     }
 
     function exportPNG() {
-      const multiplier = parseInt(document.getElementById('exportDpiMode').value, 10);
+      const multiplier = parseFloat(document.getElementById('exportDpiMode').value) || 8;
       
-      const originalGuideState = guidesVisible;
+      // Sembunyikan garis panduan saat unduh jika sedang aktif
       if (guidesVisible) toggleBoxGuides();
 
       const dataURL = mainCanvas.toDataURL({
         format: 'png',
-        multiplier: multiplier,
-        quality: 1
+        quality: 1,
+        multiplier: multiplier
       });
 
-      if (!originalGuideState) toggleBoxGuides();
+      if (!guidesVisible) toggleBoxGuides();
 
       const link = document.createElement('a');
-      link.download = `label-design-${Date.now()}.png`;
+      link.download = `Label-Studio-Pro-${Date.now()}.png`;
       link.href = dataURL;
+      document.body.appendChild(link);
       link.click();
-      addHistoryLog("Desain berhasil diunduh sebagai Super High Quality PNG.");
+      document.body.removeChild(link);
+      addHistoryLog("Mengekspor gambar hasil akhir ke format PNG.");
     }
 
+    // Inisialisasi saat dokumen dimuat
     window.onload = function() {
       loadProjectState();
     };
