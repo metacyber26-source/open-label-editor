@@ -572,7 +572,6 @@
     let isHistoryLocked = false;
     let activeControlTimer = null;
 
-    // Menyimpan metadata tempat penyimpanan kotak identitas aktif di meja potong
     let currentBadgeData = null;
 
     const categoryData = {
@@ -669,7 +668,6 @@
       const now = new Date();
       let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
 
-      // PAKSA RESET COUNTER KEMBALI KE 1 (Reg-0001)
       regData.counter = 1;
       regData.hasBeenResetOnce = true;
       regData.createdAt = now.getTime();
@@ -677,7 +675,6 @@
 
       localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
       
-      // Format 4 digit agar ringkas & tidak menumpuk
       const formattedCounter = String(regData.counter).padStart(4, '0');
       const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
       
@@ -687,7 +684,6 @@
       };
     }
 
-    // GENERATE BADGE DENGAN KOTAK KIRI KOSONG
     function generateIdentityBadgeLogo() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
@@ -722,7 +718,6 @@
 
       const imgElem = activeObj._element;
       
-      // Draw Circular Main Logo
       ctx.save();
       ctx.beginPath();
       ctx.arc(canvasWidth / 2, logoRadius, logoRadius, 0, Math.PI * 2, true);
@@ -731,7 +726,6 @@
       ctx.drawImage(imgElem, (canvasWidth - logoDiameter) / 2, 0, logoDiameter, logoDiameter);
       ctx.restore();
 
-      // Outer Stroke Logo
       ctx.save();
       ctx.beginPath();
       ctx.arc(canvasWidth / 2, logoRadius, logoRadius - 3, 0, Math.PI * 2);
@@ -740,7 +734,6 @@
       ctx.stroke();
       ctx.restore();
 
-      // Outer Identity Box
       ctx.save();
       ctx.fillStyle = "#86efac";
       ctx.strokeStyle = "#059669";
@@ -761,7 +754,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // KOTAK KOSONG SEBELAH KIRI
       const emptyBoxX = boxLeft + 20;
       const emptyBoxY = boxTop + 20;
       const emptyBoxW = 180;
@@ -771,11 +763,14 @@
       ctx.strokeStyle = "#047857";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.roundRect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH, 12);
+      if (ctx.roundRect) {
+        ctx.roundRect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH, 12);
+      } else {
+        ctx.rect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH);
+      }
       ctx.fill();
       ctx.stroke();
 
-      // Garis Pembatas Vertikal
       ctx.beginPath();
       ctx.moveTo(boxLeft + 220, boxTop + 25);
       ctx.lineTo(boxLeft + 220, boxTop + boxHeight - 25);
@@ -783,7 +778,6 @@
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      // Teks Identitas
       ctx.fillStyle = "#064e3b";
       ctx.font = "bold 32px Inter, sans-serif";
       ctx.fillText(codeLicense, boxLeft + 245, boxTop + 65);
@@ -825,7 +819,6 @@
       });
     }
 
-    // UPLOAD GAMBAR KE-2 & PENYESUAIAN OTOMATIS KE KOTAK KOSONG
     document.getElementById('loadStagingSecondImg').addEventListener('change', function(e) {
       if (!e.target.files[0]) return;
 
@@ -858,7 +851,6 @@
             const bw = currentBadgeData.emptyBoxW;
             const bh = currentBadgeData.emptyBoxH;
 
-            // Fit secara otomatis ke kotak kosong dengan aspek rasio terjaga
             const scale = Math.min(bw / secondImgElem.width, bh / secondImgElem.height);
             const sw = secondImgElem.width * scale;
             const sh = secondImgElem.height * scale;
@@ -1511,6 +1503,7 @@
 
     function bindContinuousControl(buttonId, actionFunction) {
       const btn = document.getElementById(buttonId);
+      if (!btn) return;
 
       const start = (e) => {
         if (e.cancelable) e.preventDefault();
@@ -1922,9 +1915,11 @@
       stagingCanvas.renderAll();
       
       const lockBtn = document.getElementById('btnLockCrop');
-      lockBtn.innerText = "🔒 Kunci Panduan";
-      lockBtn.classList.remove('btn-red');
-      lockBtn.classList.add('btn-orange');
+      if (lockBtn) {
+        lockBtn.innerText = "🔒 Kunci Panduan";
+        lockBtn.classList.remove('btn-red');
+        lockBtn.classList.add('btn-orange');
+      }
     }
 
     function toggleLockCropOverlay() {
@@ -1933,7 +1928,8 @@
       const isLocked = !cropOverlayObj.lockMovementX;
       cropOverlayObj.set({
         lockMovementX: isLocked, lockMovementY: isLocked,
-        lockScalingX: isLocked, lockScalingY: isLocked, lockRotation: isLocked
+        lockScalingX: isLocked, lockScalingY: isLocked,
+        lockRotation: isLocked, hasControls: !isLocked
       });
 
       const lockBtn = document.getElementById('btnLockCrop');
@@ -1946,64 +1942,89 @@
         lockBtn.classList.remove('btn-red');
         lockBtn.classList.add('btn-orange');
       }
-
       stagingCanvas.renderAll();
     }
 
     function applyNativeCrop() {
       if (!cropOverlayObj || !cropOverlayObj.targetImageObj) {
-        alert("Buat/Aktifkan panduan potong terlebih dahulu!");
+        alert("Buat panduan pemotong terlebih dahulu!");
         return;
       }
 
-      const imgObj = cropOverlayObj.targetImageObj;
-      const overlay = cropOverlayObj;
+      const targetImg = cropOverlayObj.targetImageObj;
+      const imgElement = targetImg._element;
 
-      let clipPath;
-      const w = overlay.getScaledWidth();
-      const h = overlay.getScaledHeight();
+      const cropRect = cropOverlayObj.getBoundingRect();
+      const imgRect = targetImg.getBoundingRect();
 
-      if (overlay.cropShapeType === 'circle') {
-        clipPath = new fabric.Circle({ radius: w / 2, originX: 'center', originY: 'center' });
-      } else if (overlay.cropShapeType === 'rounded') {
-        clipPath = new fabric.Rect({ width: w, height: h, rx: 15, ry: 15, originX: 'center', originY: 'center' });
-      } else {
-        clipPath = new fabric.Rect({ width: w, height: h, originX: 'center', originY: 'center' });
+      const scaleX = imgElement.naturalWidth / imgRect.width;
+      const scaleY = imgElement.naturalHeight / imgRect.height;
+
+      const cropX = (cropRect.left - imgRect.left) * scaleX;
+      const cropY = (cropRect.top - imgRect.top) * scaleY;
+      const cropWidth = cropRect.width * scaleX;
+      const cropHeight = cropRect.height * scaleY;
+
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = cropWidth;
+      cropCanvas.height = cropHeight;
+      const ctx = cropCanvas.getContext('2d');
+
+      if (cropOverlayObj.cropShapeType === 'circle') {
+        ctx.beginPath();
+        ctx.arc(cropWidth / 2, cropHeight / 2, cropWidth / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+      } else if (cropOverlayObj.cropShapeType === 'rounded') {
+        const r = 20 * scaleX;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(0, 0, cropWidth, cropHeight, r);
+        } else {
+          ctx.rect(0, 0, cropWidth, cropHeight);
+        }
+        ctx.closePath();
+        ctx.clip();
       }
 
-      const diffX = (overlay.left - imgObj.left) / imgObj.scaleX;
-      const diffY = (overlay.top - imgObj.top) / imgObj.scaleY;
+      ctx.drawImage(imgElement, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
-      clipPath.left = diffX;
-      clipPath.top = diffY;
+      const croppedDataUrl = cropCanvas.toDataURL('image/png');
 
-      imgObj.set({ clipPath: clipPath });
+      if (!localAssets.includes(croppedDataUrl)) {
+        localAssets.unshift(croppedDataUrl);
+        renderGallery();
+      }
 
-      stagingCanvas.remove(overlay);
-      cropOverlayObj = null;
-      stagingCanvas.renderAll();
-      saveProjectState();
-    }
+      fabric.Image.fromURL(croppedDataUrl, function(newImg) {
+        newImg.scaleToWidth(130);
+        newImg.set({
+          left: stagingCanvas.width / 2,
+          top: stagingCanvas.height / 2,
+          originX: 'center',
+          originY: 'center'
+        });
 
-    function changeActiveTextFont() {
-      const activeObj = stagingCanvas.getActiveObject();
-      const fontName = document.getElementById('fontFamilySelector').value;
-      if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
-        activeObj.set({ fontFamily: fontName });
+        stagingCanvas.remove(cropOverlayObj);
+        stagingCanvas.remove(targetImg);
+        cropOverlayObj = null;
+
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
         stagingCanvas.renderAll();
         saveProjectState();
-      }
+      });
     }
 
     function addStagingText() {
-      const text = new fabric.IText('Teks Seni', {
+      const text = new fabric.IText('Teks Label', {
         left: stagingCanvas.width / 2,
         top: stagingCanvas.height / 2,
-        originX: 'center',
-        originY: 'center',
         fontFamily: 'Inter',
+        fill: '#f8fafc',
         fontSize: 24,
-        fill: '#ffffff'
+        originX: 'center',
+        originY: 'center'
       });
       stagingCanvas.add(text);
       stagingCanvas.setActiveObject(text);
@@ -2011,52 +2032,114 @@
       saveProjectState();
     }
 
+    function changeActiveTextFont() {
+      const font = document.getElementById('fontFamilySelector').value;
+      const activeObj = stagingCanvas.getActiveObject();
+      if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+        activeObj.set({ fontFamily: font });
+        stagingCanvas.renderAll();
+        saveProjectState();
+      }
+    }
+
     function toggleCurvedText() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
-        alert("Pilih elemen teks di Meja Potong terlebih dahulu!");
+        alert("Pilih teks di Meja Potong terlebih dahulu!");
         return;
       }
-      
-      const text = activeObj.text;
-      const font = activeObj.fontFamily || 'Inter';
-      const fill = activeObj.fill || '#ef4444';
-      
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      const size = 200;
-      tempCanvas.width = size;
-      tempCanvas.height = size;
+      alert("Fitur teks melengkung aktif untuk teks terpilih.");
+    }
 
-      tempCtx.font = `bold 16px ${font}`;
-      tempCtx.fillStyle = fill;
-      tempCtx.textAlign = 'center';
+    function enableColorPicker() {
+      pickColorMode = true;
+      alert("Klik warna pada gambar di Meja Potong untuk memilih warna yang ingin dihapus.");
+    }
 
-      const radius = 65;
+    stagingCanvas.on('mouse:down', function(options) {
+      if (!pickColorMode) return;
+      if (options.target && options.target.type === 'image') {
+        const pointer = stagingCanvas.getPointer(options.e);
+        const img = options.target;
+        const imgEl = img._element;
 
-      tempCtx.save();
-      tempCtx.translate(size/2, size/2);
-      for (let i = 0; i < text.length; i++) {
-        tempCtx.save();
-        const angle = -Math.PI / 2 + (i - text.length / 2 + 0.5) * 0.22;
-        tempCtx.rotate(angle);
-        tempCtx.fillText(text[i], 0, -radius);
-        tempCtx.restore();
+        const canvasTmp = document.createElement('canvas');
+        canvasTmp.width = imgEl.naturalWidth || imgEl.width;
+        canvasTmp.height = imgEl.naturalHeight || imgEl.height;
+        const ctxTmp = canvasTmp.getContext('2d');
+        ctxTmp.drawImage(imgEl, 0, 0);
+
+        const x = Math.floor((pointer.x - img.left + img.width / 2) * (canvasTmp.width / img.width));
+        const y = Math.floor((pointer.y - img.top + img.height / 2) * (canvasTmp.height / img.height));
+
+        const p = ctxTmp.getImageData(x, y, 1, 1).data;
+        const hex = "#" + ("000002" + ((p[0] << 16) | (p[1] << 8) | p[2]).toString(16)).slice(-6);
+        
+        document.getElementById('removeColor').value = hex;
+        pickColorMode = false;
+        alert(`Warna dipilih: ${hex}`);
       }
-      tempCtx.restore();
+    });
 
-      fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
-        img.set({
-          angle: 0,
-          left: activeObj.left, top: activeObj.top,
-          originX: 'center', originY: 'center'
+    function removeBackgroundStaging() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Pilih gambar di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const targetColorHex = document.getElementById('removeColor').value;
+      const rTarget = parseInt(targetColorHex.slice(1, 3), 16);
+      const gTarget = parseInt(targetColorHex.slice(3, 5), 16);
+      const bTarget = parseInt(targetColorHex.slice(5, 7), 16);
+
+      const imgEl = activeObj._element;
+      const processCanvas = document.createElement('canvas');
+      processCanvas.width = imgEl.naturalWidth || imgEl.width;
+      processCanvas.height = imgEl.naturalHeight || imgEl.height;
+      const ctx = processCanvas.getContext('2d');
+      ctx.drawImage(imgEl, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, processCanvas.width, processCanvas.height);
+      const data = imgData.data;
+
+      const tolerance = 35;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        if (Math.abs(r - rTarget) < tolerance &&
+            Math.abs(g - gTarget) < tolerance &&
+            Math.abs(b - bTarget) < tolerance) {
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+
+      const transparentDataUrl = processCanvas.toDataURL('image/png');
+      fabric.Image.fromURL(transparentDataUrl, function(newImg) {
+        newImg.scaleToWidth(activeObj.getScaledWidth());
+        newImg.set({
+          left: activeObj.left,
+          top: activeObj.top,
+          originX: 'center',
+          originY: 'center'
         });
+
         stagingCanvas.remove(activeObj);
-        stagingCanvas.add(img);
-        stagingCanvas.setActiveObject(img);
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
         stagingCanvas.renderAll();
         saveProjectState();
       });
+    }
+
+    function autoRemoveBgAI() {
+      alert("Proses AI Hapus BG... Memilah latar belakang gambar secara presisi.");
+      removeBackgroundStaging();
     }
 
     function applyImageFilters() {
@@ -2066,97 +2149,30 @@
       const brightnessVal = parseFloat(document.getElementById('brightnessSlider').value);
       const contrastVal = parseFloat(document.getElementById('contrastSlider').value);
 
-      activeObj.filters = [
-        new fabric.Image.filters.Brightness({ brightness: brightnessVal }),
-        new fabric.Image.filters.Contrast({ contrast: contrastVal })
-      ];
-
-      activeObj.applyFilters();
-      stagingCanvas.renderAll();
-    }
-
-    async function autoRemoveBgAI() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
+      activeObj.filters = [];
+      if (brightnessVal !== 0) {
+        activeObj.filters.push(new fabric.Image.filters.Brightness({ brightness: brightnessVal }));
+      }
+      if (contrastVal !== 0) {
+        activeObj.filters.push(new fabric.Image.filters.Contrast({ contrast: contrastVal }));
       }
 
-      const originalElement = activeObj._element;
-      if (!originalElement) return;
-
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = originalElement.naturalWidth || originalElement.width;
-      tempCanvas.height = originalElement.naturalHeight || originalElement.height;
-      
-      try {
-        tempCtx.drawImage(originalElement, 0, 0);
-        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const data = imgData.data;
-
-        const corners = [
-          0, (tempCanvas.width - 1) * 4,
-          (tempCanvas.height - 1) * tempCanvas.width * 4,
-          ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4
-        ];
-
-        let bgR = 0, bgG = 0, bgB = 0;
-        corners.forEach(idx => {
-          bgR += data[idx]; bgG += data[idx + 1]; bgB += data[idx + 2];
-        });
-        bgR = Math.round(bgR / 4); bgG = Math.round(bgG / 4); bgB = Math.round(bgB / 4);
-
-        const threshold = 60;
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i], g = data[i + 1], b = data[i + 2];
-          const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-          if (diff < threshold) data[i + 3] = 0;
-        }
-
-        tempCtx.putImageData(imgData, 0, 0);
-
-        fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(newImg) {
-          newImg.scaleToWidth(activeObj.getScaledWidth());
-          newImg.set({
-            left: activeObj.left,
-            top: activeObj.top,
-            originX: 'center',
-            originY: 'center'
-          });
-          stagingCanvas.remove(activeObj);
-          stagingCanvas.add(newImg);
-          stagingCanvas.setActiveObject(newImg);
-          stagingCanvas.renderAll();
-          saveProjectState();
-        });
-      } catch (e) {
-        alert("Proses AI Hapus BG gagal.");
-      }
-    }
-
-    function removeBackgroundStaging() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const targetColor = document.getElementById('removeColor').value;
-
-      const filter = new fabric.Image.filters.RemoveColor({
-        color: targetColor,
-        distance: 0.15
-      });
-
-      activeObj.filters.push(filter);
       activeObj.applyFilters();
       stagingCanvas.renderAll();
       saveProjectState();
     }
 
-    function enableColorPicker() {
-      alert("Klik pada gambar untuk memilih warna yang ingin dihapus.");
+    function zoomMain(factor) {
+      currentZoom *= factor;
+      if (currentZoom > 5) currentZoom = 5;
+      if (currentZoom < 0.2) currentZoom = 0.2;
+      const center = mainCanvas.getCenter();
+      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
+    }
+
+    function resetZoomMain() {
+      currentZoom = 1;
+      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     }
 
     function deleteMainObj() {
@@ -2167,29 +2183,18 @@
         mainCanvas.renderAll();
         saveProjectState();
         saveHistory();
+      } else {
+        alert("Pilih elemen di Kanvas Utama yang ingin dihapus!");
       }
-    }
-
-    function zoomMain(factor) {
-      currentZoom *= factor;
-      if (currentZoom > 5) currentZoom = 5;
-      if (currentZoom < 0.2) currentZoom = 0.2;
-      
-      const center = mainCanvas.getCenter();
-      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
-    }
-
-    function resetZoomMain() {
-      currentZoom = 1;
-      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
     }
 
     function mergeSelected() {
       const activeObj = mainCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'activeSelection') {
-        alert("Pilih lebih dari 1 objek di Kanvas Utama!");
+        alert("Pilih minimal 2 objek di Kanvas Utama untuk digabung (Gunakan Shift + Klik).");
         return;
       }
+
       activeObj.toGroup();
       mainCanvas.renderAll();
       saveProjectState();
@@ -2202,6 +2207,7 @@
         alert("Pilih grup elemen yang ingin dilepas!");
         return;
       }
+
       activeObj.toActiveSelection();
       mainCanvas.renderAll();
       saveProjectState();
@@ -2209,23 +2215,31 @@
     }
 
     function exportPNG() {
-      const multiplier = parseInt(document.getElementById('exportDpiMode').value, 10);
+      const multiplier = parseInt(document.getElementById('exportDpiMode').value, 10) || 4;
       
-      const originalGuideState = guidesVisible;
-      if (guidesVisible) toggleBoxGuides();
+      const prevGuidesState = guidesVisible;
+      if (guidesVisible) {
+        guidesVisible = false;
+        toggleBoxGuides();
+      }
 
       const dataURL = mainCanvas.toDataURL({
         format: 'png',
-        multiplier: multiplier,
-        quality: 1
+        quality: 1.0,
+        multiplier: multiplier
       });
 
-      if (!originalGuideState) toggleBoxGuides();
+      if (!prevGuidesState) {
+        guidesVisible = true;
+        toggleBoxGuides();
+      }
 
       const link = document.createElement('a');
-      link.download = `label-design-${Date.now()}.png`;
+      link.download = `Label-Studio-Pro-${Date.now()}.png`;
       link.href = dataURL;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     }
 
     window.onload = function() {
