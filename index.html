@@ -201,7 +201,7 @@
     .gallery-title { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; display: flex; justify-content: space-between; font-weight: 600; }
     .gallery-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
     .gallery-item {
-      position: relative; flex: 0 0 60px; height: 60px; border: 1px solid var(--border-color);
+      position: relative; flex: 0 0 65px; height: 65px; border: 1px solid var(--border-color);
       border-radius: 6px; overflow: hidden; background: var(--bg-card); cursor: pointer;
     }
     .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
@@ -213,7 +213,11 @@
     .inline-tool-box {
       width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     }
-    .inline-input { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; flex: 1; min-width: 110px; outline: none; }
+    .inline-input { 
+      background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); 
+      padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; flex: 1; min-width: 110px; outline: none;
+      text-transform: uppercase;
+    }
     .inline-input:focus { border-color: var(--border-focus); }
     .slider-group { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-muted); }
     .slider-group input { width: 80px; }
@@ -237,7 +241,6 @@
     .badge-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; }
     .badge-row label { font-size: 0.7rem; color: var(--border-focus); min-width: 90px; font-weight: bold; }
     
-    /* MODAL HISTORI & ADD SAVE */
     .history-drawer {
       display: none; width: 100%; background: var(--bg-card); border: 1px solid var(--accent-purple); border-radius: 8px; padding: 10px; margin-top: 10px;
     }
@@ -249,6 +252,26 @@
       background: var(--accent-green); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: bold; cursor: pointer; white-space: nowrap;
     }
     .btn-add-save:hover { opacity: 0.9; }
+
+    /* MODAL APPROVAL MATRIX */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 10000;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--bg-card); border: 2px solid var(--border-focus); border-radius: 12px;
+      width: 100%; max-width: 500px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .approval-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .approval-item {
+      background: var(--bg-main); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;
+    }
+    .approval-item.approved { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.1); }
+    .share-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -437,9 +460,10 @@
       <button class="btn-switch" id="btnCanvas2Theme" onclick="toggleCanvasTheme('stagingCanvasWrapper', 'btnCanvas2Theme')">💡 Terang / Gelap</button>
     </div>
     
+    <!-- PENYIMPANAN KHUSUS BAHAN TIDAK HILANG SAAT RESET ALL -->
     <div class="gallery-container">
       <div class="gallery-title">
-        <span>📁 Penyimpanan Aset Gambar Lokal</span>
+        <span>📁 Penyimpanan Khusus Bahan Diproses (Permanen)</span>
         <span id="assetCount">0 Aset</span>
       </div>
       <div class="gallery-grid" id="assetGallery"></div>
@@ -452,6 +476,10 @@
       <label class="btn btn-cyan">
         + Upload Gambar ke-2 <input type="file" id="loadStagingSecondImg" accept="image/*" hidden>
       </label>
+
+      <!-- TOMBOL PUTAR KIRI/KANAN PRESISI KECIL -->
+      <button class="btn btn-zoom" onclick="rotateSelectedStaging(-0.5)">🔄 -0.5° Presisi</button>
+      <button class="btn btn-zoom" onclick="rotateSelectedStaging(0.5)">🔁 +0.5° Presisi</button>
 
       <button class="btn" onclick="addStagingText()">+ Teks Seni</button>
       <button class="btn btn-ai" onclick="autoRemoveBgAI()">🤖 AI Hapus BG</button>
@@ -482,6 +510,12 @@
           <button class="btn-switch" id="btnBadgeLicenseToggle" onclick="toggleLicenseAdderLock()">OFF 🔴</button>
         </div>
       </div>
+
+      <!-- AREA INPUT WILAYAH OTOMATIS/MANUAL -->
+      <div class="badge-row">
+        <label>Wilayah:</label>
+        <input type="text" id="manualWilayah" class="inline-input badge-input" data-next="manualSpesifik" placeholder="Kosongkan untuk Otomatis (BLITAR-RAYA)">
+      </div>
       
       <div class="badge-row">
         <label>1. Spesifikasi:</label>
@@ -506,8 +540,9 @@
         <button class="btn-add-save" onclick="addOptionToDropdown('SubKategori')">➕ ADD-SAVE</button>
       </div>
 
-      <button class="btn btn-cyan" style="width:100%; padding: 8px; font-weight: bold; margin-top: 4px;" onclick="generateIdentityBadgeLogo()">
-        ✨ Buat Logo + Identity Badge (Kotak Kiri Kosong)
+      <!-- TOMBOL PROSES KE APPROVAL MATRIX -->
+      <button class="btn btn-cyan" style="width:100%; padding: 8px; font-weight: bold; margin-top: 4px;" onclick="openApprovalModal()">
+        ✨ Process Verification & Generate License Matrix
       </button>
     </div>
 
@@ -564,6 +599,49 @@
     </div>
   </div>
 
+  <!-- MODAL APPROVAL MATRIX & MULTI-CHANNEL SHARE -->
+  <div class="modal-overlay" id="approvalModal">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:var(--border-focus);">🔒 APPROVAL MATRIX & GENERATE LISENSI</h3>
+        <button class="btn btn-red" style="padding:2px 6px;" onclick="closeApprovalModal()">✕</button>
+      </div>
+      
+      <div style="font-size:0.7rem; color:var(--text-muted); word-break: break-all;" id="previewLicenseCode">Format Kode: -</div>
+
+      <div class="approval-grid">
+        <div class="approval-item" id="appKetua">
+          <span>Ketua</span>
+          <button class="btn btn-cyan" style="padding:2px 6px; font-size:0.65rem;" onclick="toggleApproval('Ketua')">Approve</button>
+        </div>
+        <div class="approval-item" id="appWakil">
+          <span>Wakil</span>
+          <button class="btn btn-cyan" style="padding:2px 6px; font-size:0.65rem;" onclick="toggleApproval('Wakil')">Approve</button>
+        </div>
+        <div class="approval-item" id="appBendahara">
+          <span>Bendahara</span>
+          <button class="btn btn-cyan" style="padding:2px 6px; font-size:0.65rem;" onclick="toggleApproval('Bendahara')">Approve</button>
+        </div>
+        <div class="approval-item" id="appSekretaris">
+          <span>Sekretaris</span>
+          <button class="btn btn-cyan" style="padding:2px 6px; font-size:0.65rem;" onclick="toggleApproval('Sekretaris')">Approve</button>
+        </div>
+      </div>
+
+      <button class="btn btn-green" id="btnExecuteGenerate" style="width:100%; padding:10px; opacity:0.5; cursor:not-allowed;" disabled onclick="executeIdentityBadgeGeneration()">
+        ✨ Execute Badge & Lock License
+      </button>
+
+      <!-- TOMBOL KIRIM MULTI-MEDSOS -->
+      <div class="share-buttons">
+        <button class="btn btn-green" onclick="shareLicense('wa')">📲 WA</button>
+        <button class="btn btn-cyan" onclick="shareLicense('tele')">✈️ Telegram</button>
+        <button class="btn btn-purple" onclick="shareLicense('email')">✉️ Email</button>
+        <button class="btn btn-pink" onclick="shareLicense('medsos')">🌐 Share/Medsos</button>
+      </div>
+    </div>
+  </div>
+
   <canvas id="barcodeHiddenCanvas" style="display:none;"></canvas>
   <div id="qrcodeHidden" style="display:none;"></div>
 
@@ -582,7 +660,7 @@
     let currentZoom = 1;
     let pickColorMode = false;
     let currentMainBgImage = null;
-    let localAssets = [];
+    let localAssets = []; // Menyimpan bahan olahan meja potong (PERMANEN)
     let cropOverlayObj = null;
     let guidesVisible = true;
     let isPanMode = false;
@@ -596,6 +674,14 @@
     let activeControlTimer = null;
 
     let currentBadgeData = null;
+
+    // Approvals State
+    let approvals = {
+      Ketua: false,
+      Wakil: false,
+      Bendahara: false,
+      Sekretaris: false
+    };
 
     // Dynamic Category Data Model
     let categoryData = {
@@ -648,7 +734,6 @@
       if (logList) logList.innerHTML = '<div class="history-item">Log dibersihkan.</div>';
     }
 
-    // LOAD & SAVE CATEGORY DATA DARI LOCALSTORAGE
     function loadSavedCategoryData() {
       const saved = localStorage.getItem('label_studio_category_data');
       if (saved) {
@@ -682,7 +767,6 @@
       updateBagianOptions();
     }
 
-    // FITUR DETEKSI OTOMATIS SEKTOR & KATEGORI DARI SPESIFIKASI
     function autoDetectCategoryFromSpec(specText) {
       if (!specText || !specText.trim()) return;
       const cleanSpec = specText.trim().toUpperCase();
@@ -703,7 +787,6 @@
       }
     }
 
-    // FITUR ADD-SAVE UNTUK DROPDOWN
     function addOptionToDropdown(level) {
       const newValue = prompt(`Masukkan nama baru untuk ${level}:`);
       if (!newValue || !newValue.trim()) return;
@@ -746,8 +829,15 @@
       }
     }
 
-    // KONFIGURASI URUTAN INPUT NAVIGASI (ENTER) & FORMAT DESIMAL 1
+    // FORMULASI INPUT HURUF BESAR & INTEGRASI NAVIGASI
     function setupInputNavigationAndFormatting() {
+      const inputs = document.querySelectorAll('.inline-input');
+      inputs.forEach(input => {
+        input.addEventListener('input', function() {
+          this.value = this.value.toUpperCase();
+        });
+      });
+
       const badgeInputs = document.querySelectorAll('.badge-input');
       badgeInputs.forEach((input) => {
         input.addEventListener('keydown', function(e) {
@@ -761,7 +851,7 @@
                 if (nextElem.select) nextElem.select();
               }
             } else {
-              generateIdentityBadgeLogo();
+              openApprovalModal();
             }
           }
         });
@@ -839,46 +929,107 @@
       }
     }
 
-    // PERBAIKAN: OTOMATIS INCREMENT NOMOR REGISTRASI (Reg-0001 -> Reg-0002)
+    // FORMAT KODE BARU LENGKAP + OTOMATIS RESET 00:00:00 KEMBALI KE REG-0001
     function getNextRegNumber() {
       const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       let regData = JSON.parse(localStorage.getItem('icp2e_reg_counter') || '{}');
 
-      if (!regData.counter) {
+      // Reset setiap pergantian hari (pukul 00:00:00)
+      if (regData.lastDate !== todayStr) {
         regData.counter = 1;
+        regData.lastDate = todayStr;
       } else {
-        regData.counter += 1;
+        regData.counter = (regData.counter || 0) + 1;
       }
 
-      regData.lastUpdatedMonth = now.getMonth();
       localStorage.setItem('icp2e_reg_counter', JSON.stringify(regData));
       
       const formattedCounter = String(regData.counter).padStart(4, '0');
-      const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
-      
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const dd = String(now.getDate()).padStart(2,'0');
+      const jam = String(now.getHours()).padStart(2,'0');
+      const menit = String(now.getMinutes()).padStart(2,'0');
+      const detik = String(now.getSeconds()).padStart(2,'0');
+
+      let wilayah = document.getElementById('manualWilayah').value.trim().toUpperCase();
+      if (!wilayah) wilayah = 'BLITAR-RAYA'; // Default otomatis sistem
+
+      const sektor = document.getElementById('dropPokok').value.toUpperCase();
+      const kategori = document.getElementById('dropBagian').value.toUpperCase();
+      const subKategori = document.getElementById('dropSubBagian').value.toUpperCase();
+      let spesifik = document.getElementById('manualSpesifik').value.trim().toUpperCase() || 'GENERAL';
+
+      const fullCode = `ICP2E/${wilayah}/${yyyy}/${mm}/${dd}/${jam}:${menit}:${detik}/${sektor}/${kategori}/${subKategori}/${spesifik}/REG-${formattedCounter}`;
+
       return {
-        formattedDate: dateStr,
-        regCode: `Reg-${formattedCounter}`
+        fullCode: fullCode,
+        regCode: `REG-${formattedCounter}`
       };
     }
 
-    function generateIdentityBadgeLogo() {
+    // MODAL APPROVAL MATRIX ENGINE
+    function openApprovalModal() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || activeObj.type !== 'image') {
         alert("Pilih/Klik Gambar Logo Utama di Meja Potong terlebih dahulu!");
         return;
       }
 
+      const modal = document.getElementById('approvalModal');
       const regInfo = getNextRegNumber();
-      const codeLicense = `ICP2E / ${regInfo.formattedDate} / ${regInfo.regCode}`;
+      document.getElementById('previewLicenseCode').innerText = regInfo.fullCode;
 
-      const pokok = document.getElementById('dropPokok').value;
-      const bagian = document.getElementById('dropBagian').value;
-      const sub = document.getElementById('dropSubBagian').value;
-      const spesifik = document.getElementById('manualSpesifik').value.trim();
+      // Reset status approvals
+      approvals = { Ketua: false, Wakil: false, Bendahara: false, Sekretaris: false };
+      updateApprovalUI();
 
-      const lineCategory = `CODE ${pokok} > ${bagian}`;
-      const lineSpecific = `> ${sub}${spesifik ? ' ' + spesifik : ''}`;
+      modal.classList.add('active');
+    }
+
+    function closeApprovalModal() {
+      document.getElementById('approvalModal').classList.remove('active');
+    }
+
+    function toggleApproval(role) {
+      approvals[role] = !approvals[role];
+      const el = document.getElementById(`app${role}`);
+      if (approvals[role]) {
+        el.classList.add('approved');
+        el.querySelector('button').innerText = '✅ OK';
+      } else {
+        el.classList.remove('approved');
+        el.querySelector('button').innerText = 'Approve';
+      }
+      updateApprovalUI();
+    }
+
+    function updateApprovalUI() {
+      const isAllApproved = Object.values(approvals).every(v => v === true);
+      const btn = document.getElementById('btnExecuteGenerate');
+      if (isAllApproved) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+      }
+    }
+
+    function executeIdentityBadgeGeneration() {
+      closeApprovalModal();
+      generateIdentityBadgeLogo();
+    }
+
+    function generateIdentityBadgeLogo() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') return;
+
+      const regInfo = getNextRegNumber();
+      const codeLicense = regInfo.fullCode;
 
       const canvasWidth = 1024;
       const logoRadius = 380;
@@ -941,7 +1092,11 @@
       ctx.strokeStyle = "#047857";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.roundRect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH, 12);
+      if (ctx.roundRect) {
+        ctx.roundRect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH, 12);
+      } else {
+        ctx.rect(emptyBoxX, emptyBoxY, emptyBoxW, emptyBoxH);
+      }
       ctx.fill();
       ctx.stroke();
 
@@ -953,16 +1108,12 @@
       ctx.stroke();
 
       ctx.fillStyle = "#064e3b";
-      ctx.font = "bold 32px Inter, sans-serif";
-      ctx.fillText(codeLicense, boxLeft + 245, boxTop + 65);
-
-      ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 26px Inter, sans-serif";
-      ctx.fillText(lineCategory, boxLeft + 245, boxTop + 120);
+      ctx.font = "bold 16px Inter, sans-serif";
+      ctx.fillText(codeLicense, boxLeft + 235, boxTop + 65);
 
       ctx.fillStyle = "#0284c7";
-      ctx.font = "bold 28px Inter, sans-serif";
-      ctx.fillText(lineSpecific, boxLeft + 245, boxTop + 165);
+      ctx.font = "bold 22px Inter, sans-serif";
+      ctx.fillText("STATUS: APPROVED (4/4 OFFICERS)", boxLeft + 235, boxTop + 120);
 
       const finalDataUrl = renderCanvas.toDataURL('image/png');
       fabric.Image.fromURL(finalDataUrl, function(badgeImg) {
@@ -990,8 +1141,42 @@
         stagingCanvas.setActiveObject(badgeImg);
         stagingCanvas.renderAll();
         saveProjectState();
-        addHistoryLog(`Logo Badge Identitas dibuat: <b>${regInfo.regCode}</b> - ${lineSpecific}`);
+        addHistoryLog(`Logo Badge Identitas dibuat: <b>${regInfo.regCode}</b>`);
       });
+    }
+
+    // TOMBOL SHARE MULTI-CHANNEL
+    function shareLicense(platform) {
+      const code = document.getElementById('previewLicenseCode').innerText;
+      const text = encodeURIComponent(`Berikut adalah Lisensi Resmi Terverifikasi ICP2E:\n\n${code}\n\nDisetujui oleh: Ketua, Wakil, Bendahara, Sekretaris.`);
+
+      if (platform === 'wa') {
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+      } else if (platform === 'tele') {
+        window.open(`https://t.me/share/url?url=&text=${text}`, '_blank');
+      } else if (platform === 'email') {
+        window.open(`mailto:?subject=Lisensi Resmi ICP2E&body=${text}`, '_blank');
+      } else if (platform === 'medsos') {
+        if (navigator.share) {
+          navigator.share({ title: 'Lisensi ICP2E', text: decodeURIComponent(text) });
+        } else {
+          navigator.clipboard.writeText(decodeURIComponent(text));
+          alert("Kode Lisensi disalin ke clipboard!");
+        }
+      }
+    }
+
+    // TOMBOL PUTAR KECIL PRESISI MEJA POTONG
+    function rotateSelectedStaging(angle) {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj) {
+        alert("Pilih elemen di Meja Potong terlebih dahulu!");
+        return;
+      }
+      activeObj.set('angle', activeObj.angle + angle);
+      activeObj.setCoords();
+      stagingCanvas.renderAll();
+      saveProjectState();
     }
 
     document.getElementById('loadStagingSecondImg').addEventListener('change', function(e) {
@@ -1061,11 +1246,22 @@
       if (!e.target.files[0]) return;
       const reader = new FileReader();
       reader.onload = function(event) {
+        // Otomatis simpan ke galeri permanen saat diupload
+        saveAssetToGallery(event.target.result);
         loadImageToStaging(event.target.result);
-        addHistoryLog("Logo Utama diunggah ke Meja Potong.");
+        addHistoryLog("Logo Utama diunggah ke Meja Potong dan disimpan ke Penyimpanan Bahan.");
       };
       reader.readAsDataURL(e.target.files[0]);
     });
+
+    // SIMPAN ASET KE GALERI KHUSUS PERMANEN
+    function saveAssetToGallery(dataUrl) {
+      if (!localAssets.includes(dataUrl)) {
+        localAssets.push(dataUrl);
+        renderGallery();
+        localStorage.setItem('label_studio_permanent_assets', JSON.stringify(localAssets));
+      }
+    }
 
     function saveHistory() {
       if (isHistoryLocked) return;
@@ -1238,6 +1434,21 @@
       }
     });
 
+    function zoomMain(factor) {
+      let newZoom = mainCanvas.getZoom() * factor;
+      if (newZoom > 5) newZoom = 5;
+      if (newZoom < 0.3) newZoom = 0.3;
+      const center = mainCanvas.getCenter();
+      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, newZoom);
+      currentZoom = newZoom;
+    }
+
+    function resetZoomMain() {
+      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      mainCanvas.setZoom(1);
+      currentZoom = 1;
+    }
+
     function autoFocusAndFitBg() {
       const bg = mainCanvas.backgroundImage || currentMainBgImage;
       if (!bg) { 
@@ -1377,7 +1588,7 @@
         const stagingData = JSON.stringify(stagingCanvas.toJSON(['isCropOverlay', 'cropShapeType', 'targetImageObj', 'isCurvedText', 'isIdentityBadge']));
         localStorage.setItem('label_studio_main', mainData);
         localStorage.setItem('label_studio_staging', stagingData);
-        localStorage.setItem('label_studio_assets', JSON.stringify(localAssets));
+        localStorage.setItem('label_studio_permanent_assets', JSON.stringify(localAssets));
       } catch (e) {
         console.warn("Autosave gagal:", e);
       }
@@ -1388,7 +1599,7 @@
 
       const savedMain = localStorage.getItem('label_studio_main');
       const savedStaging = localStorage.getItem('label_studio_staging');
-      const savedAssets = localStorage.getItem('label_studio_assets');
+      const savedAssets = localStorage.getItem('label_studio_permanent_assets');
 
       if (savedAssets) {
         try { localAssets = JSON.parse(savedAssets); } catch(e) { localAssets = []; }
@@ -1419,24 +1630,22 @@
       if (initialSpec) autoDetectCategoryFromSpec(initialSpec);
     }
 
+    // RESET ALL TIDAK MENGHAPUS PENYIMPANAN KHUSUS BAHAN
     function clearProjectData() {
-      if (confirm("Reset seluruh hasil kerja di kanvas? (Nomor registrasi lisensi & opsi kategori tersimpan aman)")) {
+      if (confirm("Reset seluruh hasil kerja di kanvas? (Penyimpanan Bahan Olahan, Nomor registrasi & opsi kategori tersimpan aman)")) {
         localStorage.removeItem('label_studio_main');
         localStorage.removeItem('label_studio_staging');
-        localStorage.removeItem('label_studio_assets');
         
         mainCanvas.clear();
         stagingCanvas.clear();
         
         resetZoomMain();
-        localAssets = [];
         mainHistory = [];
         redoStack = [];
         currentBadgeData = null;
-        renderGallery();
         saveProjectState();
         saveHistory();
-        addHistoryLog("Proyek direset ke kondisi awal.");
+        addHistoryLog("Proyek kanvas direset ke kondisi awal (Bahan penyimpanan tetap aman).");
       }
     }
 
@@ -1655,7 +1864,7 @@
       if (!galleryEl || !countEl) return;
       
       galleryEl.innerHTML = '';
-      countEl.innerText = `${localAssets.length} Aset`;
+      countEl.innerText = `${localAssets.length} Bahan`;
 
       localAssets.forEach((dataUrl, index) => {
         const item = document.createElement('div');
@@ -1665,9 +1874,11 @@
         img.src = dataUrl;
         img.onclick = () => loadImageToStaging(dataUrl);
 
+        // DIBERI TOMBOL KHUSUS MENGHAPUS BAHAN (TIDAK BISA HAPUS ALL)
         const delBtn = document.createElement('button');
         delBtn.className = 'btn-del-asset';
         delBtn.innerHTML = '✕';
+        delBtn.title = "Hapus Bahan Ini";
         delBtn.onclick = (e) => {
           e.stopPropagation();
           deleteAsset(index);
@@ -1697,9 +1908,12 @@
     }
 
     function deleteAsset(index) {
-      localAssets.splice(index, 1);
-      renderGallery();
-      saveProjectState();
+      if (confirm("Hapus bahan olahan ini dari penyimpanan khusus?")) {
+        localAssets.splice(index, 1);
+        renderGallery();
+        saveProjectState();
+        addHistoryLog("Satu bahan dihapus dari penyimpanan.");
+      }
     }
 
     function bringToFrontMain() {
@@ -1835,6 +2049,49 @@
       mainCanvas.renderAll();
       saveProjectState();
       saveHistory();
+    }
+
+    function mergeSelected() {
+      const activeObj = mainCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'activeSelection') {
+        alert("Pilih minimal 2 objek di Kanvas Utama untuk digabung!");
+        return;
+      }
+      activeObj.toGroup();
+      mainCanvas.renderAll();
+      saveProjectState();
+      saveHistory();
+      addHistoryLog("Objek berhasil digabungkan.");
+    }
+
+    function unmergeSelected() {
+      const activeObj = mainCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'group') {
+        alert("Pilih objek hasil gabungan (Group) untuk dilepas!");
+        return;
+      }
+      activeObj.toActiveSelection();
+      mainCanvas.renderAll();
+      saveProjectState();
+      saveHistory();
+      addHistoryLog("Objek kelompok berhasil dilepas.");
+    }
+
+    function deleteMainObj() {
+      const activeObj = mainCanvas.getActiveObject();
+      if (activeObj) {
+        if (activeObj.type === 'activeSelection') {
+          activeObj.forEachObject(o => mainCanvas.remove(o));
+        } else {
+          mainCanvas.remove(activeObj);
+        }
+        mainCanvas.discardActiveObject();
+        mainCanvas.renderAll();
+        saveProjectState();
+        saveHistory();
+      } else {
+        alert("Pilih objek di Kanvas Utama yang ingin dihapus!");
+      }
     }
 
     bindContinuousControl('btnUp', () => moveSelected(0, -2));
@@ -2227,7 +2484,7 @@
     }
 
     function addStagingText() {
-      const text = new fabric.IText('Teks Seni', {
+      const text = new fabric.IText('TEKS SENI', {
         left: stagingCanvas.width / 2,
         top: stagingCanvas.height / 2,
         originX: 'center',
@@ -2245,48 +2502,142 @@
     function toggleCurvedText() {
       const activeObj = stagingCanvas.getActiveObject();
       if (!activeObj || (activeObj.type !== 'i-text' && activeObj.type !== 'text')) {
-        alert("Pilih elemen teks di Meja Potong terlebih dahulu!");
+        alert("Pilih elemen Teks di Meja Potong terlebih dahulu!");
         return;
       }
-      
-      const text = activeObj.text;
-      const font = activeObj.fontFamily || 'Inter';
-      const fill = activeObj.fill || '#ef4444';
-      
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      const size = 200;
-      tempCanvas.width = size;
-      tempCanvas.height = size;
 
-      tempCtx.font = `bold 16px ${font}`;
-      tempCtx.fillStyle = fill;
-      tempCtx.textAlign = 'center';
-
-      const radius = 65;
-
-      tempCtx.save();
-      tempCtx.translate(size/2, size/2);
-      for (let i = 0; i < text.length; i++) {
-        tempCtx.save();
-        const angle = -Math.PI / 2 + (i - text.length / 2 + 0.5) * 0.22;
-        tempCtx.rotate(angle);
-        tempCtx.fillText(text[i], 0, -radius);
-        tempCtx.restore();
+      if (activeObj.isCurvedText) {
+        activeObj.path = null;
+        activeObj.isCurvedText = false;
+      } else {
+        const path = new fabric.Path('M 0 0 Q 100 -50 200 0', { fill: '', stroke: '' });
+        activeObj.path = path;
+        activeObj.isCurvedText = true;
       }
-      tempCtx.restore();
 
-      fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(img) {
-        img.set({
-          angle: 0,
+      stagingCanvas.renderAll();
+      saveProjectState();
+    }
+
+    function autoRemoveBgAI() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Pilih gambar di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      alert("🤖 AI Background Removal Aktif! Memproses transparansi otomatis...");
+
+      const imgElem = activeObj._element;
+      const c = document.createElement('canvas');
+      c.width = imgElem.width;
+      c.height = imgElem.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(imgElem, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, c.width, c.height);
+      const data = imgData.data;
+
+      const r0 = data[0], g0 = data[1], b0 = data[2];
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        if (Math.abs(r - r0) < 35 && Math.abs(g - g0) < 35 && Math.abs(b - b0) < 35) {
+          data[i+3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const newUrl = c.toDataURL('image/png');
+
+      fabric.Image.fromURL(newUrl, function(newImg) {
+        newImg.set({
           left: activeObj.left, top: activeObj.top,
+          scaleX: activeObj.scaleX, scaleY: activeObj.scaleY,
           originX: 'center', originY: 'center'
         });
         stagingCanvas.remove(activeObj);
-        stagingCanvas.add(img);
-        stagingCanvas.setActiveObject(img);
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
         stagingCanvas.renderAll();
         saveProjectState();
+        addHistoryLog("🤖 <b>AI Hapus BG</b> otomatis memproses latar belakang transparan.");
+      });
+    }
+
+    function enableColorPicker() {
+      pickColorMode = true;
+      alert("🧪 Klik pada area gambar di Meja Potong untuk mengambil sampel warna latar belakang!");
+    }
+
+    stagingCanvas.on('mouse:down', function(opt) {
+      if (pickColorMode && opt.target && opt.target.type === 'image') {
+        const pointer = stagingCanvas.getPointer(opt.e);
+        const img = opt.target;
+        
+        const c = document.createElement('canvas');
+        c.width = img.width;
+        c.height = img.height;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img._element, 0, 0);
+
+        const x = Math.floor((pointer.x - img.left + img.width * img.scaleX / 2) / img.scaleX);
+        const y = Math.floor((pointer.y - img.top + img.height * img.scaleY / 2) / img.scaleY);
+
+        if (x >= 0 && x < img.width && y >= 0 && y < img.height) {
+          const p = ctx.getImageData(x, y, 1, 1).data;
+          const hex = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1);
+          document.getElementById('removeColor').value = hex;
+          alert(`Warna dipilih: ${hex}`);
+        }
+        pickColorMode = false;
+      }
+    });
+
+    function removeBackgroundStaging() {
+      const activeObj = stagingCanvas.getActiveObject();
+      if (!activeObj || activeObj.type !== 'image') {
+        alert("Pilih gambar di Meja Potong terlebih dahulu!");
+        return;
+      }
+
+      const targetHex = document.getElementById('removeColor').value;
+      const rTarget = parseInt(targetHex.slice(1,3), 16);
+      const gTarget = parseInt(targetHex.slice(3,5), 16);
+      const bTarget = parseInt(targetHex.slice(5,7), 16);
+
+      const imgElem = activeObj._element;
+      const c = document.createElement('canvas');
+      c.width = imgElem.width;
+      c.height = imgElem.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(imgElem, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, c.width, c.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        if (Math.abs(r - rTarget) < 45 && Math.abs(g - gTarget) < 45 && Math.abs(b - bTarget) < 45) {
+          data[i+3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      const newUrl = c.toDataURL('image/png');
+
+      fabric.Image.fromURL(newUrl, function(newImg) {
+        newImg.set({
+          left: activeObj.left, top: activeObj.top,
+          scaleX: activeObj.scaleX, scaleY: activeObj.scaleY,
+          originX: 'center', originY: 'center'
+        });
+        stagingCanvas.remove(activeObj);
+        stagingCanvas.add(newImg);
+        stagingCanvas.setActiveObject(newImg);
+        stagingCanvas.renderAll();
+        saveProjectState();
+        addHistoryLog(`Warna Latar (${targetHex}) berhasil dihapus.`);
       });
     }
 
@@ -2297,154 +2648,28 @@
       const brightnessVal = parseFloat(document.getElementById('brightnessSlider').value);
       const contrastVal = parseFloat(document.getElementById('contrastSlider').value);
 
-      activeObj.filters = [
-        new fabric.Image.filters.Brightness({ brightness: brightnessVal }),
-        new fabric.Image.filters.Contrast({ contrast: contrastVal })
-      ];
+      activeObj.filters = [];
+      activeObj.filters.push(new fabric.Image.filters.Brightness({ brightness: brightnessVal }));
+      activeObj.filters.push(new fabric.Image.filters.Contrast({ contrast: contrastVal }));
 
       activeObj.applyFilters();
       stagingCanvas.renderAll();
-    }
-
-    async function autoRemoveBgAI() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const originalElement = activeObj._element;
-      if (!originalElement) return;
-
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = originalElement.naturalWidth || originalElement.width;
-      tempCanvas.height = originalElement.naturalHeight || originalElement.height;
-      
-      try {
-        tempCtx.drawImage(originalElement, 0, 0);
-        const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-        const data = imgData.data;
-
-        const corners = [
-          0, (tempCanvas.width - 1) * 4,
-          (tempCanvas.height - 1) * tempCanvas.width * 4,
-          ((tempCanvas.height - 1) * tempCanvas.width + (tempCanvas.width - 1)) * 4
-        ];
-
-        let bgR = 0, bgG = 0, bgB = 0;
-        corners.forEach(idx => {
-          bgR += data[idx]; bgG += data[idx + 1]; bgB += data[idx + 2];
-        });
-        bgR = Math.round(bgR / 4); bgG = Math.round(bgG / 4); bgB = Math.round(bgB / 4);
-
-        const threshold = 60;
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i], g = data[i + 1], b = data[i + 2];
-          const diff = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-          if (diff < threshold) data[i + 3] = 0;
-        }
-
-        tempCtx.putImageData(imgData, 0, 0);
-
-        fabric.Image.fromURL(tempCanvas.toDataURL('image/png'), function(newImg) {
-          newImg.scaleToWidth(activeObj.getScaledWidth());
-          newImg.set({
-            left: activeObj.left,
-            top: activeObj.top,
-            originX: 'center',
-            originY: 'center'
-          });
-          stagingCanvas.remove(activeObj);
-          stagingCanvas.add(newImg);
-          stagingCanvas.setActiveObject(newImg);
-          stagingCanvas.renderAll();
-          saveProjectState();
-          addHistoryLog("<b>AI Auto Remove BG</b> berhasil membersihkan latar belakang gambar.");
-        });
-      } catch (e) {
-        alert("Proses AI Hapus BG gagal.");
-      }
-    }
-
-    function removeBackgroundStaging() {
-      const activeObj = stagingCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'image') {
-        alert("Pilih gambar di Meja Potong terlebih dahulu!");
-        return;
-      }
-
-      const targetColor = document.getElementById('removeColor').value;
-
-      const filter = new fabric.Image.filters.RemoveColor({
-        color: targetColor,
-        distance: 0.15
-      });
-
-      activeObj.filters.push(filter);
-      activeObj.applyFilters();
-      stagingCanvas.renderAll();
       saveProjectState();
-    }
-
-    function enableColorPicker() {
-      alert("Klik pada gambar untuk memilih warna yang ingin dihapus.");
-    }
-
-    function deleteMainObj() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (activeObj) {
-        mainCanvas.remove(activeObj);
-        mainCanvas.discardActiveObject();
-        mainCanvas.renderAll();
-        saveProjectState();
-        saveHistory();
-      }
-    }
-
-    function zoomMain(factor) {
-      currentZoom *= factor;
-      if (currentZoom > 5) currentZoom = 5;
-      if (currentZoom < 0.2) currentZoom = 0.2;
-      
-      const center = mainCanvas.getCenter();
-      mainCanvas.zoomToPoint({ x: center.left, y: center.top }, currentZoom);
-    }
-
-    function resetZoomMain() {
-      currentZoom = 1;
-      mainCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    }
-
-    function mergeSelected() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'activeSelection') {
-        alert("Pilih lebih dari 1 objek di Kanvas Utama!");
-        return;
-      }
-      activeObj.toGroup();
-      mainCanvas.renderAll();
-      saveProjectState();
-      saveHistory();
-    }
-
-    function unmergeSelected() {
-      const activeObj = mainCanvas.getActiveObject();
-      if (!activeObj || activeObj.type !== 'group') {
-        alert("Pilih grup elemen yang ingin dilepas!");
-        return;
-      }
-      activeObj.toActiveSelection();
-      mainCanvas.renderAll();
-      saveProjectState();
-      saveHistory();
     }
 
     function exportPNG() {
-      const multiplier = parseFloat(document.getElementById('exportDpiMode').value) || 8;
-      
-      // Sembunyikan garis panduan saat unduh jika sedang aktif
-      if (guidesVisible) toggleBoxGuides();
+      const multiplier = parseInt(document.getElementById('exportDpiMode').value) || 8;
+
+      const tempGuides = [];
+      mainCanvas.getObjects().forEach(o => {
+        if (o.isBoxGroup || o.isMagicBox || o.isLicenseBox) {
+          if (o.opacity > 0) {
+            tempGuides.push(o);
+            o.set('opacity', 0);
+          }
+        }
+      });
+      mainCanvas.renderAll();
 
       const dataURL = mainCanvas.toDataURL({
         format: 'png',
@@ -2452,18 +2677,19 @@
         multiplier: multiplier
       });
 
-      if (!guidesVisible) toggleBoxGuides();
+      tempGuides.forEach(o => o.set('opacity', 1));
+      mainCanvas.renderAll();
 
       const link = document.createElement('a');
-      link.download = `Label-Studio-Pro-${Date.now()}.png`;
+      link.download = `Label-ICP2E-UltraHD-${Date.now()}.png`;
       link.href = dataURL;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      addHistoryLog("Mengekspor gambar hasil akhir ke format PNG.");
+
+      addHistoryLog("Unduh PNG Super High Quality berhasil dilaksanakan.");
     }
 
-    // Inisialisasi saat dokumen dimuat
     window.onload = function() {
       loadProjectState();
     };
